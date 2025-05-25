@@ -1,28 +1,26 @@
-// app/seller/[userId]/page.tsx (ou o caminho correto)
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation'; // useRouter para navegação
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image'; // Importar next/image
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 
 // Componentes Shadcn/ui
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton'; // Para loading
-import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator'; // Importado mas não usado no código final, pode remover se não precisar
 
 // Ícones Lucide
 import { Phone, ShoppingBag, Store, UserCircle2, PackageOpen, AlertTriangle, MessageSquareText, ChevronRight } from 'lucide-react';
 
-// Seus componentes Navbar e Footer (caminhos de exemplo)
-import Navbar from '@/app/components/layout/Navbar'; // Ajuste o caminho se necessário
-import Footer from '@/app/components/layout/Footer'; // Ajuste o caminho se necessário
+// Seus componentes Navbar e Footer (ajuste os caminhos se necessário)
+import Navbar from '@/app/components/layout/Navbar'; 
+import Footer from '@/app/components/layout/Footer'; 
 
-// Interfaces (mantidas do seu código)
 interface SellerCategory {
   id: string;
   name: string;
@@ -46,11 +44,31 @@ interface SellerProfile {
   image?: string | null;
   whatsappLink?: string | null;
   profileDescription?: string | null;
-  Product: SellerProduct[]; // Note que a API parece retornar 'Product' com 'P' maiúsculo
+  products: SellerProduct[]; // Corrigido para 'products'
 }
 
+// Animações Framer Motion (mantidas da sua versão anterior)
+const pageVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.1 } },
+};
 
-// --- ProductCard Aprimorado ---
+const headerVariants = {
+  hidden: { opacity: 0, y: -30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+};
+
+const productListVariants = {
+  visible: { transition: { staggerChildren: 0.07 } },
+  hidden: {},
+};
+
+// --- ProductCard Aprimorado (mantido da sua versão anterior) ---
 const ProductCard = ({ product }: { product: SellerProduct }) => (
   <motion.div
     variants={itemVariants}
@@ -61,7 +79,7 @@ const ProductCard = ({ product }: { product: SellerProduct }) => (
         <CardHeader className="p-0 relative border-b dark:border-gray-700/50">
           <div className="aspect-[4/3] w-full relative bg-gray-100 dark:bg-gray-700 rounded-t-lg overflow-hidden">
             <Image
-              src={product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '/img-placeholder.png'} // Tenha um /public/img-placeholder.png
+              src={product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '/img-placeholder.png'} 
               alt={`Imagem de ${product.name}`}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-110"
@@ -106,7 +124,7 @@ const ProductCard = ({ product }: { product: SellerProduct }) => (
   </motion.div>
 );
 
-// --- Skeleton para ProductCard ---
+// --- Skeleton para ProductCard (mantido da sua versão anterior) ---
 const ProductCardSkeleton = () => (
   <Card className="h-full flex flex-col dark:bg-gray-800/70 dark:border-gray-700/80">
     <CardHeader className="p-0 relative">
@@ -125,28 +143,6 @@ const ProductCardSkeleton = () => (
   </Card>
 );
 
-// Animações Framer Motion
-const pageVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.1 } },
-};
-
-const headerVariants = {
-  hidden: { opacity: 0, y: -30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
-
-const productListVariants = {
-  visible: { transition: { staggerChildren: 0.07 } },
-  hidden: {},
-};
-
-// --- Componente da Página de Perfil do Vendedor ---
 export default function SellerProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -164,14 +160,23 @@ export default function SellerProfilePage() {
         try {
           const response = await fetch(`/api/seller/${userId}`);
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || 'Falha ao buscar perfil do vendedor');
+            let errorDetail = `HTTP error! status: ${response.status}`;
+            try {
+              const errorData = await response.json();
+              errorDetail = errorData.error || errorData.message || JSON.stringify(errorData) || `Falha ao buscar perfil do vendedor (status: ${response.status})`;
+            } catch (e) {
+              const textError = await response.text().catch(() => '');
+              errorDetail = textError || `Falha ao buscar perfil do vendedor (status: ${response.status}, sem JSON de erro detalhado)`;
+              console.error('Response text when JSON parsing failed:', textError);
+            }
+            throw new Error(errorDetail);
           }
           const data = await response.json();
           setSeller(data);
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido');
-          console.error(err);
+          const errorMessage = err instanceof Error ? err.message : 'Ocorreu um erro desconhecido';
+          setError(errorMessage);
+          console.error("Failed to fetch seller profile:", err);
         } finally {
           setIsLoading(false);
         }
@@ -208,7 +213,7 @@ export default function SellerProfilePage() {
           <section>
             <Skeleton className="h-8 w-1/3 mb-8 rounded-md" />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => <ProductCardSkeleton key={i} />)}
+              {[...Array(4)].map((_, i) => <ProductCardSkeleton key={`skeleton-${i}`} />)} {/* Adicionado key única */}
             </div>
           </section>
         </main>
@@ -260,7 +265,6 @@ export default function SellerProfilePage() {
         initial="hidden"
         animate="visible"
       >
-        {/* Seção de Cabeçalho/Banner do Vendedor */}
         <motion.header 
           variants={headerVariants}
           className="bg-gradient-to-br from-sky-500 via-indigo-500 to-purple-600 dark:from-sky-700 dark:via-indigo-700 dark:to-purple-800 text-white py-12 sm:py-16 md:py-20"
@@ -300,7 +304,6 @@ export default function SellerProfilePage() {
           </div>
         </motion.header>
 
-        {/* Seção de Produtos do Vendedor */}
         <motion.section variants={itemVariants} className="container mx-auto p-4 md:p-8 mt-0 md:-mt-8">
           <Card className="shadow-xl dark:bg-gray-800/70 backdrop-blur-sm border dark:border-gray-700/50 rounded-xl md:rounded-2xl">
             <CardHeader className="pb-4 pt-6 px-6 md:px-8 border-b dark:border-gray-700/50">
@@ -310,12 +313,12 @@ export default function SellerProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 md:p-8">
-              {seller.Product && seller.Product.length > 0 ? (
+              {seller.products && seller.products.length > 0 ? (
                 <motion.div 
                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-8"
                   variants={productListVariants}
                 >
-                  {seller.Product.map((product) => (
+                  {seller.products.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </motion.div>

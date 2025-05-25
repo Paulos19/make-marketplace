@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
         image: true,
         whatsappLink: true,
         profileDescription: true,
-        Product: { 
+        products: {  // <--- ALTERADO DE 'Product' PARA 'products'
           orderBy: { createdAt: 'desc' },
           include: {
             categories: true, 
@@ -32,7 +32,14 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
 
     return NextResponse.json(seller, { status: 200 });
   } catch (error) {
-    console.error('Error fetching seller profile:', error);
-    return NextResponse.json({ error: 'Internal server error fetching seller profile' }, { status: 500 });
+    console.error('Error fetching seller profile API ROUTE:', error); // Log aprimorado
+    // Tenta retornar uma resposta de erro JSON
+    try {
+      return NextResponse.json({ error: 'Internal server error fetching seller profile', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
+    } catch (responseError) {
+      // Se NextResponse.json falhar, loga e retorna uma resposta de texto simples
+      console.error('Failed to construct JSON error response in API route:', responseError);
+      return new Response('Internal server error', { status: 500 });
+    }
   }
 }
