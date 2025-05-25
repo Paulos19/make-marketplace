@@ -1,13 +1,12 @@
-// app/page.tsx (ou onde sua HomePage estiver)
 "use client";
 
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import Image, { StaticImageData } from 'next/image'; // Importar StaticImageData para tipagem
+import Image from 'next/image'; // Importação do next/image
 import { motion } from 'framer-motion';
 
-// Componentes Shadcn/ui
+// Componentes Shadcn/ui (ajuste os caminhos se o diretório @/components estiver diferente)
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import {
@@ -20,43 +19,29 @@ import {
 import Autoplay from "embla-carousel-autoplay";
 
 // Seus componentes Navbar e Footer
-import Navbar from './components/layout/Navbar';
+// Certifique-se que estes caminhos estão corretos em relação à localização deste page.tsx
+// Se page.tsx está em app/page.tsx, então os componentes estariam em app/components/layout/
+import Navbar from './components/layout/Navbar'; 
 import Footer from './components/layout/Footer';
 
-// Ícones
-import { ShoppingCart, Zap, Gift, AlertTriangle, PackageOpen } from 'lucide-react';
-
-// Importe as imagens estaticamente
-// Ajuste o caminho se a pasta 'assets' estiver em um local diferente de 'app/assets'
-// Se 'app' é o seu diretório raiz para imports com '@/', então seria '@/assets/carousel/...'
-// Para este exemplo, vou assumir que você criou app/assets/carousel/
-import banner1 from './assets/carousel/1.jpg';
-import banner2 from './assets/carousel/2.jpg';
-import banner3 from './assets/carousel/3.jpg';
+// Ícones (opcional)
+import { ShoppingCart, Zap, Gift, AlertTriangle, PackageOpen } from 'lucide-react'; // Adicionados ícones para estados de erro/vazio
 import { Skeleton } from '@/components/ui/skeleton';
-
-// As outras imagens usadas nas seções estáticas, se também quiser importá-las:
-// import destaqueImg1 from './assets/static/destaque-maquiagem.jpg';
-// import destaqueImg2 from './assets/static/cuidados-pele.jpg';
-// import placeholderProductImg from './assets/static/placeholder-product.png';
-
 
 interface Product {
   id: string;
   name: string;
   description?: string | null;
   price: number;
-  imageUrls: string[];
+  imageUrls: string[]; // Usado para produtos, podem ser URLs externas ou locais
   userId: string;
-  createdAt?: string | Date;
+  // Adicione createdAt se for usar para ordenar "Adicionados Recentemente"
+  createdAt?: string | Date; 
+  // Adicione onPromotion e originalPrice se for usar para a seção "Em Promoção"
   onPromotion?: boolean;
   originalPrice?: number;
+  // Adicione categories se for usar para "Produtos por Categoria"
   categories?: { id: string; name: string }[];
-}
-
-interface CarouselImage {
-  src: StaticImageData; // Tipo para imagens importadas estaticamente
-  alt: string;
 }
 
 // Configurações para animações do Framer Motion
@@ -70,16 +55,21 @@ const itemVariants = {
   visible: { opacity: 1, scale: 1, transition: { duration: 0.5 } },
 };
 
+// Componente ProductCard para reutilização (exemplo simplificado)
+// Você pode ter um ProductCard mais elaborado em um arquivo separado
 const ProductCardDisplay = ({ product }: { product: Product }) => (
-  <motion.div variants={itemVariants} className="h-full">
+  <motion.div
+    variants={itemVariants}
+    className="h-full" // Para garantir que o Card ocupe o espaço do motion.div
+  >
     <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 h-full flex flex-col dark:bg-gray-800">
       <CardHeader className="p-0">
-        <div className="relative w-full aspect-[4/3]">
+        <div className="relative w-full aspect-[4/3]"> {/* Proporção da imagem */}
           <Image
-            src={product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '/img-placeholder.png'} // Imagens de produto podem vir de API (externas) ou /public
+            src={product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '/img-placeholder.png'} // Tenha um /public/img-placeholder.png
             alt={product.name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-300 group-hover:scale-105" // Efeito de zoom no hover do Link pai
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
         </div>
@@ -100,30 +90,29 @@ const ProductCardDisplay = ({ product }: { product: Product }) => (
   </motion.div>
 );
 
+
 export default function HomePage() {
   const { data: session, status } = useSession();
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [productError, setProductError] = useState<string | null>(null);
 
-  // ATUALIZADO: Usando imagens importadas estaticamente para o carrossel
-  const carouselImages: CarouselImage[] = [
-    { src: banner1, alt: 'Banner Promocional MakeStore 1 - Maquiagens Vibrantes' },
-    { src: banner2, alt: 'Banner Promocional MakeStore 2 - Coleção Exclusiva' },
-    { src: banner3, alt: 'Banner Promocional MakeStore 3 - Cuidados Essenciais' },
-  ];
+  // ATUALIZADO: Usando imagens locais da pasta /public para o carrossel
+  const carouselImages = ['/1.jpg', '/2.jpg', '/3.jpg'];
+  // CERTIFIQUE-SE QUE AS IMAGENS 1.jpg, 2.jpg, 3.jpg ESTÃO NA PASTA /public DO SEU PROJETO
 
   useEffect(() => {
     const fetchRecentProducts = async () => {
       setIsLoadingProducts(true);
       setProductError(null);
       try {
-        const response = await fetch('/api/products?limit=4&sort=createdAt:desc');
+        const response = await fetch('/api/products?limit=4&sort=createdAt:desc'); // Exemplo: buscar 4 mais recentes
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.message || 'Falha ao buscar produtos recentes');
         }
         const data = await response.json();
+        // Certifique-se que 'data' é um array de produtos
         setRecentProducts(Array.isArray(data) ? data : (data.products && Array.isArray(data.products) ? data.products : []));
       } catch (err) {
         setProductError(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido');
@@ -153,17 +142,16 @@ export default function HomePage() {
             opts={{ loop: true }}
           >
             <CarouselContent className="h-full">
-              {carouselImages.map((item, index) => ( // Mudado para 'item' para clareza
+              {carouselImages.map((src, index) => (
                 <CarouselItem key={index} className="h-full">
                   <div className="relative w-full h-full">
                     <Image
-                      src={item.src} // Agora usa o objeto de imagem importado
-                      alt={item.alt}
+                      src={src} // Caminho local agora
+                      alt={`Banner Promocional MakeStore ${index + 1}`}
                       fill
                       className="object-cover"
                       priority={index === 0}
-                      sizes="100vw"
-                      placeholder="blur" // Habilita placeholder de blur para imagens estáticas
+                      sizes="100vw" // Simplificado, pois é background
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex flex-col items-center justify-end text-center p-8 pb-12 sm:pb-16 md:pb-20">
                       <motion.h1
@@ -213,7 +201,7 @@ export default function HomePage() {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <motion.div variants={itemVariants} className="rounded-lg overflow-hidden shadow-xl aspect-video md:aspect-[4/3]">
-                 {/* Para esta imagem, você pode manter /public ou importar estaticamente também */}
+                 {/* Use uma das suas imagens locais aqui também, ou um placeholder diferente */}
                 <Image src="/2.jpg" alt="Destaque Maquiagem MakeStore" width={600} height={450} className="object-cover w-full h-full" />
               </motion.div>
               <motion.div variants={itemVariants}>
@@ -245,6 +233,7 @@ export default function HomePage() {
               <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">Confira os últimos produtos que chegaram em nossa loja.</p>
             </div>
             {isLoadingProducts ? (
+              // Skeleton para produtos recentes
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[...Array(4)].map((_, i) => (
                   <div key={i} className="rounded-lg overflow-hidden shadow-lg dark:bg-gray-800">
@@ -301,7 +290,7 @@ export default function HomePage() {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <motion.div variants={itemVariants} className="md:order-2 rounded-lg overflow-hidden shadow-xl aspect-video md:aspect-[4/3]">
-                 {/* Para esta imagem, você pode manter /public ou importar estaticamente também */}
+                 {/* Use uma das suas imagens locais aqui também, ou um placeholder diferente */}
                  <Image src="/3.jpg" alt="Destaque Cuidados com a Pele MakeStore" width={600} height={450} className="object-cover w-full h-full" />
               </motion.div>
               <motion.div variants={itemVariants} className="md:order-1">
