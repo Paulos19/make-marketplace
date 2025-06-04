@@ -1,12 +1,16 @@
+// app/layout.tsx
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Bangers } from 'next/font/google';
 import './globals.css';
-import AuthProvider from './components/AuthProvider'; 
-import Navbar from './components/layout/Navbar';
-import Footer from './components/layout/Footer';
+import AuthProvider from './components/AuthProvider';
 import { Toaster } from 'sonner';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const bangers = Bangers({ 
+  subsets: ['latin'], 
+  weight: ['400'], 
+  variable: '--font-bangers' 
+});
 
 export const metadata: Metadata = {
   title: 'MakeStore Marketplace',
@@ -20,7 +24,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className}`} suppressHydrationWarning={true}>
+      {/* Adicione a classe da nova fonte ao body ou a um elemento wrapper */}
+      <body className={`${inter.variable} ${bangers.variable} font-sans`} suppressHydrationWarning={true}>
         <AuthProvider>
           <main>
             {children}

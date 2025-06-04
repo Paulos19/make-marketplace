@@ -1,21 +1,21 @@
+// app/api/reservations/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma'; //
 import { z } from 'zod';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '../auth/[...nextauth]/route'; ///route.ts]
+import { sendReservationNotificationEmail } from '@/lib/nodemailer'; // << Importar a função
 
 const reservationSchema = z.object({
   productId: z.string().min(1, "Product ID is required"),
   quantity: z.number().int().min(1, "Quantity must be at least 1"),
-  // Não precisamos de status aqui, será PENDING por padrão
 });
 
-// Handler para criar uma nova reserva
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.id) {
-      return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
+    if (!session || !session.user?.id || !session.user?.name || !session.user?.email) { // Garantir que temos nome e email do cliente
+      return NextResponse.json({ message: 'Autenticação necessária ou dados do usuário incompletos na sessão.' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -26,33 +26,45 @@ export async function POST(request: Request) {
     }
 
     const { productId, quantity: reservedQuantity } = validation.data;
-    const userId = session.user.id;
+    const clientId = session.user.id;
+    const clientName = session.user.name;
+    const clientContact = session.user.email; // Ou session.user.whatsappLink se preferir/tiver
 
     // Transação para garantir atomicidade
     const result = await prisma.$transaction(async (tx) => {
       const product = await tx.product.findUnique({
         where: { id: productId },
+        include: { // Incluir dados do vendedor (dono do produto)
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+            }
+          }
+        }
       });
 
       if (!product) {
-        throw new Error('Product not found');
+        throw new Error('Produto não encontrado (Product not found)');
+      }
+      if (!product.user || !product.user.email) {
+        throw new Error('Vendedor do produto não encontrado ou sem email cadastrado.');
       }
 
       if (product.quantity < reservedQuantity) {
-        throw new Error('Not enough stock available');
+        throw new Error('Estoque insuficiente (Not enough stock available)');
       }
 
-      // Criar a reserva
       const reservation = await tx.reservation.create({
         data: {
-          userId,
+          userId: clientId,
           productId,
           quantity: reservedQuantity,
-          status: 'PENDING', // Status inicial da reserva
+          status: 'PENDING',
         },
       });
 
-      // Atualizar a quantidade do produto
       const updatedProduct = await tx.product.update({
         where: { id: productId },
         data: {
@@ -62,21 +74,40 @@ export async function POST(request: Request) {
         },
       });
 
-      return { reservation, updatedProduct };
+      return { reservation, productOwner: product.user, productName: product.name };
     });
+
+    // Enviar email APÓS a transação ser bem-sucedida
+    if (result.productOwner.email) {
+      await sendReservationNotificationEmail({
+        sellerEmail: result.productOwner.email,
+        sellerName: result.productOwner.name,
+        clientName: clientName,
+        clientContact: clientContact, // Enviar email do cliente como contato
+        productName: result.productName,
+        quantity: reservedQuantity,
+        productId: productId,
+      });
+    } else {
+      console.warn(`Email do vendedor para o produto ${result.productName} (ID: ${productId}) não encontrado. Notificação não enviada.`);
+    }
 
     return NextResponse.json(result.reservation, { status: 201 });
 
   } catch (error) {
     console.error("Reservation error:", error);
-    if (error instanceof Error && (error.message === 'Product not found' || error.message === 'Not enough stock available')) {
-      return NextResponse.json({ message: error.message }, { status: 400 });
+    if (error instanceof Error) {
+        if (error.message === 'Produto não encontrado (Product not found)' || 
+            error.message === 'Estoque insuficiente (Not enough stock available)' ||
+            error.message === 'Vendedor do produto não encontrado ou sem email cadastrado.') {
+        return NextResponse.json({ message: error.message }, { status: 400 });
+        }
     }
-    return NextResponse.json({ message: 'Could not create reservation' }, { status: 500 });
+    return NextResponse.json({ message: 'Não foi possível criar a reserva (Could not create reservation)' }, { status: 500 });
   }
 }
 
-// Novo Handler GET para buscar reservas do usuário
+// GET Handler (permanece o mesmo da sua implementação anterior)
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -84,20 +115,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const userIdFromQuery = searchParams.get('userId');
-
-    // Idealmente, o usuário só pode buscar suas próprias reservas.
-    // Se um admin pudesse buscar por qualquer userId, essa verificação seria diferente.
-    if (userIdFromQuery !== session.user.id) {
-        // Ou poderia simplesmente ignorar o userIdFromQuery e usar sempre o session.user.id
-        // return NextResponse.json({ message: 'Forbidden: You can only fetch your own reservations.' }, { status: 403 });
-        // Por simplicidade, vamos assumir que se userId é fornecido, ele deve corresponder ao usuário logado
-        // ou, se não fornecido, usa o usuário logado.
-        // Para o caso da dashboard, o userIdFromQuery será o do usuário logado.
-    }
-
-    const targetUserId = session.user.id; // Garante que estamos buscando para o usuário logado
+    const targetUserId = session.user.id;
 
     const reservations = await prisma.reservation.findMany({
       where: {
@@ -114,7 +132,7 @@ export async function GET(request: Request) {
         },
       },
       orderBy: {
-        createdAt: 'desc', // Mostrar as mais recentes primeiro
+        createdAt: 'desc',
       },
     });
 

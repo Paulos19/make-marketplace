@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // Ajuste o caminho se necessário
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
+
+// Schema para validação no PUT (opcional, mas recomendado para robustez)
+const updateUserSchema = z.object({
+  name: z.string().min(2).max(50).optional(),
+  image: z.string().url().nullable().optional(),
+  whatsappLink: z.string().url().nullable().optional(),
+  storeName: z.string().min(2).max(50).nullable().optional(),
+  sellerBannerImageUrl: z.string().url().nullable().optional(),
+  profileDescription: z.string().max(500).nullable().optional(), // Adicionado também
+});
 
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -12,26 +23,31 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, image, whatsappLink } = body;
+    
+    // Validação com Zod
+    const validation = updateUserSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json({ message: 'Dados inválidos', errors: validation.error.format() }, { status: 400 });
+    }
 
-    // Validação básica (pode ser expandida)
-    if (name && typeof name !== 'string') {
-      return NextResponse.json({ message: 'Nome inválido' }, { status: 400 });
-    }
-    if (image && typeof image !== 'string') {
-      return NextResponse.json({ message: 'URL da imagem inválida' }, { status: 400 });
-    }
-    if (whatsappLink && typeof whatsappLink !== 'string') {
-      return NextResponse.json({ message: 'Link do WhatsApp inválido' }, { status: 400 });
+    const { name, image, whatsappLink, storeName, sellerBannerImageUrl, profileDescription } = validation.data;
+
+    const dataToUpdate: any = {};
+    if (name !== undefined) dataToUpdate.name = name;
+    if (image !== undefined) dataToUpdate.image = image; // Permite null para remover
+    if (whatsappLink !== undefined) dataToUpdate.whatsappLink = whatsappLink; // Permite null
+    if (storeName !== undefined) dataToUpdate.storeName = storeName; // Permite null
+    if (sellerBannerImageUrl !== undefined) dataToUpdate.sellerBannerImageUrl = sellerBannerImageUrl; // Permite null
+    if (profileDescription !== undefined) dataToUpdate.profileDescription = profileDescription; // Permite null
+
+
+    if (Object.keys(dataToUpdate).length === 0) {
+        return NextResponse.json({ message: 'Nenhum dado para atualizar' }, { status: 400 });
     }
 
     const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
-      data: {
-        ...(name && { name }),
-        ...(image && { image }),
-        ...(whatsappLink && { whatsappLink }),
-      },
+      data: dataToUpdate,
     });
 
     return NextResponse.json(updatedUser, { status: 200 });
@@ -57,6 +73,9 @@ export async function GET(req: NextRequest) {
         email: true,
         image: true,
         whatsappLink: true,
+        storeName: true, // Adicionado
+        sellerBannerImageUrl: true, // Adicionado
+        profileDescription: true, // Adicionado
       },
     });
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma'; //
 
 export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
   const { userId } = params;
@@ -13,31 +13,32 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
       where: { id: userId },
       select: {
         id: true,
-        name: true,
-        image: true,
+        name: true, // Nome pessoal do usuário/vendedor
+        email: false, // Geralmente não exibimos email publicamente
+        image: true, // Avatar do vendedor
         whatsappLink: true,
+        storeName: true, // << NOVO CAMPO ADICIONADO
         profileDescription: true,
-        products: {  // <--- ALTERADO DE 'Product' PARA 'products'
+        sellerBannerImageUrl: true, // << NOVO CAMPO ADICIONADO
+        products: {
           orderBy: { createdAt: 'desc' },
           include: {
-            categories: true, 
+            categories: true,
           }
         },
       },
     });
 
     if (!seller) {
-      return NextResponse.json({ error: 'Seller not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Vendedor não encontrado (Seller not found)' }, { status: 404 });
     }
 
     return NextResponse.json(seller, { status: 200 });
   } catch (error) {
-    console.error('Error fetching seller profile API ROUTE:', error); // Log aprimorado
-    // Tenta retornar uma resposta de erro JSON
+    console.error('Error fetching seller profile API ROUTE:', error);
     try {
-      return NextResponse.json({ error: 'Internal server error fetching seller profile', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
+      return NextResponse.json({ error: 'Erro interno do servidor ao buscar perfil do vendedor', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
     } catch (responseError) {
-      // Se NextResponse.json falhar, loga e retorna uma resposta de texto simples
       console.error('Failed to construct JSON error response in API route:', responseError);
       return new Response('Internal server error', { status: 500 });
     }

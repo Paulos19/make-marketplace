@@ -1,3 +1,4 @@
+// app/auth/signup/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -52,25 +53,18 @@ export default function SignUpPage() {
         throw new Error(data.message || "Falha ao registrar. Tente novamente.");
       }
       
-      setSuccess("Cadastro realizado com sucesso! Tentando fazer login...");
-      
-      const loginResult = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
-      });
-
-      if (loginResult?.ok) {
-        setSuccess("Login realizado com sucesso! Redirecionando..."); 
-        router.push(loginResult.url || '/signin'); 
-      } else {
-        setError("Cadastro realizado, mas o login automático falhou. Por favor, tente fazer login manualmente.");
-        setIsLoading(false); 
-      }
+      // --- MODIFICAÇÃO AQUI ---
+      setSuccess("Cadastro realizado com sucesso! Por favor, verifique seu e-mail para ativar sua conta.");
+      // Não tentamos login automático aqui, forçamos a verificação de e-mail.
+      // Opcional: Redirecionar para uma página de "Verifique seu e-mail"
+      // router.push('/auth/verify-email-pending');
+      // ------------------------
 
     } catch (err: any) {
       setError(err.message || "Ocorreu um erro desconhecido.");
       setIsLoading(false);
+    } finally {
+        setIsLoading(false); // Garantir que o loading seja desativado em caso de erro também
     }
   };
 

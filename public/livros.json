@@ -1,0 +1,4174 @@
+[
+    {
+      "codigo": "1",
+      "livro": "As lutas de classe na França",
+      "autor": "Karl Marx",
+      "valor": "25,00",
+      "categoria": "Ciências Sociais/Política"
+    },
+    {
+      "codigo": "2",
+      "livro": "Sobre as ruinas do Museu",
+      "autor": "Douglas Crimp",
+      "valor": "60,00",
+      "categoria": "Arte/Crítica Cultural"
+    },
+    {
+      "codigo": "3",
+      "livro": "O fotográfico",
+      "autor": "Rosalin Krauss",
+      "valor": "80,00",
+      "categoria": "Arte/Fotografia"
+    },
+    {
+      "codigo": "4",
+      "livro": "A ilha de Dr. Moreau",
+      "autor": "H. G. Wells",
+      "valor": "15,00",
+      "categoria": "Ficção Científica Clássica"
+    },
+    {
+      "codigo": "5",
+      "livro": "A formação das almas",
+      "autor": "José Murilo de Carvalho",
+      "valor": "30,00",
+      "categoria": "História do Brasil"
+    },
+    {
+      "codigo": "6",
+      "livro": "Dialética de família",
+      "autor": "Engels, Freud, Reich",
+      "valor": "25,00",
+      "categoria": "Psicologia/Sociologia"
+    },
+    {
+      "codigo": "7",
+      "livro": "Usos da fronteira - Terras, contr",
+      "autor": "Sueny Diana Oliveira de Souza",
+      "valor": "30,00",
+      "categoria": "Ciências Sociais/Estudos Regionais"
+    },
+    {
+      "codigo": "8",
+      "livro": "O tempo e o cão",
+      "autor": "Maria Rita Kehl",
+      "valor": "40,00",
+      "categoria": "Psicanálise/Ensaios"
+    },
+    {
+      "codigo": "9",
+      "livro": "A casa do silencio",
+      "autor": "Orhan Pamuk",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira/Romance"
+    },
+    {
+      "codigo": "10",
+      "livro": "Veneno antimonotonia",
+      "autor": "Varios autores",
+      "valor": "30,00",
+      "categoria": "Coletânea/Ensaios"
+    },
+    {
+      "codigo": "11",
+      "livro": "Moda e arte",
+      "autor": "Maria Alice",
+      "valor": "15,00",
+      "categoria": "Moda/Arte"
+    },
+    {
+      "codigo": "12",
+      "livro": "Darwin e o Darwinismo",
+      "autor": "Denis Buican",
+      "valor": "20,00",
+      "categoria": "Ciência/Biologia"
+    },
+    {
+      "codigo": "13",
+      "livro": "Arsene Lupin",
+      "autor": "Maurice Leblanc",
+      "valor": "15,00",
+      "categoria": "Literatura Policial/Aventura"
+    },
+    {
+      "codigo": "14",
+      "livro": "A crise da ideologia Keynesiana",
+      "autor": "Lauro Campos",
+      "valor": "40,00",
+      "categoria": "Economia/Política"
+    },
+    {
+      "codigo": "15",
+      "livro": "A Casa das Orquideas",
+      "autor": "Lucinda Riley",
+      "valor": "25,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "16",
+      "livro": "Os problemas da estética",
+      "autor": "Luigi Pareyson",
+      "valor": "20,00",
+      "categoria": "Filosofia/Estética"
+    },
+    {
+      "codigo": "17",
+      "livro": "As fúrias invisíveis do coração",
+      "autor": "John Boyne",
+      "valor": "30,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "18",
+      "livro": "Feliz por nada",
+      "autor": "Martha Medeiros",
+      "valor": "20,00",
+      "categoria": "Crônicas/Literatura Brasileira"
+    },
+    {
+      "codigo": "19",
+      "livro": "Arte Contemporânea",
+      "autor": "Michel Archer",
+      "valor": "30,00",
+      "categoria": "Arte"
+    },
+    {
+      "codigo": "20",
+      "livro": "Dois ensaios e duas lembranças",
+      "autor": "Benedito Nunes",
+      "valor": "20,00",
+      "categoria": "Ensaios/Literatura Brasileira"
+    },
+    {
+      "codigo": "21",
+      "livro": "A revolução dos bichos",
+      "autor": "George Orwell",
+      "valor": "15,00",
+      "categoria": "Literatura Estrangeira/Distopia"
+    },
+    {
+      "codigo": "22",
+      "livro": "Dentro da baleia e outros ensai",
+      "autor": "George Orwell",
+      "valor": "15,00",
+      "categoria": "Ensaios/Literatura Estrangeira"
+    },
+    {
+      "codigo": "23",
+      "livro": "Orgulho e preconceito",
+      "autor": "Jane Austen",
+      "valor": "20,00",
+      "categoria": "Romance Clássico Estrangeiro"
+    },
+    {
+      "codigo": "24",
+      "livro": "A Fogueira das Vaidades",
+      "autor": "Tom Wolfe",
+      "valor": "35,00",
+      "categoria": "Literatura Estrangeira/Sátira"
+    },
+    {
+      "codigo": "25",
+      "livro": "Factótum",
+      "autor": "Bukowski",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira/Romance"
+    },
+    {
+      "codigo": "26",
+      "livro": "Fugitiva",
+      "autor": "Alice Munro",
+      "valor": "25,00",
+      "categoria": "Contos/Literatura Estrangeira"
+    },
+    {
+      "codigo": "27",
+      "livro": "O caso morel",
+      "autor": "Rubem fonseca",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira/Policial"
+    },
+    {
+      "codigo": "28",
+      "livro": "A república de platão",
+      "autor": "tradução de enrico corvisieri",
+      "valor": "25,00",
+      "categoria": "Filosofia Clássica"
+    },
+    {
+      "codigo": "29",
+      "livro": "Os versos satânicos",
+      "autor": "Salman rushdie",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira/Romance"
+    },
+    {
+      "codigo": "30",
+      "livro": "A princesa vermelha",
+      "autor": "Sofka zinovieff",
+      "valor": "30,00",
+      "categoria": "Biografia/História"
+    },
+    {
+      "codigo": "31",
+      "livro": "Conversas com Woody allen",
+      "autor": "Eric lax",
+      "valor": "15,00",
+      "categoria": "Cinema/Biografia"
+    },
+    {
+      "codigo": "32",
+      "livro": "Os anos loucos",
+      "autor": "Willian wiser",
+      "valor": "20,00",
+      "categoria": "História/Cultura"
+    },
+    {
+      "codigo": "33",
+      "livro": "A carne e o Sangue",
+      "autor": "Mary Del Priore",
+      "valor": "25,00",
+      "categoria": "História do Brasil/Estudos de Gênero"
+    },
+    {
+      "codigo": "34",
+      "livro": "Realidades e Ficções",
+      "autor": "Boris Kossoy",
+      "valor": "30,00",
+      "categoria": "Fotografia/Arte"
+    },
+    {
+      "codigo": "35",
+      "livro": "Principios fundamentais da Filos",
+      "autor": "Guy Besse",
+      "valor": "20,00",
+      "categoria": "Filosofia"
+    },
+    {
+      "codigo": "36",
+      "livro": "Caio Prado Junior",
+      "autor": "Paulo Lumatti",
+      "valor": "25,00",
+      "categoria": "Biografia/História do Brasil"
+    },
+    {
+      "codigo": "37",
+      "livro": "Outlander a viajante do tempo",
+      "autor": "Diana cabaldon",
+      "valor": "30,00",
+      "categoria": "Romance Histórico/Fantasia"
+    },
+    {
+      "codigo": "38",
+      "livro": "Rumo a estação finlandia",
+      "autor": "Edmund Wilson",
+      "valor": "20,00",
+      "categoria": "História/Política"
+    },
+    {
+      "codigo": "39",
+      "livro": "As viagens de Gulliver",
+      "autor": "Jonathan Swift",
+      "valor": "30,00",
+      "categoria": "Literatura Clássica Estrangeira/Sátira"
+    },
+    {
+      "codigo": "40",
+      "livro": "A convidada",
+      "autor": "Simone de Beauvoir",
+      "valor": "30,00",
+      "categoria": "Literatura Estrangeira/Filosofia Existencialista"
+    },
+    {
+      "codigo": "41",
+      "livro": "Amor em São Petersburgo",
+      "autor": "Heinz G.",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "42",
+      "livro": "Os homens que não amavam as",
+      "autor": "Charles bukowski",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira"
+    },
+    {
+      "codigo": "43",
+      "livro": "O olho e o espirito",
+      "autor": "Maurice Merleau",
+      "valor": "25,00",
+      "categoria": "Filosofia/Fenomenologia"
+    },
+    {
+      "codigo": "44",
+      "livro": "Mrs. Dolloway",
+      "autor": "Virginia Woolf",
+      "valor": "30,00",
+      "categoria": "Literatura Modernista Estrangeira"
+    },
+    {
+      "codigo": "45",
+      "livro": "O que é a liberdade",
+      "autor": "Caio Prado Jr",
+      "valor": "10,00",
+      "categoria": "Filosofia/Política"
+    },
+    {
+      "codigo": "46",
+      "livro": "Seis vezes lucas",
+      "autor": "Lygia Bojunga",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil Brasileira"
+    },
+    {
+      "codigo": "47",
+      "livro": "No limiar do moderno Estudos s",
+      "autor": "Ernani Chaves",
+      "valor": "35,00",
+      "categoria": "Filosofia/Estudos Culturais"
+    },
+    {
+      "codigo": "48",
+      "livro": "História constitucional",
+      "autor": "Cristiano Paixão",
+      "valor": "25,00",
+      "categoria": "Direito/História"
+    },
+    {
+      "codigo": "49",
+      "livro": "A elegância do ouriço",
+      "autor": "Muriel Barbery",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro/Filosofia"
+    },
+    {
+      "codigo": "50",
+      "livro": "Istambul",
+      "autor": "Orhan Pamuk",
+      "valor": "20,00",
+      "categoria": "Memórias/Literatura Estrangeira"
+    },
+    {
+      "codigo": "51",
+      "livro": "O livreiro de Cabul",
+      "autor": "Asne Seierstad",
+      "valor": "20,00",
+      "categoria": "Reportagem/Não-Ficção"
+    },
+    {
+      "codigo": "52",
+      "livro": "Uma temporada no inferno",
+      "autor": "Arthur Rimbaud",
+      "valor": "15,00",
+      "categoria": "Poesia Estrangeira"
+    },
+    {
+      "codigo": "53",
+      "livro": "Ficções do Interlúdio",
+      "autor": "Fernando Pessoa",
+      "valor": "25,00",
+      "categoria": "Poesia Portuguesa"
+    },
+    {
+      "codigo": "54",
+      "livro": "Iluminismo",
+      "autor": "Francisco José",
+      "valor": "20,00",
+      "categoria": "História/Filosofia"
+    },
+    {
+      "codigo": "55",
+      "livro": "O homem que vivia com os lobo",
+      "autor": "Shaun Ellis",
+      "valor": "25,00",
+      "categoria": "Biografia/Natureza"
+    },
+    {
+      "codigo": "56",
+      "livro": "Fazendo modelo",
+      "autor": "Chico Buarque",
+      "valor": "15,00",
+      "categoria": "Teatro Brasileiro"
+    },
+    {
+      "codigo": "57",
+      "livro": "O lugar do olhar",
+      "autor": "Paulo Cesar",
+      "valor": "20,00",
+      "categoria": "Arte/Fotografia"
+    },
+    {
+      "codigo": "58",
+      "livro": "A imagem no ensino da Arte",
+      "autor": "Ana Mae Barbosa",
+      "valor": "20,00",
+      "categoria": "Educação/Arte"
+    },
+    {
+      "codigo": "59",
+      "livro": "RollingStone",
+      "autor": "Jann S. Wenner e Joe Levy",
+      "valor": "20,00",
+      "categoria": "Música/Cultura Pop"
+    },
+    {
+      "codigo": "60",
+      "livro": "Desconstruir Duchamp",
+      "autor": "Affonso Romano",
+      "valor": "35,00",
+      "categoria": "Arte/Crítica"
+    },
+    {
+      "codigo": "61",
+      "livro": "A bliotecaria de Auschwitz",
+      "autor": "Antonio Iturbe",
+      "valor": "20,00",
+      "categoria": "Romance Histórico"
+    },
+    {
+      "codigo": "62",
+      "livro": "Adeus, China",
+      "autor": "Li Cunxin",
+      "valor": "30,00",
+      "categoria": "Autobiografia"
+    },
+    {
+      "codigo": "63",
+      "livro": "A construção social da realidade",
+      "autor": "Peter Berger",
+      "valor": "30,00",
+      "categoria": "Sociologia"
+    },
+    {
+      "codigo": "64",
+      "livro": "Os prazeres e os dias",
+      "autor": "Marcel Proust",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira Clássica"
+    },
+    {
+      "codigo": "65",
+      "livro": null,
+      "autor": "Nicole Krauss",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira"
+    },
+    {
+      "codigo": "66",
+      "livro": "Perfume história de um assasin",
+      "autor": "Patrick Suskind",
+      "valor": "25,00",
+      "categoria": "Romance Estrangeiro/Suspense"
+    },
+    {
+      "codigo": "67",
+      "livro": "A lembrança compartilhada",
+      "autor": "Simone Signoret",
+      "valor": "10.00",
+      "categoria": "Autobiografia/Cinema"
+    },
+    {
+      "codigo": "68",
+      "livro": "Anti-retrato",
+      "autor": "Max Martins",
+      "valor": "30,00",
+      "categoria": "Poesia Brasileira"
+    },
+    {
+      "codigo": "69",
+      "livro": "As palavras",
+      "autor": "Sartre",
+      "valor": "25,00",
+      "categoria": "Autobiografia/Filosofia"
+    },
+    {
+      "codigo": "70",
+      "livro": "Melhores poemas",
+      "autor": "Cora coralina",
+      "valor": "60,00",
+      "categoria": "Poesia Brasileira"
+    },
+    {
+      "codigo": "71",
+      "livro": "Porta do Sol",
+      "autor": "Elias Khoury",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira/Romance Histórico"
+    },
+    {
+      "codigo": "72",
+      "livro": "Ursula",
+      "autor": "Maria Firmina dos Reis",
+      "valor": "30,00",
+      "categoria": "Literatura Brasileira/Romance Abolicionista"
+    },
+    {
+      "codigo": "73",
+      "livro": "Ponto de impacto",
+      "autor": "Dan Brown",
+      "valor": "20,00",
+      "categoria": "Suspense/Aventura"
+    },
+    {
+      "codigo": "74",
+      "livro": "Mansfield Park",
+      "autor": "Jane Austen",
+      "valor": "10,00",
+      "categoria": "Romance Clássico Estrangeiro"
+    },
+    {
+      "codigo": "75",
+      "livro": "Demian",
+      "autor": "Hermann Hesse",
+      "valor": "20,00",
+      "categoria": "Romance Filosófico Estrangeiro"
+    },
+    {
+      "codigo": "76",
+      "livro": "Belém conta",
+      "autor": "Maria do Socorro",
+      "valor": "30,00",
+      "categoria": "História Local/Belém"
+    },
+    {
+      "codigo": "77",
+      "livro": "A mulher desiludida",
+      "autor": "Simone de Beauvoir",
+      "valor": "15,00",
+      "categoria": "Literatura Estrangeira/Feminismo"
+    },
+    {
+      "codigo": "78",
+      "livro": "As belas imagens",
+      "autor": "Simone de Beauvoir",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira/Romance"
+    },
+    {
+      "codigo": "79",
+      "livro": "Profetas da modernidade",
+      "autor": "Leda Miranda",
+      "valor": "20,00",
+      "categoria": "Sociologia/Filosofia"
+    },
+    {
+      "codigo": "80",
+      "livro": "Transposições midíaticas",
+      "autor": "Helena Bonito",
+      "valor": "25,00",
+      "categoria": "Comunicação/Mídia"
+    },
+    {
+      "codigo": "81",
+      "livro": "Os pensadores",
+      "autor": "Benjamin Habermas",
+      "valor": "15,00",
+      "categoria": "Filosofia"
+    },
+    {
+      "codigo": "82",
+      "livro": "Marina",
+      "autor": "Carlos Ruiz",
+      "valor": "30,00",
+      "categoria": "Romance Estrangeiro/Mistério"
+    },
+    {
+      "codigo": "83",
+      "livro": "O tesouro da casa velha",
+      "autor": "Cora Carolina",
+      "valor": "25,00",
+      "categoria": "Poesia Brasileira"
+    },
+    {
+      "codigo": "84",
+      "livro": "Encontros com a civilização bras",
+      "autor": "Moacyr Félix",
+      "valor": "20,00",
+      "categoria": "História do Brasil/Cultura"
+    },
+    {
+      "codigo": "85",
+      "livro": "Família e conflito conjugal",
+      "autor": "Carmine Martuscello",
+      "valor": "15,00",
+      "categoria": "Psicologia/Sociologia"
+    },
+    {
+      "codigo": "86",
+      "livro": "Pride And Prejudice",
+      "autor": "Jane Austen",
+      "valor": "10,00",
+      "categoria": "Romance Clássico Estrangeiro"
+    },
+    {
+      "codigo": "87",
+      "livro": "Risíveis amores",
+      "autor": "Milan Kundera",
+      "valor": "20,00",
+      "categoria": "Contos/Literatura Estrangeira"
+    },
+    {
+      "codigo": "88",
+      "livro": "Os cadernos de Dom Rigoberto",
+      "autor": "Mario Vargas Lhosa",
+      "valor": "20,00",
+      "categoria": "Literatura Latino-Americana/Romance"
+    },
+    {
+      "codigo": "89",
+      "livro": "Funções da Pintura",
+      "autor": "Fernand Leger",
+      "valor": "25,00",
+      "categoria": "Arte/Pintura"
+    },
+    {
+      "codigo": "90",
+      "livro": "O sobrevivente",
+      "autor": "Aleksander Henryk",
+      "valor": "20,00",
+      "categoria": "Romance Histórico/Segunda Guerra"
+    },
+    {
+      "codigo": "91",
+      "livro": "Vietnã Pós-Guerra",
+      "autor": "Airton Ortiz",
+      "valor": "25,00",
+      "categoria": "História/Reportagem"
+    },
+    {
+      "codigo": "92",
+      "livro": "Como ser as duas coisas",
+      "autor": "Ali Smith",
+      "valor": "25,00",
+      "categoria": "Literatura Estrangeira Contemporânea"
+    },
+    {
+      "codigo": "93",
+      "livro": "Arquitetura dos Ossos",
+      "autor": "Age de Carvalho",
+      "valor": "15,00",
+      "categoria": "Poesia Brasileira"
+    },
+    {
+      "codigo": "94",
+      "livro": "A cartomante e outros contos",
+      "autor": "Machado de Assis",
+      "valor": "10,00",
+      "categoria": "Contos/Literatura Brasileira Clássica"
+    },
+    {
+      "codigo": "95",
+      "livro": "Doze contos peregrinos",
+      "autor": "Gabriel Garcia Marquez",
+      "valor": "30,00",
+      "categoria": "Contos/Literatura Latino-Americana"
+    },
+    {
+      "codigo": "96",
+      "livro": "Led Zeppelin",
+      "autor": "Mick Wall",
+      "valor": "40,00",
+      "categoria": "Música/Biografia"
+    },
+    {
+      "codigo": "97",
+      "livro": "Cem sonetos de amor",
+      "autor": "Pablo Neruda",
+      "valor": "20,00",
+      "categoria": "Poesia Latino-Americana"
+    },
+    {
+      "codigo": "98",
+      "livro": "A Era do Resentimento",
+      "autor": "Pondé",
+      "valor": "25,00",
+      "categoria": "Filosofia/Ensaios"
+    },
+    {
+      "codigo": "99",
+      "livro": "O jovem Torless",
+      "autor": "Robert Musil",
+      "valor": "30,00",
+      "categoria": "Literatura Estrangeira/Romance"
+    },
+    {
+      "codigo": "100",
+      "livro": "Desnudando Valentina",
+      "autor": "Lucchetti Marco Aurélio",
+      "valor": "100,00",
+      "categoria": "Quadrinhos/Erótico"
+    },
+    {
+      "codigo": "101",
+      "livro": "Naquele dia",
+      "autor": "Dennis Lehane",
+      "valor": "30,00",
+      "categoria": "Romance Policial/Suspense"
+    },
+    {
+      "codigo": "102",
+      "livro": "O Espaço Crítico",
+      "autor": "Paul Virilio",
+      "valor": "25,00",
+      "categoria": "Filosofia/Urbanismo"
+    },
+    {
+      "codigo": "103",
+      "livro": "Os miseráveis",
+      "autor": "Victor Hugo",
+      "valor": "25,00",
+      "categoria": "Literatura Clássica Estrangeira"
+    },
+    {
+      "codigo": "104",
+      "livro": "O mapa fantasma",
+      "autor": "Steven Johnson",
+      "valor": "20,00",
+      "categoria": "História da Ciência/Não-Ficção"
+    },
+    {
+      "codigo": "105",
+      "livro": "O Pintassilgo",
+      "autor": "Donna Tartt",
+      "valor": "40,00",
+      "categoria": "Literatura Estrangeira Contemporânea"
+    },
+    {
+      "codigo": "106",
+      "livro": "Seis estudos de Psicologia",
+      "autor": "Piaget",
+      "valor": "50,00",
+      "categoria": "Psicologia/Educação"
+    },
+    {
+      "codigo": "107",
+      "livro": "Alegorias urbanas",
+      "autor": "Susana Gastal",
+      "valor": "25,00",
+      "categoria": "Urbanismo/Arte"
+    },
+    {
+      "codigo": "108",
+      "livro": "O fundamentalista relutante",
+      "autor": "Mohsin Hamid",
+      "valor": "30,00",
+      "categoria": "Literatura Estrangeira/Romance"
+    },
+    {
+      "codigo": "109",
+      "livro": "Slash",
+      "autor": "Anthony Bozza",
+      "valor": "40,00",
+      "categoria": "Música/Autobiografia"
+    },
+    {
+      "codigo": "110",
+      "livro": "Maquiavel, a política e o estado",
+      "autor": "Antonio Gramsci",
+      "valor": "30,00",
+      "categoria": "Filosofia Política"
+    },
+    {
+      "codigo": "111",
+      "livro": "A origem da família, da propried",
+      "autor": "Friedrich Engels",
+      "valor": "30,00",
+      "categoria": "Ciências Sociais/Política"
+    },
+    {
+      "codigo": "112",
+      "livro": "Urbanização e ambiente",
+      "autor": "Luiz de Jesus",
+      "valor": "30,00",
+      "categoria": "Urbanismo/Geografia"
+    },
+    {
+      "codigo": "113",
+      "livro": "Educação, saber, produção em",
+      "autor": "Maria Alice Nogueira",
+      "valor": "35,00",
+      "categoria": "Educação/Sociologia"
+    },
+    {
+      "codigo": "114",
+      "livro": "O processo civilizatório",
+      "autor": "Darcy Ribeiro",
+      "valor": "40,00",
+      "categoria": "Antropologia/Sociologia"
+    },
+    {
+      "codigo": "115",
+      "livro": "A história nas ruas de Belém",
+      "autor": "José Valente",
+      "valor": "40,00",
+      "categoria": "História Local/Belém"
+    },
+    {
+      "codigo": "116",
+      "livro": "A busca pela imortalidade",
+      "autor": "John Gray",
+      "valor": "20,00",
+      "categoria": "Filosofia"
+    },
+    {
+      "codigo": "117",
+      "livro": "A arte do romance",
+      "autor": "Milan Kundera",
+      "valor": "25,00",
+      "categoria": "Teoria Literária/Ensaios"
+    },
+    {
+      "codigo": "118",
+      "livro": "As flores do mal",
+      "autor": "Charles de Baudelaire",
+      "valor": "40,00",
+      "categoria": "Poesia Estrangeira Clássica"
+    },
+    {
+      "codigo": "119",
+      "livro": "A cidade ilhada",
+      "autor": "Milton Hatoum",
+      "valor": "30,00",
+      "categoria": "Literatura Brasileira Contemporânea"
+    },
+    {
+      "codigo": "120",
+      "livro": "O homem visivel",
+      "autor": "Chuck Klosterman",
+      "valor": "20,00",
+      "categoria": "Ensaios/Cultura Pop"
+    },
+    {
+      "codigo": "121",
+      "livro": "Triste fim de policarpo Quaresm",
+      "autor": "Lima Barreto",
+      "valor": "10,00",
+      "categoria": "Literatura Brasileira Clássica"
+    },
+    {
+      "codigo": "122",
+      "livro": "O banquete",
+      "autor": "Platão",
+      "valor": "25,00",
+      "categoria": "Filosofia Clássica"
+    },
+    {
+      "codigo": "123",
+      "livro": "Histórias de cronópios e de fam",
+      "autor": "Julio Cortázar",
+      "valor": "20,00",
+      "categoria": "Contos/Literatura Latino-Americana"
+    },
+    {
+      "codigo": "124",
+      "livro": "Sem plumas",
+      "autor": "Woody Allen",
+      "valor": "20,00",
+      "categoria": "Humor/Contos"
+    },
+    {
+      "codigo": "125",
+      "livro": "Sobre a liberdade",
+      "autor": "Mill",
+      "valor": "40,00",
+      "categoria": "Filosofia Política"
+    },
+    {
+      "codigo": "126",
+      "livro": "A menina que roubava livros",
+      "autor": "Markus Zusak",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Romance Histórico"
+    },
+    {
+      "codigo": "127",
+      "livro": "Um certo capitão Rodrigo",
+      "autor": "Erico Verissimo",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira/Romance Histórico"
+    },
+    {
+      "codigo": "128",
+      "livro": "Ponto de fuga",
+      "autor": "Jorge Coli",
+      "valor": "40,00",
+      "categoria": "Arte/História da Arte"
+    },
+    {
+      "codigo": "129",
+      "livro": "Golpes de misericordia",
+      "autor": "Marguerite Yourcenar",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira/Romance"
+    },
+    {
+      "codigo": "130",
+      "livro": "Ferreira Gullar",
+      "autor": "Alfredo Bosi",
+      "valor": "20,00",
+      "categoria": "Crítica Literária/Poesia Brasileira"
+    },
+    {
+      "codigo": "131",
+      "livro": "Balanço final",
+      "autor": "Simone de Beauvoir",
+      "valor": "30,00",
+      "categoria": "Autobiografia/Filosofia"
+    },
+    {
+      "codigo": "132",
+      "livro": "O leitor",
+      "autor": "Bernhard Schlink",
+      "valor": "25,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "133",
+      "livro": "Breviarium - para refletir com P",
+      "autor": "Amarilis Tupiassú",
+      "valor": "20,00",
+      "categoria": "Ensaios/Reflexões"
+    },
+    {
+      "codigo": "134",
+      "livro": "Educação como prática de liber",
+      "autor": "Paulo Freire",
+      "valor": "30,00",
+      "categoria": "Educação/Pedagogia"
+    },
+    {
+      "codigo": "135",
+      "livro": "O que o sol faz com as flores",
+      "autor": "Rupi Kaur",
+      "valor": "20,00",
+      "categoria": "Poesia Contemporânea"
+    },
+    {
+      "codigo": "136",
+      "livro": "As mulheres do deserto",
+      "autor": "Alice Hoffman",
+      "valor": "25,00",
+      "categoria": "Romance Estrangeiro/Realismo Mágico"
+    },
+    {
+      "codigo": "137",
+      "livro": "As filhas do capitão",
+      "autor": "Maria Duenas",
+      "valor": "25,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "138",
+      "livro": "Flor da Pele",
+      "autor": "Javier Moro",
+      "valor": "25,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "139",
+      "livro": "Sapos e Estrelas",
+      "autor": "Machado Coelho",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira"
+    },
+    {
+      "codigo": "140",
+      "livro": "A firma",
+      "autor": "John Grisham",
+      "valor": "25,00",
+      "categoria": "Suspense Jurídico"
+    },
+    {
+      "codigo": "141",
+      "livro": "Blues",
+      "autor": "R. Crumb",
+      "valor": "50,00",
+      "categoria": "Quadrinhos/Música"
+    },
+    {
+      "codigo": "142",
+      "livro": "Memórias Postumas de Bras Cu",
+      "autor": "Machado de Assis",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira Clássica"
+    },
+    {
+      "codigo": "143",
+      "livro": "As sombras de Longbourn",
+      "autor": "Jo Baker",
+      "valor": "30,00",
+      "categoria": "Romance Histórico Estrangeiro/Releitura"
+    },
+    {
+      "codigo": "144",
+      "livro": "Memórias de uma moça mal co",
+      "autor": "Bianca Lamblin",
+      "valor": "20,00",
+      "categoria": "Autobiografia"
+    },
+    {
+      "codigo": "145",
+      "livro": "O legado",
+      "autor": "Katherine Webb",
+      "valor": "20,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "146",
+      "livro": "Um rapaz adequado",
+      "autor": "Vikram Seth",
+      "valor": "20,00",
+      "categoria": "Literatura Indiana/Romance"
+    },
+    {
+      "codigo": "147",
+      "livro": "Esta terra dourada",
+      "autor": "Barbara Wood",
+      "valor": "20,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "148",
+      "livro": "A herança de Ana Bolena",
+      "autor": "Philippa Gregory",
+      "valor": "30,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "149",
+      "livro": "O historiador",
+      "autor": "Elizabeth Kostova",
+      "valor": "25,00",
+      "categoria": "Romance Histórico/Suspense"
+    },
+    {
+      "codigo": "150",
+      "livro": "O palhaço e sua filha",
+      "autor": "Halide Edip Adivar",
+      "valor": "15,00",
+      "categoria": "Literatura Turca/Romance"
+    },
+    {
+      "codigo": "151",
+      "livro": "O diario de Suzana para Nicolas",
+      "autor": "James Patterson",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "152",
+      "livro": "Cartas lacradas",
+      "autor": "Dora Openheim",
+      "valor": "20,00",
+      "categoria": "Romance Epistolar"
+    },
+    {
+      "codigo": "153",
+      "livro": "O comite da morte",
+      "autor": "Noah Gordon",
+      "valor": "20,00",
+      "categoria": "Romance Histórico/Medicina"
+    },
+    {
+      "codigo": "154",
+      "livro": "A luz através da janela",
+      "autor": "Lucinda Riley",
+      "valor": "30,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "155",
+      "livro": "O advogado do diabo",
+      "autor": "Morris West",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro/Drama"
+    },
+    {
+      "codigo": "156",
+      "livro": "Rangers. Ordem dos Arqueiros.",
+      "autor": "John Flanagan",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Fantasia"
+    },
+    {
+      "codigo": "157",
+      "livro": "Racionalismo",
+      "autor": "Charlie Huenemann",
+      "valor": "40,00",
+      "categoria": "Filosofia"
+    },
+    {
+      "codigo": "158",
+      "livro": "Ideologia e currículo",
+      "autor": "Michael W. Apple",
+      "valor": "30,00",
+      "categoria": "Educação/Sociologia"
+    },
+    {
+      "codigo": "159",
+      "livro": "Depois do funeral",
+      "autor": "Agatha Christie",
+      "valor": "15,00",
+      "categoria": "Romance Policial"
+    },
+    {
+      "codigo": "160",
+      "livro": "A produção social do espaço ur",
+      "autor": "Mark Gottdiener",
+      "valor": "20,00",
+      "categoria": "Urbanismo/Sociologia"
+    },
+    {
+      "codigo": "161",
+      "livro": "Para compreender a ciência - u",
+      "autor": "Maria Amália",
+      "valor": "25,00",
+      "categoria": "Divulgação Científica"
+    },
+    {
+      "codigo": "162",
+      "livro": "Por um conhecimento sincero n",
+      "autor": "Deborah Christina Antunes",
+      "valor": "30,00",
+      "categoria": "Educação/Filosofia"
+    },
+    {
+      "codigo": "163",
+      "livro": "Mar de gente",
+      "autor": "Alex Viégas",
+      "valor": "20,00",
+      "categoria": "Fotografia/Documental"
+    },
+    {
+      "codigo": "164",
+      "livro": "Porra moleque!",
+      "autor": "Agenor Sarraf Pacheco",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira/Crônicas"
+    },
+    {
+      "codigo": "165",
+      "livro": "Imagens que passais pela retina",
+      "autor": "Amarílis Tupiassú",
+      "valor": "23,00",
+      "categoria": "Poesia Brasileira"
+    },
+    {
+      "codigo": "166",
+      "livro": "Eugenia Grandet",
+      "autor": "Balzac",
+      "valor": "20,00",
+      "categoria": "Literatura Clássica Estrangeira"
+    },
+    {
+      "codigo": "167",
+      "livro": "Antes, o verão",
+      "autor": "Carlos Heitor Cony",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira/Romance"
+    },
+    {
+      "codigo": "168",
+      "livro": "Mulheres que mudaram o mun",
+      "autor": "Gabriel Chalita",
+      "valor": "15,00",
+      "categoria": "Biografia/História"
+    },
+    {
+      "codigo": "169",
+      "livro": "Adolescência, a vigília dos olhos",
+      "autor": "Leandro Tocantins",
+      "valor": "20,00",
+      "categoria": "Psicologia/Desenvolvimento Pessoal"
+    },
+    {
+      "codigo": "170",
+      "livro": "Antropologia e ética - O debate",
+      "autor": "Ceres Victora",
+      "valor": "30,00",
+      "categoria": "Antropologia/Ética"
+    },
+    {
+      "codigo": "171",
+      "livro": "(in) confidente",
+      "autor": "Wilton Moreira",
+      "valor": "25,00",
+      "categoria": "Literatura Brasileira"
+    },
+    {
+      "codigo": "172",
+      "livro": "Velas em Tapera",
+      "autor": "Carlos Correia Santos",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira/Regional"
+    },
+    {
+      "codigo": "173",
+      "livro": "Underground Railroad - Os cam",
+      "autor": "Colson Whitehead",
+      "valor": "35,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "174",
+      "livro": "Inovação na filosofia",
+      "autor": "Stein Ernildo",
+      "valor": "25,00",
+      "categoria": "Filosofia"
+    },
+    {
+      "codigo": "175",
+      "livro": "João Cabral de Melo Neto",
+      "autor": "Antonio Carlos Sechin",
+      "valor": "30,00",
+      "categoria": "Crítica Literária/Poesia Brasileira"
+    },
+    {
+      "codigo": "176",
+      "livro": "O conde e o passarinho",
+      "autor": "Rubem Braga",
+      "valor": "15,00",
+      "categoria": "Crônicas/Literatura Brasileira"
+    },
+    {
+      "codigo": "177",
+      "livro": "Buen camino - relatos de viage",
+      "autor": "Josette Lassance",
+      "valor": "25,00",
+      "categoria": "Relatos de Viagem"
+    },
+    {
+      "codigo": "178",
+      "livro": "Técnica e existência ensaios fil",
+      "autor": "Antonio Glaudenir Brasil",
+      "valor": "25,00",
+      "categoria": "Filosofia/Ensaios"
+    },
+    {
+      "codigo": "179",
+      "livro": "Guardei no armário",
+      "autor": "Samuel Gomes",
+      "valor": "25,00",
+      "categoria": "LGBTQIA+/Relatos Pessoais"
+    },
+    {
+      "codigo": "180",
+      "livro": "Não foi nada",
+      "autor": "Antonio Skármeta",
+      "valor": "15,00",
+      "categoria": "Literatura Latino-Americana"
+    },
+    {
+      "codigo": "181",
+      "livro": "Democracia tropical",
+      "autor": "Fernando Gabeira",
+      "valor": "20,00",
+      "categoria": "Política Brasileira/Ensaios"
+    },
+    {
+      "codigo": "182",
+      "livro": "Estas poucas palavras",
+      "autor": "Acyr Castro",
+      "valor": "20,00",
+      "categoria": "Poesia Brasileira"
+    },
+    {
+      "codigo": "183",
+      "livro": "Um pianista falando de música",
+      "autor": "Oriano de Almeida",
+      "valor": "15,00",
+      "categoria": "Música/Ensaios"
+    },
+    {
+      "codigo": "184",
+      "livro": "Ilusões perdidas",
+      "autor": "Honoré de Balzac",
+      "valor": "20,00",
+      "categoria": "Literatura Clássica Estrangeira"
+    },
+    {
+      "codigo": "185",
+      "livro": "Teoria do agir comunicativos",
+      "autor": "Jurgen Harbermas",
+      "valor": "25,00",
+      "categoria": "Filosofia/Sociologia"
+    },
+    {
+      "codigo": "186",
+      "livro": "Estudos sobre formação de prof",
+      "autor": "Maria Josefa de Souza",
+      "valor": "20,00",
+      "categoria": "Educação"
+    },
+    {
+      "codigo": "187",
+      "livro": "Estatística básica",
+      "autor": "Geraldo Luciano Toledo",
+      "valor": "25,00",
+      "categoria": "Acadêmico/Estatística"
+    },
+    {
+      "codigo": "188",
+      "livro": "Formação de professores",
+      "autor": "Corrêa Gonçalves",
+      "valor": "15,00",
+      "categoria": "Educação"
+    },
+    {
+      "codigo": "189",
+      "livro": "Direto de Washington",
+      "autor": "W.Ollvetto",
+      "valor": "20,00",
+      "categoria": "Comunicação/Publicidade"
+    },
+    {
+      "codigo": "190",
+      "livro": "Problema de aprendizagem na a",
+      "autor": "Maria Irene Miranda",
+      "valor": "30,00",
+      "categoria": "Educação/Psicopedagogia"
+    },
+    {
+      "codigo": "191",
+      "livro": "A verdade é teimosa",
+      "autor": "Míriam Leitão",
+      "valor": "20,00",
+      "categoria": "Jornalismo/Política Brasileira"
+    },
+    {
+      "codigo": "192",
+      "livro": "Educação na fronteira da moder",
+      "autor": "Sidney da Silva Lobato",
+      "valor": "40,00",
+      "categoria": "Educação/Sociologia"
+    },
+    {
+      "codigo": "193",
+      "livro": "Modo de produção mundial e p",
+      "autor": "Alex Fiúza de Melo",
+      "valor": "40,00",
+      "categoria": "Economia/Globalização"
+    },
+    {
+      "codigo": "194",
+      "livro": "A produção do conhecimento e",
+      "autor": "Joelma Cristina Parente Mont",
+      "valor": "40,00",
+      "categoria": "Acadêmico/Metodologia Científica"
+    },
+    {
+      "codigo": "195",
+      "livro": "O olho da rua",
+      "autor": "Eliane Brum",
+      "valor": "25,00",
+      "categoria": "Crônicas/Jornalismo"
+    },
+    {
+      "codigo": "196",
+      "livro": "Melhores contos",
+      "autor": "Rachel de Queiroz",
+      "valor": "20,00",
+      "categoria": "Contos/Literatura Brasileira"
+    },
+    {
+      "codigo": "197",
+      "livro": "Interculturalidade e saberes - o",
+      "autor": "Fernando Alves da Silva Júnior",
+      "valor": "15,00",
+      "categoria": "Educação/Antropologia"
+    },
+    {
+      "codigo": "198",
+      "livro": "O garoto no convés",
+      "autor": "John Boyne",
+      "valor": "25,00",
+      "categoria": "Literatura Infantojuvenil"
+    },
+    {
+      "codigo": "199",
+      "livro": "A luta corporal",
+      "autor": "Ferreira Gullar",
+      "valor": "15,00",
+      "categoria": "Poesia Brasileira"
+    },
+    {
+      "codigo": "200",
+      "livro": "Inclusão em educação - culturas",
+      "autor": "Mônica Pereira dos Santos",
+      "valor": "35,00",
+      "categoria": "Educação Inclusiva"
+    },
+    {
+      "codigo": "201",
+      "livro": "Ensino de história - XII encontro",
+      "autor": "Edilson Brito",
+      "valor": "25,00",
+      "categoria": "Educação/História"
+    },
+    {
+      "codigo": "202",
+      "livro": "As luzes de setembro",
+      "autor": "Carlos Ruiz Zafón",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro/Mistério"
+    },
+    {
+      "codigo": "203",
+      "livro": "Confiança",
+      "autor": "Hernan Diaz",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira Contemporânea"
+    },
+    {
+      "codigo": "204",
+      "livro": "Democracia participativa e educ",
+      "autor": "Valdelaine Mendes",
+      "valor": "35,00",
+      "categoria": "Educação/Política"
+    },
+    {
+      "codigo": "205",
+      "livro": "O tacão de ferro",
+      "autor": "Jack London",
+      "valor": "30,00",
+      "categoria": "Literatura Estrangeira/Distopia"
+    },
+    {
+      "codigo": "206",
+      "livro": "História da educação",
+      "autor": "Claudino Piletti",
+      "valor": "30,00",
+      "categoria": "Educação/História"
+    },
+    {
+      "codigo": "207",
+      "livro": "Crepúsculo dos ídolos",
+      "autor": "F. Nietzsche",
+      "valor": "20,00",
+      "categoria": "Filosofia"
+    },
+    {
+      "codigo": "208",
+      "livro": "Guerra fria",
+      "autor": "Robert J. McMahon",
+      "valor": "15,00",
+      "categoria": "História Contemporânea"
+    },
+    {
+      "codigo": "209",
+      "livro": "Primeira guerra mundial",
+      "autor": "Michael Howard",
+      "valor": "15,00",
+      "categoria": "História Contemporânea"
+    },
+    {
+      "codigo": "210",
+      "livro": "10 lições sobre Max Weber",
+      "autor": "Luciano Albino",
+      "valor": "20,00",
+      "categoria": "Sociologia"
+    },
+    {
+      "codigo": "211",
+      "livro": "Os lusíadas",
+      "autor": "Luís de Camões antologia",
+      "valor": "20,00",
+      "categoria": "Poesia Clássica Portuguesa"
+    },
+    {
+      "codigo": "212",
+      "livro": "Empirismo",
+      "autor": "Robert G. Meyers",
+      "valor": "40,00",
+      "categoria": "Filosofia"
+    },
+    {
+      "codigo": "213",
+      "livro": "Uncharted - The Fourth Labyrin",
+      "autor": "Christopher Golden",
+      "valor": "20,00",
+      "categoria": "Aventura/Games"
+    },
+    {
+      "codigo": "214",
+      "livro": "O Conde de Monte Cristo",
+      "autor": "Alexandre Dumas",
+      "valor": "15,00",
+      "categoria": "Literatura Clássica Estrangeira/Aventura"
+    },
+    {
+      "codigo": "215",
+      "livro": "Ai de ti, Copacabana",
+      "autor": "Rubem Braga",
+      "valor": "20,00",
+      "categoria": "Crônicas/Literatura Brasileira"
+    },
+    {
+      "codigo": "216",
+      "livro": "A produção do conhecimento e",
+      "autor": "Joelma Cristina Parente Mont",
+      "valor": "40,00",
+      "categoria": "Acadêmico/Metodologia Científica"
+    },
+    {
+      "codigo": "217",
+      "livro": "Cai o pano",
+      "autor": "Agatha Christie",
+      "valor": "20,00",
+      "categoria": "Romance Policial"
+    },
+    {
+      "codigo": "218",
+      "livro": "Rio sem lei",
+      "autor": "Hudson Corrêa",
+      "valor": "10,00",
+      "categoria": "Reportagem/Segurança Pública"
+    },
+    {
+      "codigo": "219",
+      "livro": "Almirante Canaris - misterioso",
+      "autor": "Richard Bassett",
+      "valor": "10,00",
+      "categoria": "Biografia/História Militar"
+    },
+    {
+      "codigo": "220",
+      "livro": "Agente Zigzag",
+      "autor": "Ben Macintyre",
+      "valor": "10,00",
+      "categoria": "Espionagem/História"
+    },
+    {
+      "codigo": "221",
+      "livro": "Blowback - os custos e as conse",
+      "autor": "Chalmers Johnson",
+      "valor": "15,00",
+      "categoria": "Política Internacional/História"
+    },
+    {
+      "codigo": "222",
+      "livro": "Corrupção à americana",
+      "autor": "Amy Goodman e David Good",
+      "valor": "10,00",
+      "categoria": "Política/Jornalismo Investigativo"
+    },
+    {
+      "codigo": "223",
+      "livro": "Jesuítas portugueses e espanhói",
+      "autor": "Beatriz Vasconcelos Franzen",
+      "valor": "20,00",
+      "categoria": "História Religiosa"
+    },
+    {
+      "codigo": "224",
+      "livro": "David Copperfield",
+      "autor": "Charles Dickens",
+      "valor": "20,00",
+      "categoria": "Literatura Clássica Estrangeira"
+    },
+    {
+      "codigo": "225",
+      "livro": "Gestão escolar e docência",
+      "autor": "Casemiro de Medeiros",
+      "valor": "15,00",
+      "categoria": "Educação/Gestão Escolar"
+    },
+    {
+      "codigo": "226",
+      "livro": "Menina que vem de Itaiara",
+      "autor": "Lindanor Celina",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira"
+    },
+    {
+      "codigo": "227",
+      "livro": "O Natal de Poirot",
+      "autor": "Agatha Christie",
+      "valor": "20,00",
+      "categoria": "Romance Policial"
+    },
+    {
+      "codigo": "228",
+      "livro": "Explicando Tolkien",
+      "autor": "Ronald Kyrmse",
+      "valor": "25,00",
+      "categoria": "Literatura Fantástica/Crítica"
+    },
+    {
+      "codigo": "229",
+      "livro": "As palavras secretas",
+      "autor": "Rubens Figueiredo",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira Contemporânea"
+    },
+    {
+      "codigo": "230",
+      "livro": "A guerra que me ensinou a viver",
+      "autor": "Kimberly Bradley",
+      "valor": "30,00",
+      "categoria": "Literatura Infantojuvenil/Romance Histórico"
+    },
+    {
+      "codigo": "231",
+      "livro": "Estratégias de leitura",
+      "autor": "Isabel Sodré",
+      "valor": "20,00",
+      "categoria": "Educação/Linguística"
+    },
+    {
+      "codigo": "232",
+      "livro": "Fernand Braudel - Tempo e Hist",
+      "autor": "Marcos Antonio Lopes",
+      "valor": "20,00",
+      "categoria": "Historiografia/Biografia"
+    },
+    {
+      "codigo": "233",
+      "livro": "Memória e identidade",
+      "autor": "Joel Candau",
+      "valor": "25,00",
+      "categoria": "Sociologia/Antropologia"
+    },
+    {
+      "codigo": "234",
+      "livro": "Geomorfologia - Aplicação e",
+      "autor": "João Nunes",
+      "valor": "20,00",
+      "categoria": "Geografia/Geomorfologia"
+    },
+    {
+      "codigo": "235",
+      "livro": "Discurso, Alteridade e Gênero",
+      "autor": "Edgar Cezar e Vânia Guerra",
+      "valor": "25,00",
+      "categoria": "Estudos de Gênero/Linguística"
+    },
+    {
+      "codigo": "236",
+      "livro": "A Guerra se torna mundial",
+      "autor": "As grandes guerras mundiais",
+      "valor": "10,00",
+      "categoria": "História Militar"
+    },
+    {
+      "codigo": "237",
+      "livro": "Sniper de elite",
+      "autor": "Scott Mcewen",
+      "valor": "10,00",
+      "categoria": "Ação/Militar"
+    },
+    {
+      "codigo": "238",
+      "livro": "Baía da esperança",
+      "autor": "Jojo Moyes",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "239",
+      "livro": "Depois de você",
+      "autor": "Jojo Moyes",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "240",
+      "livro": "Eu, prisioneira das Farc",
+      "autor": "Clara Rojas",
+      "valor": "10,00",
+      "categoria": "Relato/Não-Ficção"
+    },
+    {
+      "codigo": "241",
+      "livro": "Branca de neve e o caçador",
+      "autor": "Lily Blake",
+      "valor": "10,00",
+      "categoria": "Fantasia/Conto de Fadas"
+    },
+    {
+      "codigo": "242",
+      "livro": "Fernando Henrique Cardoso - O",
+      "autor": "Brigitte Leoni",
+      "valor": "15,00",
+      "categoria": "Biografia/Política Brasileira"
+    },
+    {
+      "codigo": "243",
+      "livro": "As sandálias do pescador",
+      "autor": "Morris West",
+      "valor": "10,00",
+      "categoria": "Romance Estrangeiro/Religião"
+    },
+    {
+      "codigo": "244",
+      "livro": "Rui Barbosa",
+      "autor": "Maria Cristina Machado",
+      "valor": "10,00",
+      "categoria": "Biografia/História do Brasil"
+    },
+    {
+      "codigo": "245",
+      "livro": "Perdas e ganhos",
+      "autor": "Lya Luft",
+      "valor": "15,00",
+      "categoria": "Crônicas/Literatura Brasileira"
+    },
+    {
+      "codigo": "246",
+      "livro": "O mundo de vidro",
+      "autor": "Maurício Porto",
+      "valor": "10,00",
+      "categoria": "Literatura Brasileira"
+    },
+    {
+      "codigo": "247",
+      "livro": "Me diga quem eu sou",
+      "autor": "Helena Gayer",
+      "valor": "10,00",
+      "categoria": "Romance Brasileiro"
+    },
+    {
+      "codigo": "248",
+      "livro": "O menino do Portinari",
+      "autor": "Caio Riter",
+      "valor": "10,00",
+      "categoria": "Literatura Infantojuvenil Brasileira"
+    },
+    {
+      "codigo": "249",
+      "livro": "1789 As histórias de Tiradentes",
+      "autor": "Pedro Doria",
+      "valor": "20,00",
+      "categoria": "História do Brasil/Não-Ficção"
+    },
+    {
+      "codigo": "250",
+      "livro": "Esferas públicas do Brasil",
+      "autor": "Fernando Perlatto",
+      "valor": "10,00",
+      "categoria": "Ciências Sociais/Política"
+    },
+    {
+      "codigo": "251",
+      "livro": "O Teorema Katherine",
+      "autor": "John Green",
+      "valor": "10,00",
+      "categoria": "Literatura Jovem Adulto"
+    },
+    {
+      "codigo": "252",
+      "livro": "Os pensadores - Husserl",
+      "autor": "Husserl",
+      "valor": "15,00",
+      "categoria": "Filosofia"
+    },
+    {
+      "codigo": "253",
+      "livro": "Max Weber e a racionalização d",
+      "autor": "Carlos Eduardo Sell",
+      "valor": "30,00",
+      "categoria": "Sociologia"
+    },
+    {
+      "codigo": "254",
+      "livro": "Antropologia filosófica contemp",
+      "autor": "Manfredo Araújo de Oliveira",
+      "valor": "20,00",
+      "categoria": "Filosofia/Antropologia"
+    },
+    {
+      "codigo": "255",
+      "livro": "O enigma de Freud",
+      "autor": "Estelle Roith",
+      "valor": "20,00",
+      "categoria": "Psicanálise/Biografia"
+    },
+    {
+      "codigo": "256",
+      "livro": "A ascensão dos nove",
+      "autor": "Pittacus Lore",
+      "valor": "15,00",
+      "categoria": "Literatura Jovem Adulto/Ficção Científica"
+    },
+    {
+      "codigo": "257",
+      "livro": "Ao coração da tempestade",
+      "autor": "Will Eisner",
+      "valor": "35,00",
+      "categoria": "Quadrinhos/Graphic Novel"
+    },
+    {
+      "codigo": "258",
+      "livro": "O trauma na pandemia do coro",
+      "autor": "Joel Birman",
+      "valor": "20,00",
+      "categoria": "Psicanálise/Atualidades"
+    },
+    {
+      "codigo": "259",
+      "livro": "Raízes do Romantismo",
+      "autor": "Francisco Paulo Mendes",
+      "valor": "15,00",
+      "categoria": "Teoria Literária/História da Literatura"
+    },
+    {
+      "codigo": "260",
+      "livro": "Soldados da borracha",
+      "autor": "Gary Neeleman",
+      "valor": "50,00",
+      "categoria": "História do Brasil/Amazônia"
+    },
+    {
+      "codigo": "261",
+      "livro": "A estrada lincoln",
+      "autor": "Amor Towles",
+      "valor": "25,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "262",
+      "livro": "Olympe de Gouges",
+      "autor": "Catel Müller",
+      "valor": "30,00",
+      "categoria": "Quadrinhos/Biografia Histórica"
+    },
+    {
+      "codigo": "263",
+      "livro": "E foram todos para Paris",
+      "autor": "Sérgio Augusto",
+      "valor": "10,00",
+      "categoria": "Cultura/História"
+    },
+    {
+      "codigo": "264",
+      "livro": "Drummond: Uma poética do ris",
+      "autor": "Lumma Maria Simon",
+      "valor": "20,00",
+      "categoria": "Crítica Literária/Poesia Brasileira"
+    },
+    {
+      "codigo": "265",
+      "livro": "Mídia, esfera pública e identida",
+      "autor": "Rousiley Maia",
+      "valor": "20,00",
+      "categoria": "Comunicação/Sociologia"
+    },
+    {
+      "codigo": "266",
+      "livro": "Compreender Husserl",
+      "autor": "Natalie Depraz",
+      "valor": "10,00",
+      "categoria": "Filosofia"
+    },
+    {
+      "codigo": "267",
+      "livro": "Justificação é crítica - perspecti",
+      "autor": "Rainer Forst",
+      "valor": "30,00",
+      "categoria": "Filosofia Política"
+    },
+    {
+      "codigo": "268",
+      "livro": "Perplexidades - raça, sexo e out",
+      "autor": "Dário Borim Jr.",
+      "valor": "25,00",
+      "categoria": "Estudos Culturais/Sociologia"
+    },
+    {
+      "codigo": "269",
+      "livro": "Anomia - Clínica psicanalítica",
+      "autor": "Marilucia Melo Meireles",
+      "valor": "20,00",
+      "categoria": "Psicanálise"
+    },
+    {
+      "codigo": "270",
+      "livro": "São Jorge dos Ilhéus",
+      "autor": "Jorge Amado",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira Clássica"
+    },
+    {
+      "codigo": "271",
+      "livro": "Jubiabá",
+      "autor": "Jorge Amado",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira Clássica"
+    },
+    {
+      "codigo": "272",
+      "livro": "Arte, Escola e Inclusão",
+      "autor": "Aurora Ferreira",
+      "valor": "20,00",
+      "categoria": "Educação/Arte Inclusiva"
+    },
+    {
+      "codigo": "273",
+      "livro": "Tecnificação da vida",
+      "autor": "Jurema Barros",
+      "valor": "25,00",
+      "categoria": "Sociologia/Filosofia da Tecnologia"
+    },
+    {
+      "codigo": "274",
+      "livro": "A culpa é das estrelas",
+      "autor": "John Green",
+      "valor": "10,00",
+      "categoria": "Literatura Jovem Adulto/Romance"
+    },
+    {
+      "codigo": "275",
+      "livro": "Currículo e políticas",
+      "autor": "Luiz Alberto",
+      "valor": "20,00",
+      "categoria": "Educação/Políticas Educacionais"
+    },
+    {
+      "codigo": "276",
+      "livro": "Um milhão de pequenas coisas",
+      "autor": "Jodi Picoult",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro/Drama Familiar"
+    },
+    {
+      "codigo": "277",
+      "livro": "Plano Nacional de Educação",
+      "autor": "Ana Valeska",
+      "valor": "20,00",
+      "categoria": "Educação/Legislação"
+    },
+    {
+      "codigo": "278",
+      "livro": "Livro de Marena",
+      "autor": "Vicente Salles",
+      "valor": "30,00",
+      "categoria": "Literatura Brasileira/Regional"
+    },
+    {
+      "codigo": "279",
+      "livro": "Assombrações de um padre reg",
+      "autor": "Magda Ricci",
+      "valor": "40,00",
+      "categoria": "História do Brasil/Religião"
+    },
+    {
+      "codigo": "280",
+      "livro": "The Great Gatsby",
+      "autor": "F. Scott Fitzgerald",
+      "valor": "15,00",
+      "categoria": "Literatura Clássica Estrangeira"
+    },
+    {
+      "codigo": "281",
+      "livro": "Great Expectations",
+      "autor": "Charles Dickens",
+      "valor": "20,00",
+      "categoria": "Literatura Clássica Estrangeira"
+    },
+    {
+      "codigo": "282",
+      "livro": "O tempo e o vento",
+      "autor": "Erico Verissimo",
+      "valor": "25,00",
+      "categoria": "Literatura Brasileira Clássica/Romance Histórico"
+    },
+    {
+      "codigo": "283",
+      "livro": "O capital",
+      "autor": "Karl Marx",
+      "valor": "20,00",
+      "categoria": "Economia/Filosofia Política"
+    },
+    {
+      "codigo": "284",
+      "livro": "Velhice transviada",
+      "autor": "João Nery",
+      "valor": "20,00",
+      "categoria": "LGBTQIA+/Memórias"
+    },
+    {
+      "codigo": "285",
+      "livro": "Os diários de Alice Walker",
+      "autor": "Valerie Boyd",
+      "valor": "50,00",
+      "categoria": "Biografia/Literatura Feminista Negra"
+    },
+    {
+      "codigo": "286",
+      "livro": "Will e Will",
+      "autor": "John Green",
+      "valor": "20,00",
+      "categoria": "Literatura Jovem Adulto/LGBTQIA+"
+    },
+    {
+      "codigo": "287",
+      "livro": "Procura-se um marido",
+      "autor": "Carina Rissi",
+      "valor": "15,00",
+      "categoria": "Romance Brasileiro Contemporâneo"
+    },
+    {
+      "codigo": "288",
+      "livro": "Willow",
+      "autor": "Julia Hoban",
+      "valor": "20,00",
+      "categoria": "Literatura Jovem Adulto/Drama"
+    },
+    {
+      "codigo": "289",
+      "livro": "Candomble",
+      "autor": "Babalorixa Ominare",
+      "valor": "20,00",
+      "categoria": "Religião Afro-Brasileira/Antropologia"
+    },
+    {
+      "codigo": "290",
+      "livro": "Era uma vez em Hollywood: O n",
+      "autor": "Quentin Tarantino",
+      "valor": "25,00",
+      "categoria": "Cinema/Romance"
+    },
+    {
+      "codigo": "291",
+      "livro": "Inocencia",
+      "autor": "Visconde de Taunay",
+      "valor": "10,00",
+      "categoria": "Literatura Brasileira Clássica/Romantismo"
+    },
+    {
+      "codigo": "292",
+      "livro": "A bela e a fera",
+      "autor": "Madame de Beaunont",
+      "valor": "35,00",
+      "categoria": "Contos de Fadas/Literatura Clássica"
+    },
+    {
+      "codigo": "293",
+      "livro": "Os crimes do monograma",
+      "autor": "Agatha Christie",
+      "valor": "24,00",
+      "categoria": "Romance Policial"
+    },
+    {
+      "codigo": "294",
+      "livro": "O conto da aia",
+      "autor": "Margaret Atwood",
+      "valor": "35,00",
+      "categoria": "Distopia/Ficção Feminista"
+    },
+    {
+      "codigo": "295",
+      "livro": "Emma",
+      "autor": "Jane Austen",
+      "valor": "25,00",
+      "categoria": "Romance Clássico Estrangeiro"
+    },
+    {
+      "codigo": "296",
+      "livro": "O fio da vida",
+      "autor": "Kate Atkinson",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro Contemporâneo"
+    },
+    {
+      "codigo": "297",
+      "livro": "Antes que eu vả",
+      "autor": "Lauren Oliver",
+      "valor": "20,00",
+      "categoria": "Literatura Jovem Adulto"
+    },
+    {
+      "codigo": "298",
+      "livro": "Mentes Apaixonadas",
+      "autor": "David Bodanis",
+      "valor": "20,00",
+      "categoria": "Divulgação Científica/Biografia"
+    },
+    {
+      "codigo": "299",
+      "livro": "Cidade das cinzas",
+      "autor": "Cassandra Clare",
+      "valor": "20,00",
+      "categoria": "Literatura Jovem Adulto/Fantasia Urbana"
+    },
+    {
+      "codigo": "300",
+      "livro": "Antropoceno: notas sobre a vid",
+      "autor": "John Green",
+      "valor": "20,00",
+      "categoria": "Ensaios/Não-Ficção"
+    },
+    {
+      "codigo": "301",
+      "livro": "Como eu era antes de você",
+      "autor": "Jojo Moyes",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "302",
+      "livro": "O resto é silencio",
+      "autor": "Carla Guelfenbein",
+      "valor": "15,00",
+      "categoria": "Literatura Latino-Americana/Romance"
+    },
+    {
+      "codigo": "303",
+      "livro": "O codigo da vinci",
+      "autor": "Dan Brown",
+      "valor": "20,00",
+      "categoria": "Suspense/Aventura"
+    },
+    {
+      "codigo": "304",
+      "livro": "Jean Jacques Rousseau",
+      "autor": "José Romão",
+      "valor": "15,00",
+      "categoria": "Filosofia/Biografia"
+    },
+    {
+      "codigo": "305",
+      "livro": "Pegasus - Livro 1",
+      "autor": "Kate O'Hearn",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Fantasia"
+    },
+    {
+      "codigo": "306",
+      "livro": "Pegasus - Livro 2",
+      "autor": "Kate O'Hearn",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Fantasia"
+    },
+    {
+      "codigo": "307",
+      "livro": "Pegasus - Livro 3",
+      "autor": "Kate O'Hearn",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Fantasia"
+    },
+    {
+      "codigo": "308",
+      "livro": "Pegasus - Livro 4",
+      "autor": "Kate O'Hearn",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Fantasia"
+    },
+    {
+      "codigo": "309",
+      "livro": "A cinco passos de você",
+      "autor": "RachaelnLippincott",
+      "valor": "20,00",
+      "categoria": "Literatura Jovem Adulto/Romance"
+    },
+    {
+      "codigo": "310",
+      "livro": "A balada da praia dos caes",
+      "autor": "José Cardoso",
+      "valor": "20,00",
+      "categoria": "Literatura Portuguesa/Romance"
+    },
+    {
+      "codigo": "311",
+      "livro": "Desonra",
+      "autor": "Cotzee",
+      "valor": "15,00",
+      "categoria": "Literatura Sul-Africana/Romance"
+    },
+    {
+      "codigo": "312",
+      "livro": "O enigma do quatro",
+      "autor": "lan Caldwell",
+      "valor": "20,00",
+      "categoria": "Suspense/Mistério"
+    },
+    {
+      "codigo": "313",
+      "livro": "A joia",
+      "autor": "Amy e Wing",
+      "valor": "15,00",
+      "categoria": "Literatura Jovem Adulto/Distopia"
+    },
+    {
+      "codigo": "314",
+      "livro": "Introdução ao pensamento cont",
+      "autor": "Carlos Zibel",
+      "valor": "25,00",
+      "categoria": "Filosofia Contemporânea"
+    },
+    {
+      "codigo": "315",
+      "livro": "A arte da criatividade",
+      "autor": "Rod Judkins",
+      "valor": "20,00",
+      "categoria": "Desenvolvimento Pessoal/Criatividade"
+    },
+    {
+      "codigo": "316",
+      "livro": "O pequeno principe",
+      "autor": "Antoine de Saint Exupery",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil Clássica/Filosofia"
+    },
+    {
+      "codigo": "317",
+      "livro": "Dublin Street",
+      "autor": "Samantha Young",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro Contemporâneo (New Adult)"
+    },
+    {
+      "codigo": "318",
+      "livro": "Ecos da mente",
+      "autor": "Richard Powers",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira/Ficção Científica"
+    },
+    {
+      "codigo": "319",
+      "livro": "Querido John",
+      "autor": "Nicholas Sparks",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "320",
+      "livro": "A decima nona esposa",
+      "autor": "David Ebershoff",
+      "valor": "20,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "321",
+      "livro": "A rainha dos gatos",
+      "autor": "Eduardo Mendoza",
+      "valor": "20,00",
+      "categoria": "Literatura Espanhola/Romance"
+    },
+    {
+      "codigo": "322",
+      "livro": "A Herança",
+      "autor": "John Grisham",
+      "valor": "20,00",
+      "categoria": "Suspense Jurídico"
+    },
+    {
+      "codigo": "323",
+      "livro": "Operação Miami",
+      "autor": "James Grippando",
+      "valor": "20,00",
+      "categoria": "Suspense Jurídico"
+    },
+    {
+      "codigo": "324",
+      "livro": "A seleção",
+      "autor": "Kiera Cass",
+      "valor": "25,00",
+      "categoria": "Literatura Jovem Adulto/Distopia Romântica"
+    },
+    {
+      "codigo": "325",
+      "livro": "Crime e castigo",
+      "autor": "Fiodor Dostoievski",
+      "valor": "20,00",
+      "categoria": "Literatura Russa Clássica/Romance Psicológico"
+    },
+    {
+      "codigo": "326",
+      "livro": "Helena",
+      "autor": "Machado de Assis",
+      "valor": "10,00",
+      "categoria": "Literatura Brasileira Clássica"
+    },
+    {
+      "codigo": "327",
+      "livro": "As cronicas de Narnia",
+      "autor": "C.S. Lewis",
+      "valor": "30,00",
+      "categoria": "Literatura Infantojuvenil/Fantasia Clássica"
+    },
+    {
+      "codigo": "328",
+      "livro": "A luz entre oceanos",
+      "autor": "M.L. Stedman",
+      "valor": "15,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "329",
+      "livro": "O despertar do príncipe",
+      "autor": "Colleen Houck",
+      "valor": "30,00",
+      "categoria": "Literatura Jovem Adulto/Fantasia Romântica"
+    },
+    {
+      "codigo": "330",
+      "livro": "A coroa da vingança",
+      "autor": "Colleen Houck",
+      "valor": "35,00",
+      "categoria": "Literatura Jovem Adulto/Fantasia Romântica"
+    },
+    {
+      "codigo": "331",
+      "livro": "Paixão",
+      "autor": "Tracy Wolff",
+      "valor": "20,00",
+      "categoria": "Literatura Jovem Adulto/Sobrenatural Romântico"
+    },
+    {
+      "codigo": "332",
+      "livro": "O livro das princesas",
+      "autor": "Meg Cabot",
+      "valor": "15,00",
+      "categoria": "Literatura Jovem Adulto/Contos"
+    },
+    {
+      "codigo": "333",
+      "livro": "Constituição",
+      "autor": "Senado Federal",
+      "valor": "20,00",
+      "categoria": "Direito/Legislação Brasileira"
+    },
+    {
+      "codigo": "334",
+      "livro": "In a Given",
+      "autor": "Cosac",
+      "valor": "20,00",
+      "categoria": "Arte/Design (Editora Cosac Naify)"
+    },
+    {
+      "codigo": "335",
+      "livro": "Direito Judiciario",
+      "autor": "Jean Carlos",
+      "valor": "15,00",
+      "categoria": "Direito"
+    },
+    {
+      "codigo": "336",
+      "livro": "Fevereiro",
+      "autor": "Andrey Carlan",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira Contemporânea"
+    },
+    {
+      "codigo": "337",
+      "livro": "Março",
+      "autor": "Andrey Carlan",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira Contemporânea"
+    },
+    {
+      "codigo": "338",
+      "livro": "Abril",
+      "autor": "Andrey Carlan",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira Contemporânea"
+    },
+    {
+      "codigo": "339",
+      "livro": "Maio",
+      "autor": "Andrey Carlan",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira Contemporânea"
+    },
+    {
+      "codigo": "340",
+      "livro": "The League of Extraordinary",
+      "autor": "Alan Moore",
+      "valor": "25,00",
+      "categoria": "Quadrinhos/Graphic Novel"
+    },
+    {
+      "codigo": "341",
+      "livro": "Equador",
+      "autor": "Miguel Sousa Tavares",
+      "valor": "40,00",
+      "categoria": "Literatura Portuguesa/Romance Histórico"
+    },
+    {
+      "codigo": "342",
+      "livro": "O noviço",
+      "autor": "Martins Pena",
+      "valor": "15,00",
+      "categoria": "Teatro Brasileiro Clássico"
+    },
+    {
+      "codigo": "343",
+      "livro": "Queen",
+      "autor": "Alex Haley",
+      "valor": "20,00",
+      "categoria": "Romance Histórico Afro-Americano"
+    },
+    {
+      "codigo": "344",
+      "livro": "Traição do destino",
+      "autor": "Marylu Tyndall",
+      "valor": "20,00",
+      "categoria": "Romance Histórico Cristão"
+    },
+    {
+      "codigo": "345",
+      "livro": "Meninas inseparaveis",
+      "autor": "Lori Lansens",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro/Drama"
+    },
+    {
+      "codigo": "346",
+      "livro": "O vermelho e o negro",
+      "autor": "Sthendal",
+      "valor": "15,00",
+      "categoria": "Literatura Clássica Francesa"
+    },
+    {
+      "codigo": "347",
+      "livro": "Estética num bolso de fios tecid",
+      "autor": "Ilton Ribeiro",
+      "valor": "25,00",
+      "categoria": "Filosofia/Estética"
+    },
+    {
+      "codigo": "348",
+      "livro": "Diálogos com José Saramago",
+      "autor": "Carlos Reis",
+      "valor": "25,00",
+      "categoria": "Entrevistas/Literatura Portuguesa"
+    },
+    {
+      "codigo": "349",
+      "livro": "O sonho e a técnica",
+      "autor": "Cacilda Teixeira da Costa",
+      "valor": "30,00",
+      "categoria": "Arquitetura/Urbanismo"
+    },
+    {
+      "codigo": "350",
+      "livro": "Por uma sociologia crítica",
+      "autor": "Zygmunt Bauman",
+      "valor": "20,00",
+      "categoria": "Sociologia"
+    },
+    {
+      "codigo": "351",
+      "livro": "A cidade ilhada",
+      "autor": "Milton Hatoum",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira Contemporânea"
+    },
+    {
+      "codigo": "352",
+      "livro": "O espaço da arquitetura",
+      "autor": "Evaldo Coutinho",
+      "valor": "35,00",
+      "categoria": "Arquitetura/Teoria"
+    },
+    {
+      "codigo": "353",
+      "livro": "Sombra da figueira",
+      "autor": "Vaddey Ratner",
+      "valor": "20,00",
+      "categoria": "Romance Histórico Estrangeiro (Camboja)"
+    },
+    {
+      "codigo": "354",
+      "livro": "A casa dos amores impossíveis",
+      "autor": "Cristina López Barrio",
+      "valor": "30,00",
+      "categoria": "Romance Estrangeiro/Realismo Mágico"
+    },
+    {
+      "codigo": "355",
+      "livro": "Um homem célebre",
+      "autor": "Machado Recriado",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira/Releitura"
+    },
+    {
+      "codigo": "356",
+      "livro": "Economia política do imaterial",
+      "autor": "Marco Aurélio Arbage",
+      "valor": "25,00",
+      "categoria": "Economia/Sociologia"
+    },
+    {
+      "codigo": "357",
+      "livro": "O castelo de papel",
+      "autor": "Mary del Priore",
+      "valor": "25,00",
+      "categoria": "História do Brasil/Biografia"
+    },
+    {
+      "codigo": "358",
+      "livro": "Cartas de amor",
+      "autor": "Fernando Pessoa",
+      "valor": "15,00",
+      "categoria": "Poesia Portuguesa/Epistolar"
+    },
+    {
+      "codigo": "359",
+      "livro": "Os caminhos da lembrança",
+      "autor": "Robert James",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "360",
+      "livro": "Cruzando o caminho do sol",
+      "autor": "Corban Addison",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro/Drama Social"
+    },
+    {
+      "codigo": "361",
+      "livro": "O arroz de Palma",
+      "autor": "Francisco Azevedo",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira Contemporânea"
+    },
+    {
+      "codigo": "362",
+      "livro": "A resposta",
+      "autor": "Kathryn Stockett",
+      "valor": "15,00",
+      "categoria": "Romance Histórico Estrangeiro (Direitos Civis)"
+    },
+    {
+      "codigo": "363",
+      "livro": "Elizabeth I",
+      "autor": "Margaret George",
+      "valor": "20,00",
+      "categoria": "Romance Histórico Estrangeiro/Biografia"
+    },
+    {
+      "codigo": "364",
+      "livro": "O momento",
+      "autor": "Douglas Kennedy",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro Contemporâneo"
+    },
+    {
+      "codigo": "365",
+      "livro": "Circulo Intimo",
+      "autor": "T. C. Boyle",
+      "valor": "15,00",
+      "categoria": "Literatura Estrangeira/Romance"
+    },
+    {
+      "codigo": "366",
+      "livro": "Metodologia cientifica",
+      "autor": "Amado, Pedro e Roberto",
+      "valor": "25,00",
+      "categoria": "Acadêmico/Metodologia Científica"
+    },
+    {
+      "codigo": "367",
+      "livro": "Metodologia cientifica",
+      "autor": "Aidil Jesus",
+      "valor": "30,00",
+      "categoria": "Acadêmico/Metodologia Científica"
+    },
+    {
+      "codigo": "368",
+      "livro": "Café com Lucian Freud",
+      "autor": "Geordie Greig",
+      "valor": "20,00",
+      "categoria": "Arte/Biografia"
+    },
+    {
+      "codigo": "369",
+      "livro": "Oscar e Lucinda",
+      "autor": "Peter Carey",
+      "valor": "20,00",
+      "categoria": "Literatura Australiana/Romance"
+    },
+    {
+      "codigo": "370",
+      "livro": "Papisa Joana",
+      "autor": "Donna Woolfolk",
+      "valor": "15,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "371",
+      "livro": "O clube dos contrarios",
+      "autor": "Silvia Zatz",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil Brasileira"
+    },
+    {
+      "codigo": "372",
+      "livro": "Bagaceira",
+      "autor": "Tarcísio Lara Puiati",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira/Regionalismo"
+    },
+    {
+      "codigo": "373",
+      "livro": "A conspiração franciscana",
+      "autor": "John Sack",
+      "valor": "20,00",
+      "categoria": "Suspense/Religião"
+    },
+    {
+      "codigo": "374",
+      "livro": "O vulto das torres",
+      "autor": "Lawrence",
+      "valor": "25,00",
+      "categoria": "Não-Ficção/História Contemporânea (11 de Setembro)"
+    },
+    {
+      "codigo": "375",
+      "livro": "A filha do Papa",
+      "autor": "Caroline Murphy",
+      "valor": "20,00",
+      "categoria": "Biografia/História (Renascimento)"
+    },
+    {
+      "codigo": "376",
+      "livro": "Cinco quartos da laranja",
+      "autor": "Joanne Harris",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro/Realismo Mágico"
+    },
+    {
+      "codigo": "377",
+      "livro": "As asas da pomba",
+      "autor": "Henry James",
+      "valor": "20,00",
+      "categoria": "Literatura Clássica Estrangeira"
+    },
+    {
+      "codigo": "378",
+      "livro": "Palavras perdidas",
+      "autor": "Oya Baydar",
+      "valor": "20,00",
+      "categoria": "Literatura Turca/Romance"
+    },
+    {
+      "codigo": "379",
+      "livro": "Eu sou malala",
+      "autor": "Malala",
+      "valor": "20,00",
+      "categoria": "Autobiografia/Direitos Humanos"
+    },
+    {
+      "codigo": "380",
+      "livro": "A mulher do tenente francês",
+      "autor": "John Fowles",
+      "valor": "25,00",
+      "categoria": "Literatura Estrangeira/Metaficção Histórica"
+    },
+    {
+      "codigo": "381",
+      "livro": "A sexta mulher",
+      "autor": "Suzannah Dunn",
+      "valor": "15,00",
+      "categoria": "Romance Histórico Estrangeiro (Tudors)"
+    },
+    {
+      "codigo": "382",
+      "livro": "De gados e homens",
+      "autor": "Ana Paula Maia",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira Contemporânea/Romance Noir"
+    },
+    {
+      "codigo": "383",
+      "livro": "Pequenas histórias das grandes",
+      "autor": "Felicien",
+      "valor": "15,00",
+      "categoria": "História/Curiosidades"
+    },
+    {
+      "codigo": "384",
+      "livro": "Iracema",
+      "autor": "Jose de Alencar",
+      "valor": "10,00",
+      "categoria": "Literatura Brasileira Clássica/Indianismo"
+    },
+    {
+      "codigo": "385",
+      "livro": "The Great Physicists",
+      "autor": "George Gamow",
+      "valor": "25,00",
+      "categoria": "Ciência/Física (em Inglês)"
+    },
+    {
+      "codigo": "386",
+      "livro": "Antologia",
+      "autor": "IV PREMIO UFPA",
+      "valor": "15,00",
+      "categoria": "Coletânea/Literatura Universitária"
+    },
+    {
+      "codigo": "387",
+      "livro": "Um vulto na escuridão",
+      "autor": "John Bellairs",
+      "valor": "15,00",
+      "categoria": "Literatura Infantojuvenil/Mistério Gótico"
+    },
+    {
+      "codigo": "388",
+      "livro": "Carne do umbigo",
+      "autor": "Maria Rezende",
+      "valor": "15,00",
+      "categoria": "Poesia Brasileira Contemporânea"
+    },
+    {
+      "codigo": "389",
+      "livro": "A corrente da vida",
+      "autor": "Walcyr Carrasco",
+      "valor": "15,00",
+      "categoria": "Literatura Infantojuvenil Brasileira"
+    },
+    {
+      "codigo": "390",
+      "livro": "Querida Sue",
+      "autor": "Jessica Brockmole",
+      "valor": "20,00",
+      "categoria": "Romance Epistolar Estrangeiro/Histórico"
+    },
+    {
+      "codigo": "391",
+      "livro": "Parias não acaba nunca",
+      "autor": "Betty Milan",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira/Psicanálise"
+    },
+    {
+      "codigo": "392",
+      "livro": "Para minhas filhas",
+      "autor": "Barbara Delinsky",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro/Drama Familiar"
+    },
+    {
+      "codigo": "393",
+      "livro": "Justiça",
+      "autor": "Michael Sandel",
+      "valor": "20,00",
+      "categoria": "Filosofia Política/Ética"
+    },
+    {
+      "codigo": "394",
+      "livro": "Os fantoches de Deus",
+      "autor": "Morris West",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro/Religião"
+    },
+    {
+      "codigo": "395",
+      "livro": "Deus e a ciencia",
+      "autor": "Jean Guitton",
+      "valor": "15,00",
+      "categoria": "Filosofia/Religião/Ciência"
+    },
+    {
+      "codigo": "396",
+      "livro": "Cinco minutos e a viuvinha",
+      "autor": "José de Alencar",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira Clássica/Romantismo"
+    },
+    {
+      "codigo": "397",
+      "livro": "Minhas memórias de Lobato",
+      "autor": "Luciana Sandroni",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Biografia"
+    },
+    {
+      "codigo": "398",
+      "livro": "La bodega",
+      "autor": "Noah Gordon",
+      "valor": "20,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "399",
+      "livro": "Curso de Direito Civil Brasileiro",
+      "autor": "Maria Diniz",
+      "valor": "30,00",
+      "categoria": "Direito Civil"
+    },
+    {
+      "codigo": "400",
+      "livro": "A escolha da Dra. Cole",
+      "autor": "Noah Gordon",
+      "valor": "20,00",
+      "categoria": "Romance Histórico/Medicina"
+    },
+    {
+      "codigo": "401",
+      "livro": "Teoria Geral do Processo",
+      "autor": "Antonio Carlos de Araujo",
+      "valor": "25,00",
+      "categoria": "Direito Processual"
+    },
+    {
+      "codigo": "402",
+      "livro": "Semiotica básica",
+      "autor": "John Deely",
+      "valor": "20,00",
+      "categoria": "Linguística/Semiótica"
+    },
+    {
+      "codigo": "403",
+      "livro": "Brick Lane",
+      "autor": "Monica Ali",
+      "valor": "20,00",
+      "categoria": "Literatura Anglo-Bangladeshi/Romance"
+    },
+    {
+      "codigo": "404",
+      "livro": "Diarios de Andy Warhol",
+      "autor": "Pat Hackett",
+      "valor": "15,00",
+      "categoria": "Arte/Biografia (Pop Art)"
+    },
+    {
+      "codigo": "405",
+      "livro": "Banco",
+      "autor": "Henri Charrere",
+      "valor": "15,00",
+      "categoria": "Autobiografia/Aventura (Continuação de Papillon)"
+    },
+    {
+      "codigo": "406",
+      "livro": "Introdução ilustrada a computa",
+      "autor": "Larry Gonick",
+      "valor": "20,00",
+      "categoria": "Divulgação Científica/Quadrinhos (Informática)"
+    },
+    {
+      "codigo": "407",
+      "livro": "O fantasma de Canterville",
+      "autor": "Oscar Wilde",
+      "valor": "15,00",
+      "categoria": "Literatura Clássica Estrangeira/Conto Humorístico"
+    },
+    {
+      "codigo": "408",
+      "livro": "Os piores textos de Washington",
+      "autor": "Washington Olivetto",
+      "valor": "20,00",
+      "categoria": "Comunicação/Publicidade/Humor"
+    },
+    {
+      "codigo": "409",
+      "livro": "101 cosas de aprendi em la escu",
+      "autor": "Kit White",
+      "valor": "30,00",
+      "categoria": "Arte/Educação (Design/Arquitetura)"
+    },
+    {
+      "codigo": "410",
+      "livro": "De A-Há e U2",
+      "autor": "Zeca Camargo",
+      "valor": "20,00",
+      "categoria": "Música/Cultura Pop/Jornalismo"
+    },
+    {
+      "codigo": "411",
+      "livro": "Fluminense",
+      "autor": "Nelson Motta",
+      "valor": "25,00",
+      "categoria": "Esporte/Futebol (História do Clube)"
+    },
+    {
+      "codigo": "412",
+      "livro": "Paris confidencial",
+      "autor": "Sylvia",
+      "valor": "25,00",
+      "categoria": "Guias de Viagem/Cultura Francesa"
+    },
+    {
+      "codigo": "413",
+      "livro": "As pontes de madison",
+      "autor": "Robert James",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "414",
+      "livro": "Sempre clara rosa",
+      "autor": "Paula Danziger",
+      "valor": "15,00",
+      "categoria": "Literatura Infantojuvenil Estrangeira"
+    },
+    {
+      "codigo": "415",
+      "livro": "O santinho",
+      "autor": "Luis Fernando Verissimo",
+      "valor": "20,00",
+      "categoria": "Crônicas/Humor Brasileiro"
+    },
+    {
+      "codigo": "416",
+      "livro": "Escola do terror",
+      "autor": "Tom B. Stone",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Terror"
+    },
+    {
+      "codigo": "417",
+      "livro": "Valentin",
+      "autor": "Tia Bel",
+      "valor": "15,00",
+      "categoria": "Literatura Infantojuvenil Brasileira"
+    },
+    {
+      "codigo": "418",
+      "livro": "Rio de Letras",
+      "autor": "Renato Saraiva",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira/Crônicas (Rio de Janeiro)"
+    },
+    {
+      "codigo": "419",
+      "livro": "Rita sapeca",
+      "autor": "Peral",
+      "valor": "15,00",
+      "categoria": "Literatura Infantojuvenil Brasileira"
+    },
+    {
+      "codigo": "420",
+      "livro": "Cindela",
+      "autor": "Versão em Inglês",
+      "valor": "15,00",
+      "categoria": "Literatura Infantojuvenil/Contos de Fadas (Inglês)"
+    },
+    {
+      "codigo": "421",
+      "livro": "O livro das palavras",
+      "autor": "Ricardo Azevedo",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil Brasileira/Poesia"
+    },
+    {
+      "codigo": "422",
+      "livro": "Os doze trabalhos de hercules",
+      "autor": "Monteiro Lobato",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil Brasileira Clássica/Mitologia"
+    },
+    {
+      "codigo": "423",
+      "livro": "O segredo da plataforma 13",
+      "autor": "Eva Ibbotson",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Fantasia"
+    },
+    {
+      "codigo": "424",
+      "livro": "A terapia do abraço",
+      "autor": "Kathleen Keating",
+      "valor": "10,00",
+      "categoria": "Autoajuda/Bem-estar"
+    },
+    {
+      "codigo": "425",
+      "livro": "Histórias dos mares do Sul",
+      "autor": "W. Somerset",
+      "valor": "10,00",
+      "categoria": "Contos/Literatura Estrangeira Clássica"
+    },
+    {
+      "codigo": "426",
+      "livro": "Espinhos do tempo",
+      "autor": "Zibia Gasparetto",
+      "valor": "10,00",
+      "categoria": "Romance Espírita Brasileiro"
+    },
+    {
+      "codigo": "427",
+      "livro": "Aprendizados",
+      "autor": "Gisele Bundchen",
+      "valor": "10,00",
+      "categoria": "Autobiografia/Desenvolvimento Pessoal"
+    },
+    {
+      "codigo": "428",
+      "livro": "Linhas apagadas",
+      "autor": "Gilvano Sá",
+      "valor": "10,00",
+      "categoria": "Poesia Brasileira"
+    },
+    {
+      "codigo": "429",
+      "livro": "Longe é um lugar que não existe",
+      "autor": "Richard Bach",
+      "valor": "10,00",
+      "categoria": "Ficção Inspiracional/Autoajuda"
+    },
+    {
+      "codigo": "430",
+      "livro": "Como ser existencialista",
+      "autor": "Gary Cox",
+      "valor": "10,00",
+      "categoria": "Filosofia/Autoajuda"
+    },
+    {
+      "codigo": "431",
+      "livro": "Celina",
+      "autor": "Marcilio Costa",
+      "valor": "10,00",
+      "categoria": "Literatura Brasileira"
+    },
+    {
+      "codigo": "432",
+      "livro": "Harry Potter e a Pedra Filosofal",
+      "autor": "JK Rowling",
+      "valor": "40,00",
+      "categoria": "Literatura Infantojuvenil/Fantasia"
+    },
+    {
+      "codigo": "433",
+      "livro": "Todas as suas imperfeições",
+      "autor": "Collen Hoover",
+      "valor": "30,00",
+      "categoria": "Romance Estrangeiro Contemporâneo (New Adult)"
+    },
+    {
+      "codigo": "434",
+      "livro": "As vantagens de ser invisivel",
+      "autor": "Stephen Chbosky",
+      "valor": "25,00",
+      "categoria": "Literatura Jovem Adulto/Coming-of-Age"
+    },
+    {
+      "codigo": "435",
+      "livro": "Contos da Seleção",
+      "autor": "Kiera Cass",
+      "valor": "25,00",
+      "categoria": "Literatura Jovem Adulto/Distopia Romântica (Contos)"
+    },
+    {
+      "codigo": "436",
+      "livro": "A elite",
+      "autor": "Kiera Cass",
+      "valor": "25,00",
+      "categoria": "Literatura Jovem Adulto/Distopia Romântica"
+    },
+    {
+      "codigo": "437",
+      "livro": "A seleção",
+      "autor": "Kiera Cass",
+      "valor": "20,00",
+      "categoria": "Literatura Jovem Adulto/Distopia Romântica"
+    },
+    {
+      "codigo": "438",
+      "livro": "A escolha",
+      "autor": "Kiera Cass",
+      "valor": "25,00",
+      "categoria": "Literatura Jovem Adulto/Distopia Romântica"
+    },
+    {
+      "codigo": "439",
+      "livro": "A desobediência civil",
+      "autor": "Henry David",
+      "valor": "15,00",
+      "categoria": "Filosofia Política/Ensaio"
+    },
+    {
+      "codigo": "440",
+      "livro": "Uma luz no fim do tunel",
+      "autor": "Ganymedes José",
+      "valor": "15,00",
+      "categoria": "Literatura Infantojuvenil Brasileira"
+    },
+    {
+      "codigo": "441",
+      "livro": "Forças irresistiveis",
+      "autor": "Danielle Steel",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "442",
+      "livro": "O ninho dos gaviões",
+      "autor": "José Maviael",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira"
+    },
+    {
+      "codigo": "443",
+      "livro": "Frankenstein",
+      "autor": "Mary Shelley",
+      "valor": "20,00",
+      "categoria": "Literatura Gótica Clássica/Ficção Científica"
+    },
+    {
+      "codigo": "444",
+      "livro": "Recordações de família",
+      "autor": "Marguerite Yourcenar",
+      "valor": "20,00",
+      "categoria": "Autobiografia/Memórias"
+    },
+    {
+      "codigo": "445",
+      "livro": "Maria Fumaça",
+      "autor": "Amaury Braga",
+      "valor": "30,00",
+      "categoria": "História Local/Transporte"
+    },
+    {
+      "codigo": "446",
+      "livro": "Lua Nova",
+      "autor": "Stephenie Meyer",
+      "valor": "30,00",
+      "categoria": "Literatura Jovem Adulto/Sobrenatural Romântico"
+    },
+    {
+      "codigo": "447",
+      "livro": "Crepusculo",
+      "autor": "Stephenie Meyer",
+      "valor": "30,00",
+      "categoria": "Literatura Jovem Adulto/Sobrenatural Romântico"
+    },
+    {
+      "codigo": "448",
+      "livro": "Eclipse",
+      "autor": "Stephenie Meyer",
+      "valor": "30,00",
+      "categoria": "Literatura Jovem Adulto/Sobrenatural Romântico"
+    },
+    {
+      "codigo": "449",
+      "livro": "Amanhecer",
+      "autor": "Stephenie Meyer",
+      "valor": "30,00",
+      "categoria": "Literatura Jovem Adulto/Sobrenatural Romântico"
+    },
+    {
+      "codigo": "450",
+      "livro": "Memórias de um boto",
+      "autor": "Alcyr Meira",
+      "valor": "30,00",
+      "categoria": "Folclore Amazônico/Literatura Brasileira"
+    },
+    {
+      "codigo": "451",
+      "livro": "Feliz ano velho",
+      "autor": "Marcelo Rubens Paiva",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira Contemporânea/Autobiográfico"
+    },
+    {
+      "codigo": "452",
+      "livro": "Demonio do meio dia",
+      "autor": "Andrew Salomon",
+      "valor": "50,00",
+      "categoria": "Psicologia/Saúde Mental (Depressão)"
+    },
+    {
+      "codigo": "453",
+      "livro": "Admiravel mundo novo",
+      "autor": "Aldous Huxley",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira/Distopia Clássica"
+    },
+    {
+      "codigo": "454",
+      "livro": "A bolsa e a vida",
+      "autor": "Carlos Drummond",
+      "valor": "20,00",
+      "categoria": "Crônicas/Literatura Brasileira"
+    },
+    {
+      "codigo": "455",
+      "livro": "Palacio dos bares",
+      "autor": "Salomão Laredo",
+      "valor": "50,00",
+      "categoria": "Cultura Local/Belém/Gastronomia"
+    },
+    {
+      "codigo": "456",
+      "livro": "Dom Quixote",
+      "autor": "Miguel de Cervantes",
+      "valor": "20,00",
+      "categoria": "Literatura Clássica Espanhola"
+    },
+    {
+      "codigo": "457",
+      "livro": "Objecto Quase",
+      "autor": "José Saramago",
+      "valor": "15,00",
+      "categoria": "Contos/Literatura Portuguesa"
+    },
+    {
+      "codigo": "458",
+      "livro": "Frida",
+      "autor": "Hayden Herrera",
+      "valor": "50,00",
+      "categoria": "Arte/Biografia (Frida Kahlo)"
+    },
+    {
+      "codigo": "459",
+      "livro": "Amor",
+      "autor": "Isabel Allende",
+      "valor": "25,00",
+      "categoria": "Literatura Latino-Americana/Ensaios"
+    },
+    {
+      "codigo": "460",
+      "livro": "Se houver amanhã",
+      "autor": "Sideny Sheldon",
+      "valor": "20,00",
+      "categoria": "Suspense/Aventura"
+    },
+    {
+      "codigo": "461",
+      "livro": "Boca de luar",
+      "autor": "Carlos Drummond",
+      "valor": "15,00",
+      "categoria": "Literatura Infantojuvenil Brasileira/Poesia"
+    },
+    {
+      "codigo": "462",
+      "livro": "Belém e suas histórias",
+      "autor": "Paulo de Tarso",
+      "valor": "30,00",
+      "categoria": "História Local/Belém"
+    },
+    {
+      "codigo": "463",
+      "livro": "A casa dos Budas Ditosos",
+      "autor": "João Ubaldo",
+      "valor": "25,00",
+      "categoria": "Literatura Brasileira/Romance Erótico"
+    },
+    {
+      "codigo": "464",
+      "livro": "Vencecavalo",
+      "autor": "João Ubaldo",
+      "valor": "25,00",
+      "categoria": "Literatura Brasileira Contemporânea"
+    },
+    {
+      "codigo": "465",
+      "livro": "Estorvo",
+      "autor": "Chico Buarque",
+      "valor": "20,00",
+      "categoria": "Literatura Brasileira Contemporânea/Romance"
+    },
+    {
+      "codigo": "466",
+      "livro": "O conselheiro come",
+      "autor": "João Ubaldo",
+      "valor": "25,00",
+      "categoria": "Literatura Brasileira/Crônicas Gastronômicas"
+    },
+    {
+      "codigo": "467",
+      "livro": "Otelo",
+      "autor": "Shakespeare",
+      "valor": "25,00",
+      "categoria": "Teatro Clássico Inglês/Tragédia"
+    },
+    {
+      "codigo": "468",
+      "livro": "Rota 66",
+      "autor": "Caco Barcellos",
+      "valor": "20,00",
+      "categoria": "Jornalismo Investigativo/Violência Policial"
+    },
+    {
+      "codigo": "469",
+      "livro": "Formação economica do Brasil",
+      "autor": "Celso Furtado",
+      "valor": "15,00",
+      "categoria": "Economia Brasileira/História Econômica"
+    },
+    {
+      "codigo": "470",
+      "livro": "1984",
+      "autor": "George Orwell",
+      "valor": "20,00",
+      "categoria": "Literatura Estrangeira/Distopia Clássica"
+    },
+    {
+      "codigo": "471",
+      "livro": "Teorias da História",
+      "autor": "Antonio",
+      "valor": "25,00",
+      "categoria": "Historiografia/Teoria da História"
+    },
+    {
+      "codigo": "472",
+      "livro": "Razão e Sensibilidade",
+      "autor": "Jane Austen",
+      "valor": "25,00",
+      "categoria": "Romance Clássico Estrangeiro"
+    },
+    {
+      "codigo": "473",
+      "livro": "O homem que conhecia as mulh",
+      "autor": "Marcelo Rubens Paiva",
+      "valor": "25,00",
+      "categoria": "Literatura Brasileira Contemporânea/Romance"
+    },
+    {
+      "codigo": "474",
+      "livro": "A Paixão medida",
+      "autor": "Carlos Drummond",
+      "valor": "20,00",
+      "categoria": "Poesia Brasileira"
+    },
+    {
+      "codigo": "475",
+      "livro": "O grande Gatsby",
+      "autor": "Scott Fitzgerald",
+      "valor": "25,00",
+      "categoria": "Literatura Clássica Estrangeira"
+    },
+    {
+      "codigo": "476",
+      "livro": "Pedagogia da autonomia",
+      "autor": "Paulo Freire",
+      "valor": "15,00",
+      "categoria": "Educação/Pedagogia Crítica"
+    },
+    {
+      "codigo": "477",
+      "livro": "Paulo Freire para educadores",
+      "autor": "Vera Barreto",
+      "valor": "20,00",
+      "categoria": "Educação/Pedagogia"
+    },
+    {
+      "codigo": "478",
+      "livro": "Espectros",
+      "autor": "Cecilia Meirelles",
+      "valor": "25,00",
+      "categoria": "Poesia Brasileira"
+    },
+    {
+      "codigo": "479",
+      "livro": "O médico direito e o monstro ci",
+      "autor": "Pedro Veriano",
+      "valor": "30,00",
+      "categoria": "Direito Médico/Ética"
+    },
+    {
+      "codigo": "480",
+      "livro": "Carcereiros",
+      "autor": "Drauzio Varella",
+      "valor": "30,00",
+      "categoria": "Não-Ficção/Sistema Prisional Brasileiro"
+    },
+    {
+      "codigo": "481",
+      "livro": "Psicanalise",
+      "autor": "Ivan Ward",
+      "valor": "50,00",
+      "categoria": "Psicanálise/Introdução"
+    },
+    {
+      "codigo": "482",
+      "livro": "Kindred",
+      "autor": "Octavia Butler",
+      "valor": "30,00",
+      "categoria": "Ficção Científica Afrofuturista/Romance Histórico"
+    },
+    {
+      "codigo": "483",
+      "livro": "Doidas e santa",
+      "autor": "Martha medeiros",
+      "valor": "25,00",
+      "categoria": "Crônicas/Literatura Brasileira"
+    },
+    {
+      "codigo": "484",
+      "livro": "Agora e para sempre",
+      "autor": "Jenny Han",
+      "valor": "30,00",
+      "categoria": "Literatura Jovem Adulto/Romance"
+    },
+    {
+      "codigo": "485",
+      "livro": "P.S Ainda amo você",
+      "autor": "Jenny Han",
+      "valor": "30,00",
+      "categoria": "Literatura Jovem Adulto/Romance"
+    },
+    {
+      "codigo": "486",
+      "livro": "Para todos os garotos que já am",
+      "autor": "Jenny Han",
+      "valor": "30,00",
+      "categoria": "Literatura Jovem Adulto/Romance"
+    },
+    {
+      "codigo": "487",
+      "livro": "A paciente silenciosa",
+      "autor": "Alex Michaelides",
+      "valor": "30,00",
+      "categoria": "Suspense Psicológico"
+    },
+    {
+      "codigo": "488",
+      "livro": "Contos amazonicoS",
+      "autor": "Ingles de Sousa",
+      "valor": "20,00",
+      "categoria": "Contos/Literatura Brasileira (Naturalismo/Regionalismo)"
+    },
+    {
+      "codigo": "489",
+      "livro": "Toda Poesia",
+      "autor": "Paulo Leminski",
+      "valor": "25,00",
+      "categoria": "Poesia Brasileira Contemporânea"
+    },
+    {
+      "codigo": "490",
+      "livro": "O guardião de memorias",
+      "autor": "Kim Edwards",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro/Drama Familiar"
+    },
+    {
+      "codigo": "491",
+      "livro": "Dialogos com José Saramago",
+      "autor": "Carlos Reis",
+      "valor": "25,00",
+      "categoria": "Entrevistas/Literatura Portuguesa"
+    },
+    {
+      "codigo": "492",
+      "livro": "Sitio do Pica Pau amarelo",
+      "autor": "Coleção Globo",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil Brasileira Clássica"
+    },
+    {
+      "codigo": "493",
+      "livro": "Inverno em madri",
+      "autor": "C.J. Sansom",
+      "valor": "20,00",
+      "categoria": "Romance Histórico Estrangeiro/Espionagem (Guerra Civil Espanhola)"
+    },
+    {
+      "codigo": "494",
+      "livro": "A sociedade em Rede",
+      "autor": "Manuel Castells",
+      "valor": "20,00",
+      "categoria": "Sociologia/Comunicação (Era da Informação)"
+    },
+    {
+      "codigo": "495",
+      "livro": "Abordagem triangular",
+      "autor": "Ana Mae Barbosa",
+      "valor": "30,00",
+      "categoria": "Educação Artística/Metodologia"
+    },
+    {
+      "codigo": "496",
+      "livro": "As memórias do Livro",
+      "autor": "Geraldine Brooks",
+      "valor": "15,00",
+      "categoria": "Romance Histórico Estrangeiro"
+    },
+    {
+      "codigo": "497",
+      "livro": "Enfeitadas de sonho",
+      "autor": "Elizabeth Wilson",
+      "valor": "25,00",
+      "categoria": "Moda/História Social"
+    },
+    {
+      "codigo": "498",
+      "livro": "He",
+      "autor": "Robert A. Johnson",
+      "valor": "20,00",
+      "categoria": "Psicologia Junguiana/Arquétipos Masculinos"
+    },
+    {
+      "codigo": "499",
+      "livro": "As irmãs Romanov",
+      "autor": "Helen Rappaport",
+      "valor": "25,00",
+      "categoria": "Biografia/História da Rússia"
+    },
+    {
+      "codigo": "500",
+      "livro": "As invernas",
+      "autor": "Cristina Sanchez",
+      "valor": "15,00",
+      "categoria": "Romance Espanhol Contemporâneo"
+    },
+    {
+      "codigo": "501",
+      "livro": "O espaço da arquitetura",
+      "autor": "Evaldo Coutinho",
+      "valor": "35,00",
+      "categoria": "Arquitetura/Teoria"
+    },
+    {
+      "codigo": "502",
+      "livro": "Ramones",
+      "autor": "Dee Ramone",
+      "valor": "20,00",
+      "categoria": "Música/Autobiografia (Punk Rock)"
+    },
+    {
+      "codigo": "503",
+      "livro": "Sra Poe",
+      "autor": "Lynn Cullen",
+      "valor": "15,00",
+      "categoria": "Romance Histórico Estrangeiro (Edgar Allan Poe)"
+    },
+    {
+      "codigo": "504",
+      "livro": "O acorde secreto",
+      "autor": "Geraldine Brooks",
+      "valor": "20,00",
+      "categoria": "Romance Histórico Estrangeiro (Rei Davi)"
+    },
+    {
+      "codigo": "505",
+      "livro": "Domitila",
+      "autor": "Paulo Rezzutti",
+      "valor": "20,00",
+      "categoria": "Biografia/História do Brasil (Marquesa de Santos)"
+    },
+    {
+      "codigo": "506",
+      "livro": "O código da vinci",
+      "autor": "Dan Brown",
+      "valor": "10,00",
+      "categoria": "Suspense/Aventura"
+    },
+    {
+      "codigo": "507",
+      "livro": "Shosha",
+      "autor": "Isaac Bashevis",
+      "valor": "20,00",
+      "categoria": "Literatura Judaica/Romance (Prêmio Nobel)"
+    },
+    {
+      "codigo": "508",
+      "livro": "Um oceano nos separa",
+      "autor": "Robin Pilcher",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "509",
+      "livro": "Sombra do Paraíso",
+      "autor": "David Goyer",
+      "valor": "15,00",
+      "categoria": "Ficção Científica/Fantasia"
+    },
+    {
+      "codigo": "510",
+      "livro": "Hollywood",
+      "autor": "Gore Vidal",
+      "valor": "15,00",
+      "categoria": "Romance Histórico Estrangeiro (Série Narrativas do Império)"
+    },
+    {
+      "codigo": "511",
+      "livro": "O lado bom da vida",
+      "autor": "Matthew Quick",
+      "valor": "10,00",
+      "categoria": "Romance Estrangeiro Contemporâneo/Comédia Romântica"
+    },
+    {
+      "codigo": "512",
+      "livro": "Manual prático de desenho",
+      "autor": "Dario Chaves",
+      "valor": "15,00",
+      "categoria": "Arte/Desenho (Manual Técnico)"
+    },
+    {
+      "codigo": "513",
+      "livro": "A morte é uma vida que vale a p",
+      "autor": "Ana Claudia",
+      "valor": "15,00",
+      "categoria": "Cuidados Paliativos/Reflexões sobre a Morte"
+    },
+    {
+      "codigo": "514",
+      "livro": "Nietzsche para estressados",
+      "autor": "Allan Percy",
+      "valor": "10,00",
+      "categoria": "Filosofia Aplicada/Autoajuda"
+    },
+    {
+      "codigo": "515",
+      "livro": "O poder dos seis",
+      "autor": "Pittacus Lore",
+      "valor": "15,00",
+      "categoria": "Literatura Jovem Adulto/Ficção Científica"
+    },
+    {
+      "codigo": "516",
+      "livro": "Crime culposo",
+      "autor": "Fabio Roberto",
+      "valor": "15,00",
+      "categoria": "Direito Penal"
+    },
+    {
+      "codigo": "517",
+      "livro": "Direito Urbanistico Brasileiro",
+      "autor": "José Afonso da Silva",
+      "valor": "50,00",
+      "categoria": "Direito Urbanístico"
+    },
+    {
+      "codigo": "518",
+      "livro": "Inéditos e dispersos",
+      "autor": "Ana Cristina Cesar",
+      "valor": "25,00",
+      "categoria": "Poesia Brasileira Contemporânea"
+    },
+    {
+      "codigo": "519",
+      "livro": "Diario de um banana a verdad",
+      "autor": "Jeff Kiney",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Humor"
+    },
+    {
+      "codigo": "520",
+      "livro": "Diario de um banana - a gota da",
+      "autor": "Jeff Kiney",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Humor"
+    },
+    {
+      "codigo": "521",
+      "livro": "Diario de um banana - Rodrick é",
+      "autor": "Jeff Kiney",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Humor"
+    },
+    {
+      "codigo": "522",
+      "livro": "Os três",
+      "autor": "Sarah Lotz",
+      "valor": "25,00",
+      "categoria": "Suspense/Sobrenatural"
+    },
+    {
+      "codigo": "523",
+      "livro": "A mulher na janela",
+      "autor": "A.J. Finn",
+      "valor": "25,00",
+      "categoria": "Suspense Psicológico"
+    },
+    {
+      "codigo": "524",
+      "livro": "Aladddin",
+      "autor": "Disney",
+      "valor": "25,00",
+      "categoria": "Literatura Infantil/Contos de Fadas"
+    },
+    {
+      "codigo": "525",
+      "livro": "O Grande Gatsby",
+      "autor": "Scott Fitzgerald",
+      "valor": "40,00",
+      "categoria": "Literatura Clássica Estrangeira"
+    },
+    {
+      "codigo": "526",
+      "livro": "O leitor de almas",
+      "autor": "Paul Harper",
+      "valor": "20,00",
+      "categoria": "Suspense/Mistério"
+    },
+    {
+      "codigo": "527",
+      "livro": "Não conte a ninguém",
+      "autor": "Harlan Coben",
+      "valor": "20,00",
+      "categoria": "Suspense"
+    },
+    {
+      "codigo": "528",
+      "livro": "A Garota do Lago",
+      "autor": "Charlie Donlea",
+      "valor": "20,00",
+      "categoria": "Suspense/Mistério"
+    },
+    {
+      "codigo": "529",
+      "livro": "Wicked",
+      "autor": "Gregory Maguire",
+      "valor": "25,00",
+      "categoria": "Fantasia/Releitura (O Mágico de Oz)"
+    },
+    {
+      "codigo": "530",
+      "livro": "Noites de tormenta",
+      "autor": "Nicholas Sparks",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "531",
+      "livro": "A transformação de Raven",
+      "autor": "Sylvain Reynard",
+      "valor": "20,00",
+      "categoria": "Romance Erótico/Sobrenatural"
+    },
+    {
+      "codigo": "532",
+      "livro": "Cidades de papel",
+      "autor": "John Green",
+      "valor": "15,00",
+      "categoria": "Literatura Jovem Adulto/Coming-of-Age"
+    },
+    {
+      "codigo": "533",
+      "livro": "Não quero ser lembrada",
+      "autor": "Lucas Rezende",
+      "valor": "15,00",
+      "categoria": "Literatura Brasileira Contemporânea"
+    },
+    {
+      "codigo": "534",
+      "livro": "Garota A",
+      "autor": "Abigail Dean",
+      "valor": "10,00",
+      "categoria": "Suspense Psicológico/Drama Familiar"
+    },
+    {
+      "codigo": "535",
+      "livro": "Escandalos na primavera",
+      "autor": "Lisa Kleypas",
+      "valor": "20,00",
+      "categoria": "Romance de Época Estrangeiro"
+    },
+    {
+      "codigo": "536",
+      "livro": "O principe das sombras",
+      "autor": "Sylvain Reynard",
+      "valor": "20,00",
+      "categoria": "Romance Erótico/Sobrenatural"
+    },
+    {
+      "codigo": "537",
+      "livro": "Espero por você",
+      "autor": "Jennifer Armentrout",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro Contemporâneo (New Adult)"
+    },
+    {
+      "codigo": "538",
+      "livro": "Uma noite inesquesivel",
+      "autor": "Lisa Kleypas",
+      "valor": "20,00",
+      "categoria": "Romance de Época Estrangeiro"
+    },
+    {
+      "codigo": "539",
+      "livro": "Os últimoes jovens da terra",
+      "autor": "Max Brallier",
+      "valor": "30,00",
+      "categoria": "Literatura Infantojuvenil/Aventura Pós-apocalíptica"
+    },
+    {
+      "codigo": "540",
+      "livro": "O duque e eu",
+      "autor": "Julia Quinn",
+      "valor": "20,00",
+      "categoria": "Romance de Época Estrangeiro (Bridgertons)"
+    },
+    {
+      "codigo": "541",
+      "livro": "Uma garota supimpa",
+      "autor": "Jeff Kiney",
+      "valor": "20,00",
+      "categoria": "Literatura Infantojuvenil/Humor (Diário de um Banana)"
+    },
+    {
+      "codigo": "542",
+      "livro": "Quem ama educa",
+      "autor": "Içamitiba",
+      "valor": "20,00",
+      "categoria": "Educação Parental/Psicologia"
+    },
+    {
+      "codigo": "543",
+      "livro": "O chamado do Cuco",
+      "autor": "Robert Galbraith",
+      "valor": "20,00",
+      "categoria": "Romance Policial (Cormoran Strike)"
+    },
+    {
+      "codigo": "544",
+      "livro": "Eu sou malala",
+      "autor": "Malala Yousafzai",
+      "valor": "20,00",
+      "categoria": "Autobiografia/Direitos Humanos"
+    },
+    {
+      "codigo": "545",
+      "livro": "É tempo de mudança",
+      "autor": "Lourdes Possatto",
+      "valor": "10,00",
+      "categoria": "Autoajuda/Espiritualidade"
+    },
+    {
+      "codigo": "546",
+      "livro": "Limites sem traumas",
+      "autor": "Tania Zagury",
+      "valor": "15,00",
+      "categoria": "Educação Parental/Psicologia Infantil"
+    },
+    {
+      "codigo": "547",
+      "livro": "Nunca é cedo para o amanhã",
+      "autor": "Milton Nobre",
+      "valor": "20,00",
+      "categoria": "Direito/Ensaios"
+    },
+    {
+      "codigo": "548",
+      "livro": "Nós três",
+      "autor": "Lygia Bojunga",
+      "valor": "25,00",
+      "categoria": "Literatura Infantojuvenil Brasileira"
+    },
+    {
+      "codigo": "549",
+      "livro": "Um carretel de linha azul",
+      "autor": "Anne Tyler",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro/Drama Familiar"
+    },
+    {
+      "codigo": "550",
+      "livro": "Não se apega, não",
+      "autor": "Isabela Freitas",
+      "valor": "15,00",
+      "categoria": "Literatura Jovem Adulto/Autoajuda (Relacionamentos)"
+    },
+    {
+      "codigo": "551",
+      "livro": "O terceiro anjo",
+      "autor": "Alice Hoffman",
+      "valor": "15,00",
+      "categoria": "Romance Estrangeiro/Realismo Mágico"
+    },
+    {
+      "codigo": "552",
+      "livro": "A arte da felicidade",
+      "autor": "Dalai-Lama",
+      "valor": "15,00",
+      "categoria": "Espiritualidade/Budismo/Autoajuda"
+    },
+    {
+      "codigo": "553",
+      "livro": "A espera do sol",
+      "autor": "Michael Greenberg",
+      "valor": "15,00",
+      "categoria": "Memórias/Saúde Mental"
+    },
+    {
+      "codigo": "554",
+      "livro": "A arte da guerra",
+      "autor": "Sun Tzu",
+      "valor": "25,00",
+      "categoria": "Estratégia Militar/Filosofia Oriental Clássica"
+    },
+    {
+      "codigo": "555",
+      "livro": "O principe",
+      "autor": "Maquiavel",
+      "valor": "25,00",
+      "categoria": "Filosofia Política Clássica"
+    },
+    {
+      "codigo": "556",
+      "livro": "Arte urbana",
+      "autor": "Vera Pallamin",
+      "valor": "10,00",
+      "categoria": "Arte Urbana/Grafite"
+    },
+    {
+      "codigo": "557",
+      "livro": "Rio botequim",
+      "autor": "Guilherme",
+      "valor": "10,00",
+      "categoria": "Cultura Carioca/Gastronomia (Bares)"
+    },
+    {
+      "codigo": "558",
+      "livro": "Viúva por um ano",
+      "autor": "John Irving",
+      "valor": "15,00",
+      "categoria": "Literatura Estrangeira/Romance"
+    },
+    {
+      "codigo": "559",
+      "livro": "Paris Hobby",
+      "autor": "Parigramme",
+      "valor": "15,00",
+      "categoria": "Guias de Viagem/Hobbies (Paris)"
+    },
+    {
+      "codigo": "560",
+      "livro": "Três mestres do Budo",
+      "autor": "John Stevens",
+      "valor": "15,00",
+      "categoria": "Artes Marciais/Filosofia Oriental"
+    },
+    {
+      "codigo": "561",
+      "livro": "Conversa na sala",
+      "autor": "Marta Medeiros",
+      "valor": "25,00",
+      "categoria": "Crônicas/Literatura Brasileira"
+    },
+    {
+      "codigo": "562",
+      "livro": "Amar e ser livre é possível",
+      "autor": "Marcos Lacerda",
+      "valor": "15,00",
+      "categoria": "Autoajuda/Relacionamentos"
+    },
+    {
+      "codigo": "563",
+      "livro": "Cartas entre amigos",
+      "autor": "Padre Fábio de Melo",
+      "valor": "20,00",
+      "categoria": "Religião/Espiritualidade Cristã"
+    },
+    {
+      "codigo": "564",
+      "livro": "A hora da essência",
+      "autor": "Padre Fábio de Melo",
+      "valor": "20,00",
+      "categoria": "Religião/Espiritualidade Cristã"
+    },
+    {
+      "codigo": "565",
+      "livro": "Amar de novo",
+      "autor": "Marcos Lacerda",
+      "valor": "15,00",
+      "categoria": "Autoajuda/Relacionamentos"
+    },
+    {
+      "codigo": "566",
+      "livro": "Do discipulo da madrugada",
+      "autor": "Padre Fábio de Melo",
+      "valor": "20,00",
+      "categoria": "Religião/Espiritualidade Cristã"
+    },
+    {
+      "codigo": "567",
+      "livro": "Paixões",
+      "autor": "Rosa Montes",
+      "valor": "20,00",
+      "categoria": "Romance Estrangeiro"
+    },
+    {
+      "codigo": "568",
+      "livro": "Vou-me embora pra pasárgada",
+      "autor": "Manuel Bandeira",
+      "valor": "10,00",
+      "categoria": "Poesia Brasileira Modernista"
+    },
+    {
+      "codigo": "569",
+      "livro": "Efeitos pervesos e ordem social",
+      "autor": "Raymond Boudon",
+      "valor": "25,00",
+      "categoria": "Sociologia"
+    },
+    {
+      "codigo": "570",
+      "livro": "Arquitetura e critica",
+      "autor": "Josep Maria Montaner",
+      "valor": "30,00",
+      "categoria": "Arquitetura/Teoria Crítica"
+    },
+    {
+      "codigo": "571",
+      "livro": "Os novos principios do urbanis",
+      "autor": "François Ascher",
+      "valor": "35,00",
+      "categoria": "Urbanismo/Planejamento Urbano"
+    },
+    {
+      "codigo": "572",
+      "livro": "São Paulo, razões de arquitetur",
+      "autor": "Angelo Bucci",
+      "valor": "25,00",
+      "categoria": "Arquitetura/Urbanismo (São Paulo)"
+    },
+    {
+      "codigo": "573",
+      "livro": "A Apreensão da Forma da Cidad",
+      "autor": "Maria Elaine Kohlsdorf",
+      "valor": "70,00",
+      "categoria": "Arquitetura/Urbanismo/Morfologia Urbana"
+    },
+    {
+      "codigo": "574",
+      "livro": "Não começou com você",
+      "autor": "Mark Wolynn",
+      "valor": "20,00",
+      "categoria": "Psicologia/Trauma Transgeracional"
+    },
+    {
+      "codigo": "575",
+      "livro": "Teorias da cidade",
+      "autor": "Barbara Freitag",
+      "valor": "40,00",
+      "categoria": "Urbanismo/Sociologia Urbana"
+    },
+    {
+      "codigo": "576",
+      "livro": "Cenário da Arquitetura da Arte",
+      "autor": "Sonia Salcedo del Castillo",
+      "valor": "60,00",
+      "categoria": "Arquitetura/Arte/Cenografia"
+    },
+    {
+      "codigo": "577",
+      "livro": "Economida politica",
+      "autor": "Paul Singer",
+      "valor": "30,00",
+      "categoria": "Economia Política"
+    },
+    {
+      "codigo": "578",
+      "livro": "Deliberação pública",
+      "autor": "Angela Cristina",
+      "valor": "20,00",
+      "categoria": "Ciência Política/Teoria Democrática"
+    },
+    {
+      "codigo": "579",
+      "livro": "Caminhos da Arquitetura",
+      "autor": "Caminhos da Arquitetura",
+      "valor": "30,00",
+      "categoria": "Arquitetura"
+    },
+    {
+      "codigo": "580",
+      "livro": "Em louvor da sombra",
+      "autor": "Junichiro Tanizaki",
+      "valor": "25,00",
+      "categoria": "Ensaios/Estética Japonesa"
+    },
+    {
+      "codigo": "581",
+      "livro": "de Tudo Um Pouco",
+      "autor": "Michael Sorkin",
+      "valor": "20,00",
+      "categoria": "Arquitetura/Urbanismo/Crítica"
+    },
+    {
+      "codigo": "582",
+      "livro": "A ilha prometida",
+      "autor": "Anka Muhlstein",
+      "valor": "25,00",
+      "categoria": "Biografia/História (Manhattan)"
+    },
+    {
+      "codigo": "583",
+      "livro": "Dilemas urbanos - novas aborda",
+      "autor": "Ana Fani Carlos",
+      "valor": "30,00",
+      "categoria": "Urbanismo/Geografia Urbana"
+    },
+    {
+      "codigo": "584",
+      "livro": "Rio Cidade-capital",
+      "autor": "Marly Silva Da Motta",
+      "valor": "20,00",
+      "categoria": "História do Rio de Janeiro/Urbanismo"
+    },
+    {
+      "codigo": "585",
+      "livro": "Arte e Tecnica na Formação do",
+      "autor": "Edgar A. Graeff",
+      "valor": "60,00",
+      "categoria": "Arquitetura/Teoria da Arquitetura"
+    },
+    {
+      "codigo": "586",
+      "livro": "Fragmentos urbanos: Represen",
+      "autor": "Annateresa Fabris",
+      "valor": "25,00",
+      "categoria": "Arte/Urbanismo/Fotografia"
+    },
+    {
+      "codigo": "587",
+      "livro": "A divina comédia",
+      "autor": "Camara dos deputados",
+      "valor": "40,00",
+      "categoria": "Literatura Clássica Italiana/Poesia Épica"
+    },
+    {
+      "codigo": "588",
+      "livro": "Arte/Educação como mediação c",
+      "autor": "Ana Mae",
+      "valor": "30,00",
+      "categoria": "Educação Artística"
+    },
+    {
+      "codigo": "589",
+      "livro": "Moisés: codinome, ulysses guim",
+      "autor": "Luiz Gutemberg",
+      "valor": "25,00",
+      "categoria": "Biografia/Política Brasileira"
+    },
+    {
+      "codigo": "590",
+      "livro": "Leituras Em Teoria da Arquitetu",
+      "autor": "Guilherme Lassance",
+      "valor": "30,00",
+      "categoria": "Arquitetura/Teoria"
+    },
+    {
+      "codigo": "591",
+      "livro": "Retratos de Siza",
+      "autor": "Valdemar cruz",
+      "valor": "25,00",
+      "categoria": "Arquitetura/Fotografia (Álvaro Siza)"
+    },
+    {
+      "codigo": "592",
+      "livro": "A história do Nirvana",
+      "autor": "Michael Azerrad",
+      "valor": "50,00",
+      "categoria": "Música/Biografia (Grunge)"
+    },
+    {
+      "codigo": "593",
+      "livro": "O bebe de Valentina",
+      "autor": "Guido Crepax",
+      "valor": "50,00",
+      "categoria": "Quadrinhos Eróticos Italianos"
+    },
+    {
+      "codigo": "594",
+      "livro": "Os mais famosos contos",
+      "autor": "Hans Andersen",
+      "valor": "20,00",
+      "categoria": "Contos de Fadas Clássicos"
+    },
+    {
+      "codigo": "595",
+      "livro": "Sociologia sobre e sub urbana",
+      "autor": "Pedro Castro",
+      "valor": "20,00",
+      "categoria": "Sociologia Urbana"
+    },
+    {
+      "codigo": "596",
+      "livro": "Cidades na floresta",
+      "autor": "Edna Castro",
+      "valor": "60,00",
+      "categoria": "Urbanismo/Amazônia/Antropologia"
+    }
+  ]
