@@ -66,10 +66,10 @@ export async function POST(request: Request) {
       await transporter.sendMail({
         from: process.env.EMAIL_FROM,
         to: newUser.email!,
-        subject: 'Verifique seu e-mail para MakeStore Marketplace',
+        subject: 'Verifique seu e-mail para ZECAPLACE',
         html: `
           <p>Olá ${newUser.name || ''},</p>
-          <p>Obrigado por se registrar no MakeStore Marketplace. Por favor, verifique seu endereço de e-mail clicando no link abaixo:</p>
+          <p>Obrigado por se registrar no Zecaplace. Por favor, verifique seu endereço de e-mail clicando no link abaixo:</p>
           <p><a href="${verificationLink}">Verificar E-mail Agora</a></p>
           <p>Este link expirará em 1 hora.</p>
           <p>Se você não se registrou em nosso site, por favor ignore este e-mail.</p>
