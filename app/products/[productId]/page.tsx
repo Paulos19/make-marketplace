@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { toast } from 'sonner'; //
+import { motion, Variants } from 'framer-motion';
+import { toast } from 'sonner';
 
 // Componentes Shadcn/ui
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Removido CardDescription se não usado
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import {
@@ -28,45 +28,21 @@ import { Label } from '@/components/ui/label';
 // Ícones Lucide
 import {
   UserCircle2, MessageSquareText, ChevronRight, Tag, Store, Minus, Plus,
-  PackageOpen, AlertTriangle, ShoppingCart, ArrowLeft, Share2, // Adicionado Share2
-  Loader2
+  PackageOpen, AlertTriangle, ShoppingCart, ArrowLeft, Share2, Loader2
 } from 'lucide-react';
 
 import Navbar from '@/app/components/layout/Navbar';
 import Footer from '@/app/components/layout/Footer';
-import RelatedProducts from '../components/RelatedProducts'; // << NOVO COMPONENTE
+import RelatedProducts from '../components/RelatedProducts'; // Verifique o caminho
 
-// Interfaces
-interface UserInfo {
-  id: string;
-  name: string | null;
-  image?: string | null;
-  whatsappLink: string | null;
-  storeName?: string | null; // Adicionado para o vendedor
-}
-interface CategoryInfo {
-  id: string;
-  name: string;
-}
-interface ProductDetail {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  imageUrls: string[];
-  user: UserInfo;
-  createdAt: string;
-  categories: CategoryInfo[];
-  onPromotion?: boolean;
-  originalPrice?: number | null;
-  quantity: number;
-}
+// << IMPORTAÇÃO DOS TIPOS CENTRAIS >>
+import type { Product, Category as CategoryInfo, UserInfo } from '@/lib/types';
 
-const mainVariants = {
+const mainVariants: Variants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
 };
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
 };
@@ -78,8 +54,8 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const productId = params?.productId as string;
 
-  const [product, setProduct] = useState<ProductDetail | null>(null);
-  const [relatedProducts, setRelatedProducts] = useState<ProductDetail[]>([]);
+  const [product, setProduct] = useState<Product | null>(null); // << USA O TIPO Product
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]); // << USA O TIPO Product
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
@@ -92,24 +68,24 @@ export default function ProductDetailPage() {
       const fetchProductAndRelated = async () => {
         setLoading(true);
         setError(null);
+        setProduct(null);
+        setRelatedProducts([]);
         try {
-          // Fetch produto principal
           const productResponse = await fetch(`/api/products/${productId}`);
           if (!productResponse.ok) {
             const errorData = await productResponse.json().catch(() => ({}));
             throw new Error(errorData.error || `Erro ${productResponse.status} ao buscar o achadinho.`);
           }
-          const productData: ProductDetail = await productResponse.json();
+          const productData: Product = await productResponse.json();
           setProduct(productData);
 
-          // Fetch produtos relacionados (da primeira categoria, por exemplo)
           if (productData.categories && productData.categories.length > 0) {
             const primaryCategoryId = productData.categories[0].id;
-            const relatedResponse = await fetch(`/api/products?categoryId=${primaryCategoryId}&limit=${PRODUCTS_PER_RELATED_ROW + 1}`); // +1 para poder excluir o atual
+            const relatedResponse = await fetch(`/api/products?categoryId=${primaryCategoryId}&limit=${PRODUCTS_PER_RELATED_ROW + 1}&all=true`);
             if (relatedResponse.ok) {
               const relatedData = await relatedResponse.json();
-              const relatedProductsData = Array.isArray(relatedData) ? relatedData : (relatedData.products || []);
-              setRelatedProducts(relatedProductsData.filter((p: { id: string; }) => p.id !== productId).slice(0, PRODUCTS_PER_RELATED_ROW));
+              const relatedProductsData: Product[] = Array.isArray(relatedData) ? relatedData : (relatedData.products || []);
+              setRelatedProducts(relatedProductsData.filter(p => p.id !== productId && p.user).slice(0, PRODUCTS_PER_RELATED_ROW));
             } else {
               console.warn("Falha ao buscar produtos relacionados para a categoria:", primaryCategoryId);
             }
@@ -129,16 +105,36 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (!carouselApi) return;
-    setCurrentImageSlide(carouselApi.selectedScrollSnap());
-    carouselApi.on("select", () => setCurrentImageSlide(carouselApi.selectedScrollSnap()));
+    const onSelect = () => {
+      if (carouselApi) {
+        setCurrentImageSlide(carouselApi.selectedScrollSnap());
+      }
+    };
+    onSelect();
+    carouselApi.on("select", onSelect);
+    return () => {
+      carouselApi?.off("select", onSelect);
+    };
   }, [carouselApi]);
 
-  const handleWhatsAppRedirect = () => {
-    if (product?.user?.whatsappLink) {
-      window.open(product.user.whatsappLink, '_blank', 'noopener,noreferrer');
-    } else {
+  const openWhatsAppWithMessage = useCallback(() => {
+    if (!product || !product.user.whatsappLink) {
       toast.error("Ô psit, o vendedor esqueceu o ZapZap!");
+      return;
     }
+    const productName = product.name;
+    const productPrice = product.price.toFixed(2).replace('.', ',');
+    const productCategory = product.categories.length > 0 ? product.categories[0].name : 'Indefinida';
+    const quantity = selectedQuantity;
+    const message = `Olá, ${product.user.name || 'vendedor(a)'}! Tenho interesse no produto que vi no Zacaplace:\n\n*Produto:* ${productName}\n*Quantidade:* ${quantity}\n*Preço Unitário:* R$ ${productPrice}\n*Categoria:* ${productCategory}\n\nAinda está disponível? Gostaria de combinar a entrega/pagamento.`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappNumberOnly = product.user.whatsappLink.replace(/\D/g, '');
+    const whatsappUrl = `https://wa.me/${whatsappNumberOnly}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+  }, [product, selectedQuantity]);
+
+  const handleWhatsAppRedirect = () => {
+    openWhatsAppWithMessage();
   };
 
   const handleQuantityChange = (amount: number) => {
@@ -172,10 +168,15 @@ export default function ProductDetailPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Falha ao reservar. Deu xabu!');
-      toast.success(`${selectedQuantity}x "${product.name}" reservado(s) com sucesso, cumpadi!`);
+      toast.success(`${selectedQuantity}x "${product.name}" reservado(s) com sucesso!`,{
+        description: "Você será redirecionado para o WhatsApp do vendedor.",
+        duration: 3000
+      });
       setProduct(prev => prev ? { ...prev, quantity: prev.quantity - selectedQuantity } : null);
-      setSelectedQuantity(1);
-      // router.push('/dashboard/reservations'); // Opcional
+      setSelectedQuantity(1); // Reset quantity after reservation
+      setTimeout(() => {
+        openWhatsAppWithMessage();
+      }, 1500);
     } catch (err: any) {
       setError(err.message || "Deu um 'Zacaplot' na reserva.");
       toast.error(`Erro na reserva: ${err.message || 'Deu ruim!'}`);
@@ -199,37 +200,43 @@ export default function ProductDetailPage() {
         text: `Olha que achadinho incrível do Zaca: ${product.name}!`,
         url: window.location.href,
       }).then(() => {
-        toast.success("Link do produto compartilhado!");
+        toast.info("Link do achadinho compartilhado!");
       }).catch((error) => console.log('Erro ao compartilhar', error));
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => toast.success("Link copiado para a área de transferência, cumpadi!"))
+        .catch(err => toast.error("Falha ao copiar o link."));
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copiado para a área de transferência!");
+        toast.error("Não foi possível compartilhar ou copiar o link neste navegador.");
     }
   };
 
   if (loading) {
-    // Skeleton Melhorado
     return (
       <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950">
         <Navbar />
         <main className="flex-grow py-8 lg:py-12">
           <div className="container mx-auto px-4">
-            <Skeleton className="h-6 w-3/4 sm:w-1/2 mb-8 bg-slate-200 dark:bg-slate-700" /> {/* Breadcrumbs */}
+            <Skeleton className="h-6 w-3/4 sm:w-1/2 mb-8 bg-slate-200 dark:bg-slate-700 rounded-md" />
             <div className="lg:grid lg:grid-cols-12 lg:gap-10 xl:gap-16 items-start">
               <section className="lg:col-span-7 xl:col-span-7">
                 <Skeleton className="w-full aspect-square rounded-xl mb-4 bg-slate-300 dark:bg-slate-700" />
-                <div className="grid grid-cols-5 gap-2">
-                  {[...Array(4)].map((_, i) => <Skeleton key={i} className="w-full aspect-square rounded-md bg-slate-200 dark:bg-slate-600" />)}
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                  {[...Array(4)].map((_, i) => <Skeleton key={`thumb-skel-${i}`} className="w-full aspect-square rounded-md bg-slate-200 dark:bg-slate-600" />)}
                 </div>
               </section>
-              <section className="lg:col-span-5 xl:col-span-5 mt-8 lg:mt-0 space-y-6">
-                <Skeleton className="h-6 w-1/2 rounded bg-slate-200 dark:bg-slate-600" /> {/* Categorias */}
-                <Skeleton className="h-12 w-3/4 rounded bg-slate-300 dark:bg-slate-700" /> {/* Nome */}
-                <Skeleton className="h-10 w-1/3 rounded bg-slate-300 dark:bg-slate-700" /> {/* Preço */}
-                <Skeleton className="h-5 w-full rounded bg-slate-200 dark:bg-slate-600" /> {/* Descrição */}
-                <Skeleton className="h-5 w-full rounded bg-slate-200 dark:bg-slate-600" />
-                <Skeleton className="h-12 w-full rounded-lg bg-slate-300 dark:bg-slate-700" /> {/* Botão Reservar */}
-                <Skeleton className="h-20 w-full rounded-lg bg-slate-200 dark:bg-slate-600" /> {/* Card Vendedor */}
+              <section className="lg:col-span-5 xl:col-span-5 mt-8 lg:mt-0 space-y-5">
+                <Skeleton className="h-5 w-1/3 rounded bg-slate-200 dark:bg-slate-600" />
+                <Skeleton className="h-10 w-4/5 rounded bg-slate-300 dark:bg-slate-700" />
+                <Skeleton className="h-8 w-1/2 rounded bg-slate-300 dark:bg-slate-700" />
+                <Skeleton className="h-4 w-full rounded bg-slate-200 dark:bg-slate-600" />
+                <Skeleton className="h-4 w-full rounded bg-slate-200 dark:bg-slate-600" />
+                <Skeleton className="h-4 w-5/6 rounded bg-slate-200 dark:bg-slate-600" />
+                <div className="h-px bg-slate-200 dark:bg-slate-700 my-5"></div>
+                <Skeleton className="h-12 w-full rounded-lg bg-slate-300 dark:bg-slate-700" />
+                <Skeleton className="h-12 w-full rounded-lg bg-slate-200 dark:bg-slate-600" />
+                <div className="h-px bg-slate-200 dark:bg-slate-700 my-5"></div>
+                <Skeleton className="h-28 w-full rounded-lg bg-slate-200 dark:bg-slate-600" />
               </section>
             </div>
           </div>
@@ -270,17 +277,17 @@ export default function ProductDetailPage() {
         animate="visible"
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div variants={itemVariants} className="mb-6 text-sm text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-            <Link href="/" className="hover:text-zaca-azul dark:hover:text-zaca-lilas">Home</Link>
-            <ChevronRight className="h-3.5 w-3.5" />
+          <motion.div variants={itemVariants} className="mb-6 text-sm text-slate-500 dark:text-slate-400 flex items-center space-x-1.5 flex-wrap">
+            <Link href="/" className="hover:text-zaca-azul dark:hover:text-zaca-lilas">Zacaplace</Link>
+            <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
             <Link href="/products" className="hover:text-zaca-azul dark:hover:text-zaca-lilas">Achadinhos</Link>
             {product.categories && product.categories.length > 0 && (
               <>
-                <ChevronRight className="h-3.5 w-3.5" />
+                <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
                 <Link href={`/products?category=${product.categories[0].id}`} className="hover:text-zaca-azul dark:hover:text-zaca-lilas">{product.categories[0].name}</Link>
               </>
             )}
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="text-slate-700 dark:text-slate-200 font-medium truncate max-w-[150px] sm:max-w-xs">{product.name}</span>
           </motion.div>
 
@@ -400,7 +407,7 @@ export default function ProductDetailPage() {
                   className="w-full bg-btn-fale-vendedor text-btn-fale-vendedor-foreground hover:bg-btn-fale-vendedor-hover text-base font-semibold py-3 shadow-md hover:shadow-lg transition-all transform hover:scale-105"
                 >
                   {isReserving ? <Loader2 className="mr-2 h-5 w-5 animate-spin"/> : <ShoppingCart className="mr-2 h-5 w-5" />}
-                  {isReserving ? "Reservando..." : (product.quantity === 0 ? "Esgotado!" : "Quero este Achadinho!")}
+                  {isReserving ? "Reservando..." : (product.quantity === 0 ? "Esgotado!" : "Reservar e Contatar Vendedor")}
                 </Button>
                  <Button variant="outline" size="lg" onClick={shareProduct} className="w-full text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700/50">
                     <Share2 className="mr-2 h-5 w-5"/> Compartilhar Achadinho
@@ -451,7 +458,6 @@ export default function ProductDetailPage() {
           </div>
         </div>
         
-        {/* Seção de Produtos Relacionados */}
         {relatedProducts.length > 0 && (
             <RelatedProducts 
                 title="Quem viu este, curtiu estes também, cumpadi!"
@@ -459,7 +465,6 @@ export default function ProductDetailPage() {
                 currentProductId={productId}
             />
         )}
-
       </motion.main>
       <Footer />
     </div>

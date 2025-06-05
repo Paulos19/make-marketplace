@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Carousel,
@@ -11,36 +11,21 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Badge } from '@/components/ui/badge'; // Se for usar badges de promoção
-
-// Interfaces (devem ser consistentes com o restante do projeto)
-interface UserInfo {
-  id: string;
-  name?: string | null;
-}
-interface Product {
-  id:string;
-  name: string;
-  price: number;
-  imageUrls: string[];
-  user: UserInfo; // Para exibir "Vendido por" se desejado, ou para outros links
-  onPromotion?: boolean;
-  originalPrice?: number | null;
-  categories?: { id: string; name: string }[];
-}
+import { Badge } from '@/components/ui/badge';
+import type { Product } from '@/lib/types'; // << IMPORTAÇÃO DO TIPO CENTRAL
 
 interface RelatedProductsProps {
   title: string;
-  products: Product[];
-  currentProductId?: string; // Para evitar mostrar o produto atual na lista de relacionados
+  products: Product[]; // << USA O TIPO IMPORTADO
+  currentProductId?: string; // Para evitar mostrar o produto atual na lista
 }
 
-// Card compacto para produtos relacionados (similar ao AchadinhoCardMini/CategoryProductCard)
-const RelatedProductCard = ({ product }: { product: Product }) => (
+// Card compacto para produtos relacionados
+const RelatedProductCard = ({ product }: { product: Product }) => ( // << USA O TIPO IMPORTADO
   <Card className="group relative flex flex-col h-full overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 ease-in-out bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 hover:border-zaca-magenta dark:hover:border-zaca-magenta">
-    <Link href={`/products/${product.id}`} className="block aspect-square w-full relative" aria-label={product.name}> {/* Mudado para aspect-square */}
+    <Link href={`/products/${product.id}`} className="block aspect-square w-full relative" aria-label={product.name}>
       <Image
-        src={product.imageUrls[0] || '/img-placeholder.png'}
+        src={product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '/img-placeholder.png'} // Tenha um placeholder
         alt={product.name}
         fill
         className="object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
@@ -69,17 +54,17 @@ const RelatedProductCard = ({ product }: { product: Product }) => (
         </span>
       </div>
     </CardContent>
+    {/* Pode adicionar um CardFooter com botão "Ver Detalhes" se desejar */}
   </Card>
 );
 
-
-const fadeInUp = {
+const fadeInUp: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
 
 export default function RelatedProducts({ title, products, currentProductId }: RelatedProductsProps) {
-  const filteredProducts = currentProductId 
+  const filteredProducts = currentProductId
     ? products.filter(p => p.id !== currentProductId)
     : products;
 
@@ -91,7 +76,7 @@ export default function RelatedProducts({ title, products, currentProductId }: R
     <motion.section
       variants={fadeInUp}
       initial="hidden"
-      animate="visible" // Ou whileInView se preferir
+      whileInView="visible"
       viewport={{ once: true, amount: 0.1 }}
       className="py-10 md:py-16 bg-slate-100 dark:bg-slate-900/70"
     >
@@ -102,8 +87,8 @@ export default function RelatedProducts({ title, products, currentProductId }: R
         <Carousel
           opts={{
             align: "start",
-            slidesToScroll: 'auto',
-            containScroll: 'trimSnaps',
+            slidesToScroll: 'auto', // Permite scroll mais natural
+            containScroll: 'trimSnaps', // Evita scroll excessivo no final
           }}
           className="w-full"
         >
@@ -111,14 +96,15 @@ export default function RelatedProducts({ title, products, currentProductId }: R
             {filteredProducts.map((product) => (
               <CarouselItem
                 key={product.id}
-                className="pl-2.5 md:pl-4 basis-1/2 xs:basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6" // Mais itens visíveis
+                className="pl-2.5 md:pl-4 basis-[55%] xs:basis-[48%] sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6" // Ajustado para mais itens
               >
                 <RelatedProductCard product={product} />
               </CarouselItem>
             ))}
           </CarouselContent>
-          {filteredProducts.length > 4 && <CarouselPrevious className="hidden sm:flex text-slate-800 dark:text-slate-200 bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 shadow-md" />}
-          {filteredProducts.length > 4 && <CarouselNext className="hidden sm:flex text-slate-800 dark:text-slate-200 bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 shadow-md" />}
+          {/* Mostrar setas apenas se houver mais itens do que o visível */}
+          {filteredProducts.length > 5 && <CarouselPrevious className="hidden sm:flex text-slate-800 dark:text-slate-200 bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 shadow-md" />}
+          {filteredProducts.length > 5 && <CarouselNext className="hidden sm:flex text-slate-800 dark:text-slate-200 bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 shadow-md" />}
         </Carousel>
       </div>
     </motion.section>

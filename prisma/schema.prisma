@@ -1,11 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  // Certifique-se que o provider está correto para o seu banco (ex: postgresql, mysql, sqlite)
+  provider = "postgresql" 
   url      = env("DATABASE_URL")
 }
+
+// Enum para Papéis de Usuário, agora com a role SELLER
+enum UserRole {
+  USER
+  SELLER
+  ADMIN
+}
+
+// --- MODELOS PRINCIPAIS DA APLICAÇÃO ---
+
+model User {
+  id                   String    @id @default(cuid())
+  name                 String?
+  email                String?   @unique
+  emailVerified        DateTime?
+  image                String?   // Avatar do usuário
+  passwordHash         String?   // Para login com credenciais
+  role                 UserRole  @default(USER) // Padrão é USER (comprador)
+  
+  // Campos do Vendedor (Zacaplace)
+  whatsappLink         String?
+  storeName            String?               // Nome da Loja
+  profileDescription   String?   @db.Text      // Descrição do perfil/loja
+  sellerBannerImageUrl String?               // URL da imagem de banner da página do vendedor
+
+  // Relações
+  accounts     Account[]
+  sessions     Session[]
+  products     Product[]     @relation("UserProducts")
+  reservations Reservation[] @relation("UserReservations")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id   String @id @default(cuid())
+  name String @unique
+
+  products Product[] @relation("CategoryToProduct")
+}
+
+model Product {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?   @db.Text
+  price         Float
+  originalPrice Float?    // Preço original se estiver em promoção
+  onPromotion   Boolean?  @default(false)
+  imageUrls     String[]
+  quantity      Int       @default(0) // Quantidade em estoque
+
+  // Relação com o Vendedor (User)
+  userId String
+  user   User   @relation("UserProducts", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relação com Categorias
+  categories Category[] @relation("CategoryToProduct")
+
+  // Relação com Reservas
+  reservations Reservation[] @relation("ProductReservations")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Reservation {
+  id        String   @id @default(cuid())
+  quantity  Int
+  status    String   // Ex: PENDING, CONFIRMED, CANCELLED, COMPLETED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relação com o Comprador (User)
+  userId String
+  user   User   @relation("UserReservations", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relação com o Produto
+  productId String
+  product   Product @relation("ProductReservations", fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([productId])
+}
+
+
+// --- MODELOS PADRÃO DO NEXTAUTH.JS ---
 
 model Account {
   id                String  @id @default(cuid())
@@ -35,96 +126,9 @@ model Session {
 }
 
 model VerificationToken {
-  id      String   @id @default(uuid())
-  email   String   @unique
-  token   String   @unique
-  expires DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-  @@unique([email, token])
-}
-
-model Product {
-  id            String        @id @default(cuid())
-  name          String
-  description   String?
-  price         Float // This will be the promotional price if onPromotion is true, otherwise the regular price
-  originalPrice Float? // The price before promotion, only relevant if onPromotion is true
-  onPromotion   Boolean       @default(false) // Flag to indicate if the product is on promotion
-  imageUrls     String[]
-  quantity      Int           @default(0) // Novo campo para quantidade do produto
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  userId        String
-  usado         Boolean       @default(false)
-  user          User          @relation(fields: [userId], references: [id])
-  categories    Category[]    @relation("ProductCategories")
-  reservations  Reservation[] // Relation to reservations
-
-  @@index([userId])
-}
-
-model Category {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  products  Product[] @relation("ProductCategories")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-// New Reservation Model
-enum ReservationStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  COMPLETED // Optional: if you want to mark reservations as fulfilled
-}
-
-model Reservation {
-  id        String            @id @default(cuid())
-  quantity  Int
-  status    ReservationStatus @default(PENDING)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-
-  userId String // User who made the reservation
-  user   User   @relation(fields: [userId], references: [id])
-
-  // Optional: Add a field for sellerId if you want to directly link the seller
-  // who owns the product, though it can be inferred via product.userId
-  // sellerId    String
-  // seller      User              @relation(name: "SellerReservations", fields: [sellerId], references: [id])
-  // @@index([sellerId]) // if sellerId is added
-
-  @@index([productId])
-  @@index([userId])
-}
-
-enum UserRole {
-  USER
-  ADMIN
-}
-
-model User {
-  id                   String        @id @default(cuid())
-  name                 String?
-  email                String?       @unique
-  passwordHash         String?
-  emailVerified        DateTime?
-  storeName            String?
-  image                String?
-  accounts             Account[]
-  sessions             Session[]
-  products             Product[]
-  sellerBannerImageUrl String?
-  reservations         Reservation[] // Reservas feitas pelo usuário ou em seus produtos
-  whatsappLink         String? // Link do WhatsApp do usuário
-  profileDescription   String? // Descrição do perfil do vendedor
-  role                 UserRole      @default(USER) // Novo campo de papel
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
-
-  @@map("users")
+  @@unique([identifier, token])
 }

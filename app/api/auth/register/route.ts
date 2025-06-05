@@ -2,97 +2,133 @@
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-import nodemailer from 'nodemailer'; // NOVO: Importar nodemailer
-import { v4 as uuidv4 } from 'uuid'; // NOVO: Importar uuid
+import { z } from "zod";
+import { UserRole } from "@prisma/client"; // Importar o enum de roles do Prisma Client
+import { v4 as uuidv4 } from 'uuid'; // Para gerar tokens únicos
+import { sendVerificationEmail } from "@/lib/nodemailer"; // Sua função de envio de email
+
+// Schema de validação Zod com lógica condicional para o whatsappLink
+const registerUserSchema = z.object({
+  email: z.string().email({ message: "Por favor, insira um email válido." }),
+  name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
+  password: z.string().min(6, { message: "A senha precisa ter no mínimo 6 caracteres, cumpadi." }),
+  role: z.enum([UserRole.USER, UserRole.SELLER], {
+    required_error: "O tipo de conta (Comprador ou Vendedor) é obrigatório.",
+  }),
+  whatsappLink: z.string()
+    .url({ message: "O link do WhatsApp parece inválido." })
+    .refine(val => val.startsWith("https://wa.me/") || val.startsWith("https://api.whatsapp.com/send?phone="), {
+      message: "Link do Zap do Zaca deve começar com https://wa.me/ ou https://api.whatsapp.com/send?phone="
+    })
+    .optional()
+    .nullable(),
+}).superRefine((data, ctx) => {
+  if (data.role === 'SELLER' && (!data.whatsappLink || data.whatsappLink.trim() === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "O link do WhatsApp é obrigatório para a conta de Vendedor.",
+      path: ["whatsappLink"],
+    });
+  }
+});
+
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, name, password, whatsappLink } = body;
 
-    if (!email || !password || !whatsappLink) {
-      return new NextResponse("Email, senha e link do WhatsApp são obrigatórios", { status: 400 });
+    // 1. Validar os dados de entrada
+    const validation = registerUserSchema.safeParse(body);
+    if (!validation.success) {
+      const errorMessage = validation.error.errors[0]?.message || "Dados de registro inválidos.";
+      return NextResponse.json({ message: errorMessage }, { status: 400 });
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const { email, name, password, whatsappLink, role } = validation.data;
 
+    // 2. Verificar se o usuário já existe
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return new NextResponse("Usuário já existe com este email", { status: 409 });
+      // Se o usuário existe, mas ainda não verificou o email, pode ser uma boa ideia
+      // permitir que ele solicite um novo email de verificação em vez de apenas bloquear.
+      // Mas, para o fluxo de registro, um erro de conflito é apropriado.
+      return NextResponse.json(
+        { message: "Este email já foi cadastrado. Tente fazer login ou recuperar sua senha." },
+        { status: 409 } // Conflict
+      );
     }
 
+    // 3. Criptografar a senha
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // 4. Criar o novo usuário no banco de dados
     const newUser = await prisma.user.create({
       data: {
         email,
         name,
         passwordHash: hashedPassword,
-        whatsappLink,
-        // emailVerified: new Date(), // Remover esta linha
+        whatsappLink: role === UserRole.SELLER ? whatsappLink : null,
+        role: role, // Salva a role correta
+        emailVerified: null, // Usuário começa como não verificado
       },
     });
 
-    // --- Lógica de envio de e-mail de verificação integrada diretamente ---
-    try {
-      // Gerar um token único e de tempo limitado
-      const verificationToken = uuidv4();
-      const expires = new Date(Date.now() + 3600 * 1000); // Token válido por 1 hora
+    // ---- INÍCIO DA LÓGICA DE ENVIO DE EMAIL DE VERIFICAÇÃO ----
 
-      // Salvar o token no banco de dados.
-      // Certifique-se que o modelo VerificationToken está no seu schema.prisma
-      await prisma.verificationToken.create({
-        data: {
-          email: newUser.email!,
-          token: verificationToken,
-          expires: expires,
-        },
-      });
+    // 5. Gerar e armazenar o token de verificação
+    const verificationTokenValue = uuidv4() + '-' + Date.now(); // Token único
+    const expires = new Date(Date.now() + 3600 * 1000 * 24); // Token válido por 24 horas
 
-      // Configurar o Nodemailer
-      const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_SERVER_HOST,
-        port: parseInt(process.env.EMAIL_SERVER_PORT || '587'),
-        secure: process.env.EMAIL_SERVER_SECURE === 'true',
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
-      });
+    // Antes de criar um novo token, remove quaisquer tokens existentes para o mesmo email (identifier).
+    // Isso é crucial se o usuário tentar se registrar múltiplas vezes ou se um token anterior não foi usado.
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: email },
+    });
 
-      const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-email?token=${verificationToken}`;
+    // Criar o novo token de verificação
+    await prisma.verificationToken.create({
+      data: {
+        identifier: email, // O email do usuário é o identificador
+        token: verificationTokenValue,
+        expires,
+      },
+    });
 
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM,
-        to: newUser.email!,
-        subject: 'Verifique seu e-mail para ZECAPLACE',
-        html: `
-          <p>Olá ${newUser.name || ''},</p>
-          <p>Obrigado por se registrar no Zecaplace. Por favor, verifique seu endereço de e-mail clicando no link abaixo:</p>
-          <p><a href="${verificationLink}">Verificar E-mail Agora</a></p>
-          <p>Este link expirará em 1 hora.</p>
-          <p>Se você não se registrou em nosso site, por favor ignore este e-mail.</p>
-          <p>Atenciosamente,<br/>Equipe MakeStore</p>
-        `,
-      });
-      console.log(`E-mail de verificação enviado para ${newUser.email}`);
-    } catch (emailError: any) { // Capture o erro do e-mail
-      console.error(`Falha ao enviar e-mail de verificação para ${newUser.email}:`, emailError);
-      // Aqui você pode decidir o que fazer:
-      // 1. Apenas logar o erro e continuar (como está feito agora).
-      // 2. Retornar um erro para o frontend (e impedir o registro).
-      // Se decidir retornar erro, considere: return new NextResponse("Erro ao enviar e-mail de verificação. Por favor, tente novamente ou contate o suporte.", { status: 500 });
-    }
-    // -------------------------------------------------------------------
+    // 6. Enviar o email de verificação
+    await sendVerificationEmail({
+      email: newUser.email!, // Garante que o email não é null (já validado)
+      name: newUser.name,
+      token: verificationTokenValue,
+    });
+    
+    // ---- FIM DA LÓGICA DE ENVIO DE EMAIL DE VERIFICAÇÃO ----
 
-    return NextResponse.json(newUser, { status: 201 });
+    // 7. Remover a senha do objeto de resposta por segurança
+    const { passwordHash, ...userWithoutPassword } = newUser;
+
+    // 8. Retornar uma resposta de sucesso clara para o cliente
+    return NextResponse.json(
+      { 
+        message: "Cadastro realizado com sucesso! Enviamos um link de verificação para o seu email. Dá uma espiada lá (e na caixa de spam, psit!).",
+        user: userWithoutPassword 
+      },
+      { status: 201 }
+    );
+
   } catch (error: any) {
-    console.log("--- DETALHES DO ERRO CAPTURADO DURANTE REGISTRO ---");
-    console.log("Tipo do erro:", typeof error);
-    console.log("Mensagem do erro:", error?.message);
-    console.log("Stack do erro:", error?.stack);
-    console.error("Erro no registro:", error);
-    return new NextResponse("Erro interno do servidor ao registrar. Por favor, tente novamente.", { status: 500 });
+    console.error("Erro detalhado no fluxo de registro:", error);
+    
+    if (error.message?.includes('Falha ao enviar o e-mail de verificação')) {
+        // Se o envio do email falhar, o usuário já foi criado.
+        // Você pode decidir se quer deletar o usuário ou permitir que ele solicite um novo email.
+        // Por ora, informamos sobre o cadastro e a falha no email.
+        return NextResponse.json({ 
+            message: "Cadastro realizado, mas falhamos em enviar o email de verificação. Você pode tentar solicitar um novo link na página de login ou entrar em contato com o suporte." 
+        }, { status: 201 }); // Retorna 201 porque o usuário FOI criado, mas com um aviso sobre o email.
+    }
+    if (error.code === 'P2002') {
+        return NextResponse.json({ message: "Erro ao criar registro. Este email ou identificador já pode estar em uso." }, { status: 409 });
+    }
+    return NextResponse.json({ message: "Erro interno do servidor. Ai, pastor, deu um revertério aqui!" }, { status: 500 });
   }
 }

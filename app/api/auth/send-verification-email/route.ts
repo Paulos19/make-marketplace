@@ -1,80 +1,132 @@
 // app/api/auth/send-verification-email/route.ts
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma'; // [cite: paulos19/make-marketplace/make-marketplace-46963943dd3832bf14e677f937979a4894fd9404/lib/prisma.ts]
 import nodemailer from 'nodemailer';
 import { v4 as uuidv4 } from 'uuid'; // Para gerar tokens únicos
+import { z } from 'zod';
+
+// Schema de validação para o corpo da requisição
+const sendVerificationEmailSchema = z.object({
+  email: z.string().email({ message: "Por favor, forneça um email válido." }),
+});
 
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json();
+    const body = await request.json();
 
-    if (!email) {
-      return new NextResponse('Email é obrigatório', { status: 400 });
+    // Validar o corpo da requisição
+    const validation = sendVerificationEmailSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { message: "Dados inválidos.", errors: validation.error.format().email?._errors },
+        { status: 400 }
+      );
     }
+
+    const { email } = validation.data;
 
     const user = await prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
-      // Para segurança, não informamos se o email não existe.
+      // Para segurança, não informamos explicitamente se o email não existe.
       // Apenas retornamos sucesso para evitar enumeração de usuários.
-      return new NextResponse('E-mail de verificação enviado (se a conta existir).', { status: 200 });
+      // No entanto, em alguns fluxos, você pode querer dar um feedback mais direto.
+      console.log(`Tentativa de envio de verificação para email não cadastrado: ${email}`);
+      return NextResponse.json({ message: 'Se uma conta com este email existir, um link de verificação foi enviado.' }, { status: 200 });
+    }
+
+    if (user.emailVerified) {
+        return NextResponse.json({ message: 'Este email já foi verificado, cumpadi!' }, { status: 400 });
     }
 
     // Gerar um token único e de tempo limitado
-    const verificationToken = uuidv4();
-    const expires = new Date(Date.now() + 3600 * 1000); // Token válido por 1 hora
+    const verificationTokenValue = uuidv4() + uuidv4(); // Token mais longo
+    const expires = new Date(Date.now() + 3600 * 1000 * 24); // Token válido por 24 horas
 
-    // Salvar o token no banco de dados.
-    // Você pode ter uma tabela separada para tokens ou adicionar um campo no User.
-    // Para simplificar, vou criar uma nova tabela para `VerificationToken` no seu schema.prisma.
-    // **NOTA**: Certifique-se de adicionar esta tabela no seu schema.prisma e rodar `npx prisma migrate dev`
-    //  model VerificationToken {
-    //    id        String   @id @default(uuid())
-    //    email     String   @unique
-    //    token     String   @unique
-    //    expires   DateTime
-    //    @@unique([email, token])
-    //  }
-    await prisma.verificationToken.create({
-      data: {
-        email: user.email!,
-        token: verificationToken,
-        expires: expires,
+    // Usar upsert para criar um novo token ou atualizar um existente para o mesmo identifier (email)
+    // Isso evita o erro de "Unique constraint failed" se o usuário solicitar várias vezes.
+    // O modelo VerificationToken deve usar 'identifier' para o email.
+    await prisma.verificationToken.upsert({
+      where: {
+        identifier_token: {
+          identifier: email,
+          token: ''
+        }
+      },
+      create: {
+        identifier: email,
+        token: verificationTokenValue,
+        expires,
+      },
+      update: { // Se um token para este 'identifier' já existe, atualiza o token e a expiração
+        token: verificationTokenValue,
+        expires,
       },
     });
+    
+    // Se o upsert não funcionar como esperado com 'identifier' (dependendo da sua constraint única exata),
+    // uma abordagem mais robusta para o schema padrão do NextAuth (@@unique([identifier, token])) seria:
+    // 1. Deletar tokens existentes para o identifier
+    // await prisma.verificationToken.deleteMany({ where: { identifier: email } });
+    // 2. Criar o novo token
+    // await prisma.verificationToken.create({
+    //   data: {
+    //     identifier: email,
+    //     token: verificationTokenValue,
+    //     expires,
+    //   },
+    // });
 
-    // Enviar o e-mail de verificação
+
+    // Configuração do Nodemailer Transporter
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_SERVER_HOST, // Certifique-se de configurar estas variáveis no .env
+      host: process.env.EMAIL_SERVER_HOST,
       port: parseInt(process.env.EMAIL_SERVER_PORT || '587'),
-      secure: process.env.EMAIL_SERVER_SECURE === 'true', // Use 'true' para 465 (SSL) ou 'false' para 587 (TLS/STARTTLS)
+      secure: process.env.EMAIL_SERVER_PORT === '465', // true para porta 465 (SSL), false para outras (TLS/STARTTLS)
       auth: {
         user: process.env.EMAIL_SERVER_USER,
         pass: process.env.EMAIL_SERVER_PASSWORD,
       },
+      // Adicione opções de TLS se necessário para alguns provedores (ex: Gmail com App Passwords)
+      // tls: {
+      //   ciphers:'SSLv3'
+      // }
     });
 
-    const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-email?token=${verificationToken}`;
+    const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-email?token=${verificationTokenValue}`;
+    const siteName = "Zacaplace"; // Nome do seu site/marca
 
     await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: `"${siteName}" <${process.env.EMAIL_FROM}>`,
       to: user.email!,
-      subject: 'Verifique seu e-mail para MakeStore Marketplace',
+      subject: `Ô Psit! Verifique seu Email no ${siteName}!`,
       html: `
-        <p>Olá ${user.name || ''},</p>
-        <p>Obrigado por se registrar no MakeStore Marketplace. Por favor, verifique seu endereço de e-mail clicando no link abaixo:</p>
-        <p><a href="${verificationLink}">Verificar E-mail Agora</a></p>
-        <p>Este link expirará em 1 hora.</p>
-        <p>Se você não se registrou em nosso site, por favor ignore este e-mail.</p>
-        <p>Atenciosamente,<br/>Equipe MakeStore</p>
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+          <h2 style="color: #8A2BE2; text-align: center; font-family: 'Bangers', cursive;">Só falta um tiquinho, Cumpadi ${user.name || ''}!</h2>
+          <p>Obrigado por se juntar à trupe do ${siteName}! Para começar a farra (e as compras!), precisamos que você verifique seu email clicando no botão mágico abaixo:</p>
+          <div style="text-align: center; margin: 25px 0;">
+            <a href="${verificationLink}" style="background-color: #EC4899; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">Verificar Meu Email Agora!</a>
+          </div>
+          <p>Este link é mais rápido que o Zaca fugindo da bronca e expira em <strong>24 horas</strong>.</p>
+          <p>Se você não pediu pra entrar na nossa 'Zoropa', pode ignorar este email que não dá nada!</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="text-align: center; font-size: 12px; color: #777;">Abraços apertados (mas sem amassar o chapéu!),<br/>Equipe ${siteName}</p>
+        </div>
       `,
+      text: `Olá ${user.name || ''},\n\nObrigado por se registrar no ${siteName}. Por favor, verifique seu endereço de e-mail visitando o seguinte link: ${verificationLink}\n\nEste link expirará em 24 horas.\n\nSe você não se registrou, por favor ignore este e-mail.\n\nAtenciosamente,\nEquipe ${siteName}`
     });
 
-    return new NextResponse('E-mail de verificação enviado.', { status: 200 });
-  } catch (error) {
-    console.error('Erro ao enviar e-mail de verificação:', error);
-    return new NextResponse('Erro interno do servidor ao enviar e-mail de verificação', { status: 500 });
+    return NextResponse.json({ message: `Email de verificação enviado para ${user.email}. Dá uma espiada na sua caixa de entrada e no spam, viu?!` }, { status: 200 });
+
+  } catch (error: any) {
+    console.error('Erro ao enviar e-mail de verificação (API):', error);
+    // Tratar erro P2002 (unique constraint) especificamente se o upsert falhar por alguma razão de schema
+    if (error.code === 'P2002' && error.meta?.target?.includes('identifier')) {
+      // Isso não deveria acontecer com o upsert configurado corretamente, mas como fallback:
+      return NextResponse.json({ message: 'Já existe uma solicitação de verificação para este email. Verifique sua caixa de entrada.' }, { status: 409 });
+    }
+    return NextResponse.json({ message: 'Deu um revertério aqui e não conseguimos enviar o email. Tente de novo, psit!' }, { status: 500 });
   }
 }
