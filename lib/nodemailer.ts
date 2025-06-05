@@ -173,3 +173,34 @@ export const sendOrderCompletionEmail = async ({
     text: `Olá ${clientName || ''}, O vendedor ${sellerName} confirmou a entrega do seu produto "${productName}". Por favor, avalie sua compra em: ${reviewLink}`
   });
 };
+
+interface PasswordResetEmailParams {
+  email: string;
+  token: string;
+}
+
+/**
+ * Envia um e-mail para o usuário com um link para redefinir sua senha.
+ */
+export const sendPasswordResetEmail = async ({ email, token }: PasswordResetEmailParams) => {
+  const siteName = "Zacaplace";
+  const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/reset-password?token=${token}`;
+
+  const subject = `Recuperação de Senha - ${siteName}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-w: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
+      <h2 style="color: #8A2BE2;">Esqueceu sua senha, cumpadi?</h2>
+      <p>Sem problemas! Acontece nas melhores famílias de trapalhões. Recebemos uma solicitação para redefinir a senha da sua conta no ${siteName}.</p>
+      <p>Clique no botão abaixo para criar uma nova senha. Este link é válido por 1 hora.</p>
+      <p style="text-align: center; margin-top: 25px;">
+        <a href="${resetLink}" style="background-color: #f97316; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Redefinir Minha Senha</a>
+      </p>
+      <p>Se você não solicitou uma redefinição de senha, pode ignorar este e-mail com segurança. Ninguém mais além de você recebeu este link.</p>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+      <p style="text-align: center; font-size: 12px; color: #777;">Atenciosamente,<br>A Turma do ${siteName}</p>
+    </div>
+  `;
+  const text = `Olá! Para redefinir sua senha, acesse o seguinte link (válido por 1 hora): ${resetLink}`;
+
+  await sendMail({ to: email, subject, html, text });
+};
