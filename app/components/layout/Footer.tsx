@@ -1,122 +1,93 @@
-// app/components/layout/Footer.tsx (ou o caminho do seu componente)
+// app/components/layout/Footer.tsx
 import Link from 'next/link';
-import { Facebook, Instagram, Twitter, Linkedin, Youtube, Mail, MapPin, PhoneCall } from 'lucide-react'; // Ícones de exemplo
+import Image from 'next/image';
+import { Facebook, Instagram } from 'lucide-react';
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
-
-  const socialLinks = [
-    { name: 'Facebook', href: '#', icon: Facebook },
-    { name: 'Instagram', href: '#', icon: Instagram },
-    { name: 'Twitter', href: '#', icon: Twitter },
-    { name: 'LinkedIn', href: '#', icon: Linkedin },
-    // Adicione ou remova conforme necessário
-  ];
-
-  const usefulLinks = [
-    { name: 'Sobre Nós', href: '/about' },
-    { name: 'Contato', href: '/contact' },
-    { name: 'FAQ', href: '/faq' },
-    // Adicione mais links úteis se tiver
-  ];
-
-  const legalLinks = [
-    { name: 'Política de Privacidade', href: '/privacy-policy' },
-    { name: 'Termos de Serviço', href: '/terms-of-service' },
-    { name: 'Política de Cookies', href: '/cookie-policy' },
-  ];
-
   return (
-    <footer className="bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700/50 text-gray-700 dark:text-gray-300">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-8">
-          {/* Coluna 1: Sobre a Loja */}
-          <div className="space-y-4">
-            <Link href="/" className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-500 to-pink-500 hover:opacity-90 transition-opacity">
-              MakeStore
+    <footer className="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 print:hidden">
+      <div className="mx-auto max-w-screen-xl px-4 pb-8 pt-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-md">
+          <div className="flex justify-center">
+            <Link href="/" className="inline-block" aria-label="Página Inicial do Zacaplace">
+              <Image src="/logo.svg" alt="Zacaplace Logo" width={200} height={50} priority={false} />
             </Link>
-            <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-              Sua loja completa de maquiagens e produtos de beleza para realçar o seu brilho natural. Qualidade e variedade em um só lugar.
+          </div>
+
+          <p className="mx-auto mt-6 max-w-md text-center leading-relaxed text-slate-600 dark:text-slate-400">
+            O seu marketplace de achadinhos incríveis! Encontre as melhores ofertas e venda seus produtos de forma fácil e segura. É um estouro, psit!
+          </p>
+        </div>
+
+        <div className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-32">
+          <div className="mx-auto max-w-sm lg:max-w-none text-center lg:text-left">
+            <p className="text-2xl font-bangers tracking-wider text-zaca-roxo dark:text-zaca-lilas">
+              Fique por Dentro das Novidades!
             </p>
-            <div className="flex space-x-4 mt-2">
-              {socialLinks.map((social) => (
-                <Link
-                  key={social.name}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={social.name}
-                  className="text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors"
-                >
-                  <social.icon className="h-6 w-6" />
-                </Link>
-              ))}
+
+            <p className="mt-4 text-slate-600 dark:text-slate-400">
+              Cadastre seu e-mail para não perder nenhuma promoção ou lançamento dos seus vendedores favoritos. Prometemos não ser chatos igual o Sargento Pincel!
+            </p>
+
+            <form className="mt-6 flex flex-col sm:flex-row gap-4">
+              <label htmlFor="FooterEmail" className="sr-only"> Email </label>
+              <input
+                type="email"
+                id="FooterEmail"
+                placeholder="didimoco@trapalhoes.com"
+                className="w-full rounded-md border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800 px-4 py-3 text-slate-700 dark:text-slate-200 shadow-sm transition focus:border-zaca-azul dark:focus:border-zaca-lilas focus:ring-1 focus:ring-zaca-azul dark:focus:ring-zaca-lilas"
+              />
+              <button
+                type="submit"
+                className="inline-block shrink-0 rounded-md border border-zaca-azul bg-zaca-azul px-6 py-3 text-sm font-bold text-white transition hover:bg-zaca-azul/90 focus:outline-none focus:ring-2 focus:ring-zaca-azul focus:ring-offset-2 dark:focus:ring-offset-slate-900 active:bg-zaca-azul/80"
+              >
+                Quero Receber!
+              </button>
+            </form>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 text-center sm:grid-cols-2 lg:text-left">
+            <div>
+              <p className="text-lg font-semibold text-slate-900 dark:text-white font-bangers tracking-wide">Institucional</p>
+              <ul className="mt-6 space-y-3 text-sm">
+                <li><Link href="/about" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Sobre o Zacaplace</Link></li>
+                <li><Link href="/terms" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Termos de Serviço</Link></li>
+                <li><Link href="/privacy" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Política de Privacidade</Link></li>
+                <li><Link href="/careers" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Trabalhe Conosco</Link></li>
+              </ul>
             </div>
-          </div>
-
-          {/* Coluna 2: Links Úteis */}
-          <div className="mt-8 md:mt-0">
-            <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-wider uppercase">
-              Navegação
-            </h5>
-            <ul className="mt-4 space-y-3">
-              {usefulLinks.map((link) => (
-                <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors">
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Coluna 3: Legal */}
-          <div className="mt-8 md:mt-0">
-            <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-wider uppercase">
-              Informações
-            </h5>
-            <ul className="mt-4 space-y-3">
-              {legalLinks.map((link) => (
-                <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors">
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          {/* Coluna 4: Contato (Exemplo) */}
-          <div className="mt-8 md:mt-0">
-            <h5 className="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-wider uppercase">
-              Entre em Contato
-            </h5>
-            <ul className="mt-4 space-y-3">
-              <li className="flex items-start">
-                <MapPin className="h-5 w-5 mr-2.5 mt-0.5 text-indigo-500 shrink-0" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">Rua Exemplo, 123, Cidade, Estado</span>
-              </li>
-              <li className="flex items-start">
-                <Mail className="h-5 w-5 mr-2.5 mt-0.5 text-indigo-500 shrink-0" />
-                <a href="mailto:contato@makestore.com" className="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors">
-                  contato@makestore.com
-                </a>
-              </li>
-              <li className="flex items-start">
-                <PhoneCall className="h-5 w-5 mr-2.5 mt-0.5 text-indigo-500 shrink-0" />
-                <a href="tel:+5511999999999" className="text-sm text-gray-600 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors">
-                  (11) 99999-9999
-                </a>
-              </li>
-            </ul>
+            <div>
+              <p className="text-lg font-semibold text-slate-900 dark:text-white font-bangers tracking-wide">Ajuda & Suporte</p>
+              <ul className="mt-6 space-y-3 text-sm">
+                <li><Link href="/contact" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Fale com o Zaca</Link></li>
+                <li><Link href="/faq" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Dúvidas Frequentes</Link></li>
+                <li><Link href="/how-to-sell" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Como Vender no Zacaplace</Link></li>
+                <li><Link href="/how-to-buy" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Como Comprar</Link></li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        {/* Linha do Copyright */}
-        <div className="mt-12 md:mt-16 pt-8 border-t border-gray-200 dark:border-gray-700/50 text-center">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            &copy; {currentYear} MakeStore. Todos os direitos reservados. CNPJ: XX.XXX.XXX/0001-XX.
-          </p>
+        <div className="mt-16 border-t border-slate-200 dark:border-slate-800 pt-8">
+          <div className="sm:flex sm:items-center sm:justify-between">
+            <p className="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
+              &copy; {new Date().getFullYear()} Zacaplace Inc. Todos os direitos reservados. Dedéco, tira a mão daí!
+            </p>
+            <ul className="mt-4 flex justify-center gap-x-5 sm:mt-0">
+              <li>
+                <a href="#" target="_blank" rel="noreferrer" className="text-slate-700 transition hover:text-zaca-magenta dark:text-slate-300 dark:hover:text-zaca-magenta" aria-label="Facebook do Zacaplace">
+                  <Facebook className="h-5 w-5" />
+                </a>
+              </li>
+              <li>
+                <a href="#" target="_blank" rel="noreferrer" className="text-slate-700 transition hover:text-zaca-magenta dark:text-slate-300 dark:hover:text-zaca-magenta" aria-label="Instagram do Zacaplace">
+                  <Instagram className="h-5 w-5" />
+                </a>
+              </li>
+              <li>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </footer>

@@ -115,3 +115,21 @@ model Reservation {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
+
+model ThemeSettings {
+  id      String @id @default(cuid()) // Apenas um registro existirá nesta tabela
+  
+  // Exemplo de cores da marca que serão customizáveis
+  // Armazenaremos como string no formato HSL: "262 64% 49%"
+  zaca_roxo  String?
+  zaca_azul  String?
+  zaca_magenta String?
+  zaca_vermelho String?
+  
+  // Exemplo de fontes que serão customizáveis
+  // Armazenaremos o nome da fonte, ex: 'Roboto', 'Montserrat'
+  font_sans    String?
+  font_display String?
+
+  updatedAt DateTime @updatedAt
+}

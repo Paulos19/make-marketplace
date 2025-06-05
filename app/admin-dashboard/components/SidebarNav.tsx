@@ -8,6 +8,7 @@ import {
   Users,
   Package,
   Shapes,
+  Palette,
 } from 'lucide-react';
 
 export function SidebarNav({ isMobile = false }: { isMobile?: boolean }) {
@@ -18,6 +19,7 @@ export function SidebarNav({ isMobile = false }: { isMobile?: boolean }) {
     { href: "/admin-dashboard/users", label: "Usuários", icon: Users },
     { href: "/admin-dashboard/categories", label: "Categorias", icon: Shapes },
     { href: "/admin-dashboard/products", label: "Produtos", icon: Package },
+    { href: "/admin-dashboard/theme", label: "Aparência", icon: Palette },
   ];
 
   return (
