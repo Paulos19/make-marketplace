@@ -2,33 +2,34 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from 'next/server';
 
 export default withAuth(
-  // `withAuth` amplia sua Request com o token do usuário.
+  // `withAuth` amplia o objeto `req` com o token do usuário.
   function middleware(req) {
-    const isAdminPath = req.nextUrl.pathname.startsWith('/admin-dashboard');
-    const userEmail = req.nextauth.token?.email;
-    const adminEmail = process.env.EMAIL_USER_MAIL;
+    const isAdminDashboardPath = req.nextUrl.pathname.startsWith('/admin-dashboard');
+    const userRole = req.nextauth.token?.role;
 
     // Se tentando acessar a rota de admin
-    if (isAdminPath) {
-      // Se não for o admin, redireciona para a página inicial
-      if (userEmail !== adminEmail) {
+    if (isAdminDashboardPath) {
+      // Se a role no token não for 'ADMIN', redireciona para a página inicial
+      if (userRole !== 'ADMIN') {
         return NextResponse.redirect(new URL('/', req.url));
       }
     }
-    // Para outras rotas protegidas, ou se for o admin acessando a rota de admin,
+    // Para outras rotas protegidas (como /dashboard), ou se for o admin acessando a rota de admin,
     // permite o acesso.
     return NextResponse.next();
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token, // Usuário precisa estar logado
+      // O usuário precisa estar logado para qualquer rota no 'matcher'.
+      authorized: ({ token }) => !!token, 
     },
   }
 );
 
+// Define quais rotas são protegidas por este middleware
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/admin-dashboard/:path*", // Adiciona a nova rota do admin ao matcher
+    "/admin-dashboard/:path*",
   ],
 };

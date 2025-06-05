@@ -6,97 +6,40 @@ generator client {
 }
 
 datasource db {
-  // Certifique-se que o provider está correto para o seu banco (ex: postgresql, mysql, sqlite)
-  provider = "postgresql" 
+  provider = "postgresql" // Ou "mysql", "sqlite", etc.
   url      = env("DATABASE_URL")
 }
 
-// Enum para Papéis de Usuário, agora com a role SELLER
 enum UserRole {
   USER
   SELLER
   ADMIN
 }
 
-// --- MODELOS PRINCIPAIS DA APLICAÇÃO ---
-
+// Modelo User agora contém todos os campos e a role para diferenciar
 model User {
-  id                   String    @id @default(cuid())
-  name                 String?
-  email                String?   @unique
-  emailVerified        DateTime?
-  image                String?   // Avatar do usuário
-  passwordHash         String?   // Para login com credenciais
-  role                 UserRole  @default(USER) // Padrão é USER (comprador)
-  
-  // Campos do Vendedor (Zacaplace)
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          UserRole  @default(USER)
+
+  // Campos de Vendedor (opcionais, preenchidos apenas se role for SELLER)
+  storeName            String?
   whatsappLink         String?
-  storeName            String?               // Nome da Loja
-  profileDescription   String?   @db.Text      // Descrição do perfil/loja
-  sellerBannerImageUrl String?               // URL da imagem de banner da página do vendedor
+  profileDescription   String?
+  sellerBannerImageUrl String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   // Relações
   accounts     Account[]
   sessions     Session[]
-  products     Product[]     @relation("UserProducts")
-  reservations Reservation[] @relation("UserReservations")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  products     Product[] // Um usuário (vendedor) pode ter muitos produtos
+  reservations Reservation[] // Um usuário (comprador) pode ter muitas reservas
 }
-
-model Category {
-  id   String @id @default(cuid())
-  name String @unique
-
-  products Product[] @relation("CategoryToProduct")
-}
-
-model Product {
-  id            String    @id @default(cuid())
-  name          String
-  description   String?   @db.Text
-  price         Float
-  originalPrice Float?    // Preço original se estiver em promoção
-  onPromotion   Boolean?  @default(false)
-  imageUrls     String[]
-  quantity      Int       @default(0) // Quantidade em estoque
-
-  // Relação com o Vendedor (User)
-  userId String
-  user   User   @relation("UserProducts", fields: [userId], references: [id], onDelete: Cascade)
-
-  // Relação com Categorias
-  categories Category[] @relation("CategoryToProduct")
-
-  // Relação com Reservas
-  reservations Reservation[] @relation("ProductReservations")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Reservation {
-  id        String   @id @default(cuid())
-  quantity  Int
-  status    String   // Ex: PENDING, CONFIRMED, CANCELLED, COMPLETED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relação com o Comprador (User)
-  userId String
-  user   User   @relation("UserReservations", fields: [userId], references: [id], onDelete: Cascade)
-
-  // Relação com o Produto
-  productId String
-  product   Product @relation("ProductReservations", fields: [productId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([productId])
-}
-
-
-// --- MODELOS PADRÃO DO NEXTAUTH.JS ---
 
 model Account {
   id                String  @id @default(cuid())
@@ -131,4 +74,44 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// Produto agora se relaciona diretamente com User
+model Product {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  price         Float
+  originalPrice Float?
+  onPromotion   Boolean  @default(false)
+  quantity      Int      @default(1)
+  imageUrls     String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // << RELAÇÃO CORRIGIDA >>
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categories   Category[]
+  reservations Reservation[]
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  products Product[]
+}
+
+model Reservation {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }

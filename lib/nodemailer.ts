@@ -126,3 +126,50 @@ export const sendReservationNotificationEmail = async ({
     text: `Olá ${sellerName || 'Vendedor(a)'}, Você recebeu uma nova reserva para: ${productName} (Quantidade: ${quantity}) de ${clientName || 'Cliente Interessado'}. Contato: ${clientContact || 'Não informado'}. Gerencie em ${reservationsUrl}`
   });
 };
+
+interface OrderCompletionParams {
+  clientEmail: string;
+  clientName: string | null;
+  productName: string;
+  productId: string;
+  sellerName: string | null;
+}
+
+/**
+ * Envia um e-mail para o cliente quando o vendedor confirma a entrega.
+ */
+export const sendOrderCompletionEmail = async ({
+  clientEmail,
+  clientName,
+  productName,
+  productId,
+  sellerName,
+}: OrderCompletionParams) => {
+  const siteName = "Zacaplace";
+  // O link de avaliação pode apontar para a página do produto ou uma página específica de review
+  const reviewLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/products/${productId}#reviews`;
+
+  const subject = `✅ Pedido Entregue: Avalie sua compra de "${productName}"!`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-w: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
+      <h2 style="color: #16a34a;">Oba, ${clientName || 'Cumpadi'}! Seu produto chegou!</h2>
+      <p>O vendedor <strong>${sellerName || 'Zaca'}</strong> confirmou a entrega do seu produto:</p>
+      <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #eee;">
+        <p style="margin:0; font-size: 1.1em; font-weight: bold;">${productName}</p>
+      </div>
+      <p>A gente espera que você tenha amado seu achadinho! Que tal deixar uma avaliação e contar pra todo mundo como foi sua experiência? Isso ajuda outros Zacas a comprarem com mais confiança!</p>
+      <p style="text-align: center; margin-top: 25px;">
+        <a href="${reviewLink}" style="background-color: #f97316; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Deixar minha Avaliação</a>
+      </p>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+      <p style="text-align: center; font-size: 12px; color: #777;">Obrigado por fazer parte da turma do ${siteName}!</p>
+    </div>
+  `;
+
+  await sendMail({
+    to: clientEmail,
+    subject,
+    html,
+    text: `Olá ${clientName || ''}, O vendedor ${sellerName} confirmou a entrega do seu produto "${productName}". Por favor, avalie sua compra em: ${reviewLink}`
+  });
+};

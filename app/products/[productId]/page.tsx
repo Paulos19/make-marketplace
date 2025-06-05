@@ -27,16 +27,17 @@ import { Label } from '@/components/ui/label';
 
 // Ícones Lucide
 import {
-  UserCircle2, MessageSquareText, ChevronRight, Tag, Store, Minus, Plus,
+  UserCircle2, MessageSquareText, ChevronRight, Store, Minus, Plus,
   PackageOpen, AlertTriangle, ShoppingCart, ArrowLeft, Share2, Loader2
 } from 'lucide-react';
 
+// Componentes de Layout
 import Navbar from '@/app/components/layout/Navbar';
 import Footer from '@/app/components/layout/Footer';
-import RelatedProducts from '../components/RelatedProducts'; // Verifique o caminho
+import RelatedProducts from '../components/RelatedProducts'; 
 
-// << IMPORTAÇÃO DOS TIPOS CENTRAIS >>
-import type { Product, Category as CategoryInfo, UserInfo } from '@/lib/types';
+// Tipos (Importante: Product deve incluir user, onPromotion, originalPrice)
+import type { Product, Category as CategoryInfo } from '@/lib/types';
 
 const mainVariants: Variants = {
   hidden: { opacity: 0 },
@@ -54,8 +55,8 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const productId = params?.productId as string;
 
-  const [product, setProduct] = useState<Product | null>(null); // << USA O TIPO Product
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]); // << USA O TIPO Product
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
@@ -79,58 +80,69 @@ export default function ProductDetailPage() {
           const productData: Product = await productResponse.json();
           setProduct(productData);
 
-          if (productData.categories && productData.categories.length > 0) {
+          if (productData.categories && productData.categories.length > 0 && productData.user) {
             const primaryCategoryId = productData.categories[0].id;
             const relatedResponse = await fetch(`/api/products?categoryId=${primaryCategoryId}&limit=${PRODUCTS_PER_RELATED_ROW + 1}&all=true`);
             if (relatedResponse.ok) {
-              const relatedData = await relatedResponse.json();
-              const relatedProductsData: Product[] = Array.isArray(relatedData) ? relatedData : (relatedData.products || []);
-              setRelatedProducts(relatedProductsData.filter(p => p.id !== productId && p.user).slice(0, PRODUCTS_PER_RELATED_ROW));
-            } else {
-              console.warn("Falha ao buscar produtos relacionados para a categoria:", primaryCategoryId);
+              const relatedData: Product[] = await relatedResponse.json();
+              setRelatedProducts(relatedData.filter(p => p.id !== productId && p.user).slice(0, PRODUCTS_PER_RELATED_ROW));
             }
           }
         } catch (err: any) {
           setError(err.message || "Deu um 'Zacabum' ao carregar a página!");
-          console.error("Fetch product/related error:", err);
+          console.error("Erro ao buscar produto e relacionados:", err);
         }
         setLoading(false);
       };
       fetchProductAndRelated();
     } else {
-      setError("ID do achadinho não encontrado. Ai, pastor!");
+      setError("ID do achadinho não especificado.");
       setLoading(false);
     }
   }, [productId]);
 
   useEffect(() => {
-    if (!carouselApi) return;
+    if (!carouselApi) {
+      return;
+    }
     const onSelect = () => {
       if (carouselApi) {
         setCurrentImageSlide(carouselApi.selectedScrollSnap());
       }
     };
-    onSelect();
     carouselApi.on("select", onSelect);
+    onSelect();
     return () => {
-      carouselApi?.off("select", onSelect);
+      if (carouselApi) {
+        carouselApi.off("select", onSelect);
+      }
     };
   }, [carouselApi]);
 
   const openWhatsAppWithMessage = useCallback(() => {
-    if (!product || !product.user.whatsappLink) {
-      toast.error("Ô psit, o vendedor esqueceu o ZapZap!");
+    if (!product || !product.user || !product.user.whatsappLink) {
+      toast.error("Ô psit, o vendedor esqueceu o ZapZap ou os dados não carregaram!");
       return;
     }
+    
+    const whatsappLink = product.user.whatsappLink;
     const productName = product.name;
-    const productPrice = product.price.toFixed(2).replace('.', ',');
-    const productCategory = product.categories.length > 0 ? product.categories[0].name : 'Indefinida';
-    const quantity = selectedQuantity;
-    const message = `Olá, ${product.user.name || 'vendedor(a)'}! Tenho interesse no produto que vi no Zacaplace:\n\n*Produto:* ${productName}\n*Quantidade:* ${quantity}\n*Preço Unitário:* R$ ${productPrice}\n*Categoria:* ${productCategory}\n\nAinda está disponível? Gostaria de combinar a entrega/pagamento.`;
+    const sellerName = product.user.name || 'vendedor(a)';
+    const message = `Olá, ${sellerName}! Tenho interesse no produto que vi no Zacaplace:\n\n*Produto:* ${productName}\n*Quantidade:* ${selectedQuantity}\n\nAinda está disponível? Gostaria de combinar a entrega/pagamento.`;
     const encodedMessage = encodeURIComponent(message);
-    const whatsappNumberOnly = product.user.whatsappLink.replace(/\D/g, '');
-    const whatsappUrl = `https://wa.me/${whatsappNumberOnly}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+    let finalWhatsAppUrl = whatsappLink;
+    if (whatsappLink.includes("?")) {
+        finalWhatsAppUrl = `${whatsappLink}&text=${encodedMessage}`;
+    } else {
+        finalWhatsAppUrl = `${whatsappLink}?text=${encodedMessage}`;
+    }
+    const parts = finalWhatsAppUrl.split('?');
+    if (parts.length > 2) {
+        finalWhatsAppUrl = parts[0] + '?' + parts.slice(1).join('&');
+    }
+    
+    window.open(finalWhatsAppUrl, '_blank', 'noopener,noreferrer');
   }, [product, selectedQuantity]);
 
   const handleWhatsAppRedirect = () => {
@@ -151,15 +163,10 @@ export default function ProductDetailPage() {
 
   const handleReserveProduct = async () => {
     if (!product || !productId) return;
-    if (selectedQuantity > product.quantity) {
-      toast.error("Não dá pra reservar mais do que o Zaca tem em estoque!"); return;
-    }
-    if (selectedQuantity <= 0) {
-      toast.error("Escolha uma quantidade válida, Zé!"); return;
-    }
-    if (product.quantity === 0) {
-      toast.error("Ih, esse achadinho acabou igual dinheiro na mão de pobre!"); return;
-    }
+    if (selectedQuantity > product.quantity) { toast.error("Quantidade indisponível em estoque!"); return; }
+    if (selectedQuantity <= 0) { toast.error("Selecione uma quantidade válida."); return; }
+    if (product.quantity === 0) { toast.error("Produto esgotado!"); return; }
+    
     setIsReserving(true); setError(null);
     try {
       const response = await fetch('/api/reservations', {
@@ -167,105 +174,51 @@ export default function ProductDetailPage() {
         body: JSON.stringify({ productId: product.id, quantity: selectedQuantity }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Falha ao reservar. Deu xabu!');
-      toast.success(`${selectedQuantity}x "${product.name}" reservado(s) com sucesso!`,{
+      if (!response.ok) throw new Error(data.error || 'Falha ao criar reserva.');
+      
+      toast.success(`${selectedQuantity}x "${product.name}" reservado(s)!`,{
         description: "Você será redirecionado para o WhatsApp do vendedor.",
-        duration: 3000
+        duration: 3500
       });
       setProduct(prev => prev ? { ...prev, quantity: prev.quantity - selectedQuantity } : null);
-      setSelectedQuantity(1); // Reset quantity after reservation
-      setTimeout(() => {
-        openWhatsAppWithMessage();
-      }, 1500);
+      setSelectedQuantity(1);
+      setTimeout(openWhatsAppWithMessage, 1500);
     } catch (err: any) {
-      setError(err.message || "Deu um 'Zacaplot' na reserva.");
-      toast.error(`Erro na reserva: ${err.message || 'Deu ruim!'}`);
+      setError(err.message);
+      toast.error(`Erro na reserva: ${err.message}`);
     } finally {
       setIsReserving(false);
     }
   };
 
-  const getAvatarFallback = (name?: string | null) => {
-    if (name) {
-      const initials = name.trim().split(' ').map(n => n[0]).join('').toUpperCase();
-      return initials.substring(0, 2) || <UserCircle2 />;
-    }
-    return <UserCircle2 />;
-  };
+  const getAvatarFallback = (name?: string | null) => name ? name.trim().split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : <UserCircle2 />;
   
   const shareProduct = () => {
     if (navigator.share && product) {
-      navigator.share({
-        title: product.name,
-        text: `Olha que achadinho incrível do Zaca: ${product.name}!`,
-        url: window.location.href,
-      }).then(() => {
-        toast.info("Link do achadinho compartilhado!");
-      }).catch((error) => console.log('Erro ao compartilhar', error));
+      navigator.share({ title: product.name, text: `Olha que achadinho: ${product.name}!`, url: window.location.href })
+      .catch((error) => console.log('Erro ao compartilhar:', error));
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href)
-        .then(() => toast.success("Link copiado para a área de transferência, cumpadi!"))
-        .catch(err => toast.error("Falha ao copiar o link."));
+        .then(() => toast.success("Link do produto copiado!"))
+        .catch(() => toast.error("Falha ao copiar o link."));
     } else {
-        toast.error("Não foi possível compartilhar ou copiar o link neste navegador.");
+      toast.error("Compartilhamento não suportado neste navegador.");
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950">
-        <Navbar />
-        <main className="flex-grow py-8 lg:py-12">
-          <div className="container mx-auto px-4">
-            <Skeleton className="h-6 w-3/4 sm:w-1/2 mb-8 bg-slate-200 dark:bg-slate-700 rounded-md" />
-            <div className="lg:grid lg:grid-cols-12 lg:gap-10 xl:gap-16 items-start">
-              <section className="lg:col-span-7 xl:col-span-7">
-                <Skeleton className="w-full aspect-square rounded-xl mb-4 bg-slate-300 dark:bg-slate-700" />
-                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-                  {[...Array(4)].map((_, i) => <Skeleton key={`thumb-skel-${i}`} className="w-full aspect-square rounded-md bg-slate-200 dark:bg-slate-600" />)}
-                </div>
-              </section>
-              <section className="lg:col-span-5 xl:col-span-5 mt-8 lg:mt-0 space-y-5">
-                <Skeleton className="h-5 w-1/3 rounded bg-slate-200 dark:bg-slate-600" />
-                <Skeleton className="h-10 w-4/5 rounded bg-slate-300 dark:bg-slate-700" />
-                <Skeleton className="h-8 w-1/2 rounded bg-slate-300 dark:bg-slate-700" />
-                <Skeleton className="h-4 w-full rounded bg-slate-200 dark:bg-slate-600" />
-                <Skeleton className="h-4 w-full rounded bg-slate-200 dark:bg-slate-600" />
-                <Skeleton className="h-4 w-5/6 rounded bg-slate-200 dark:bg-slate-600" />
-                <div className="h-px bg-slate-200 dark:bg-slate-700 my-5"></div>
-                <Skeleton className="h-12 w-full rounded-lg bg-slate-300 dark:bg-slate-700" />
-                <Skeleton className="h-12 w-full rounded-lg bg-slate-200 dark:bg-slate-600" />
-                <div className="h-px bg-slate-200 dark:bg-slate-700 my-5"></div>
-                <Skeleton className="h-28 w-full rounded-lg bg-slate-200 dark:bg-slate-600" />
-              </section>
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
+    return <ProductPageSkeleton />;
   }
 
-  if (error || !product) {
-    return (
-      <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center py-8 lg:py-12 text-center px-4">
-          <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-xl max-w-md">
-            <AlertTriangle className="mx-auto h-16 w-16 text-zaca-vermelho mb-4" />
-            <h1 className="text-2xl font-bangers text-zaca-vermelho mb-2">Ai, Pastor! Deu Xabu!</h1>
-            <p className="text-slate-700 dark:text-slate-300 mb-6">{error || "Este achadinho sumiu igual mágica dos Trapalhões!"}</p>
-            <Button onClick={() => router.push('/products')} className="bg-zaca-azul hover:bg-zaca-azul/90 text-white">
-              <ArrowLeft className="mr-2 h-4 w-4"/> Ver outros Achadinhos
-            </Button>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
+  if (error || !product || !product.user) { 
+    return <ProductPageError error={error || "Produto não encontrado ou dados do vendedor ausentes."} />;
   }
 
-  const sellerDisplayName = product.user.storeName || product.user.name || "Vendedor Zaca";
+  const seller = product.user;
+  const sellerDisplayName = seller.storeName || seller.name || "Vendedor Zaca";
+  const sellerAvatar = seller.image;
+  const sellerWhatsappLink = seller.whatsappLink;
+  const sellerIdForLink = seller.id;
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -277,6 +230,7 @@ export default function ProductDetailPage() {
         animate="visible"
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Breadcrumbs */}
           <motion.div variants={itemVariants} className="mb-6 text-sm text-slate-500 dark:text-slate-400 flex items-center space-x-1.5 flex-wrap">
             <Link href="/" className="hover:text-zaca-azul dark:hover:text-zaca-lilas">Zacaplace</Link>
             <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
@@ -292,6 +246,7 @@ export default function ProductDetailPage() {
           </motion.div>
 
           <div className="lg:grid lg:grid-cols-12 lg:gap-10 xl:gap-16 items-start">
+            {/* Seção de Imagens do Produto */}
             <motion.section variants={itemVariants} aria-labelledby="product-images" className="lg:col-span-7 xl:col-span-7">
               <Card className="shadow-xl overflow-hidden bg-white dark:bg-slate-800/50 border dark:border-slate-700/60 rounded-xl">
                 <CardContent className="p-2 sm:p-3">
@@ -344,6 +299,7 @@ export default function ProductDetailPage() {
               )}
             </motion.section>
 
+            {/* Seção de Detalhes do Produto */}
             <motion.section variants={itemVariants} aria-labelledby="product-details" className="lg:col-span-5 xl:col-span-5 mt-8 lg:mt-0 space-y-6">
               {product.categories && product.categories.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -359,9 +315,10 @@ export default function ProductDetailPage() {
                 {product.name}
               </h1>
 
+              {/* Lógica de Exibição de Preço Promocional */}
               <div className="flex items-baseline gap-x-3">
-                {product.onPromotion && product.originalPrice && (
-                  <p className="text-xl text-slate-500 dark:text-slate-400 line-through">
+                {product.onPromotion && product.originalPrice != null && product.originalPrice > product.price && (
+                  <p className="text-xl text-slate-500 dark:text-slate-400 line-through" aria-label={`De R$ ${product.originalPrice.toFixed(2)}`}>
                     R$ {product.originalPrice.toFixed(2)}
                   </p>
                 )}
@@ -369,11 +326,14 @@ export default function ProductDetailPage() {
                   R$ {product.price.toFixed(2)}
                 </p>
               </div>
+
               {product.onPromotion && (
-                   <Badge variant="destructive" className="mt-1 text-sm bg-zaca-vermelho hover:bg-zaca-vermelho/90 text-white shadow-md">OFERTA DO ZACA!</Badge>
+                   <Badge variant="destructive" className="mt-1 text-sm bg-zaca-vermelho hover:bg-zaca-vermelho/90 text-white shadow-md">
+                    OFERTA DO ZACA!
+                   </Badge>
               )}
                <p className="text-sm text-slate-500 dark:text-slate-400">
-                {product.quantity > 0 ? `${product.quantity} em estoque, cumpadi!` : "Produto esgotado, que nem a paciência do Zaca!"}
+                {product.quantity > 0 ? `${product.quantity} em estoque, cumpadi!` : "Produto esgotado!"}
               </p>
 
               <Separator className="my-5 dark:bg-slate-700/80" />
@@ -416,7 +376,8 @@ export default function ProductDetailPage() {
 
               <Separator className="my-6 dark:bg-slate-700/80" />
 
-              {product.user && (
+              {/* Card do Vendedor - Acessa dados através de 'seller' (product.user) */}
+              {seller && (
                 <Card className="bg-slate-50 dark:bg-slate-800/60 border dark:border-slate-200 dark:border-slate-700/50 shadow-sm rounded-xl">
                   <CardHeader className="pb-3 pt-4">
                     <CardTitle className="text-lg font-semibold flex items-center text-slate-800 dark:text-slate-200 font-bangers tracking-wide">
@@ -426,20 +387,24 @@ export default function ProductDetailPage() {
                   <CardContent className="space-y-3">
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-12 w-12 border-2 border-zaca-lilas/70">
-                        <AvatarImage src={product.user.image || undefined} alt={sellerDisplayName} />
+                        <AvatarImage src={sellerAvatar || undefined} alt={sellerDisplayName} />
                         <AvatarFallback className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                          {getAvatarFallback(product.user.name)}
+                          {getAvatarFallback(seller.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <Link href={`/seller/${product.user.id}`} className="font-semibold text-slate-900 dark:text-slate-100 hover:text-zaca-azul dark:hover:text-zaca-lilas transition-colors">
-                            {sellerDisplayName}
-                        </Link>
+                        {sellerIdForLink ? (
+                            <Link href={`/seller/${sellerIdForLink}`} className="font-semibold text-slate-900 dark:text-slate-100 hover:text-zaca-azul dark:hover:text-zaca-lilas transition-colors">
+                                {sellerDisplayName}
+                            </Link>
+                        ) : (
+                            <span className="font-semibold text-slate-900 dark:text-slate-100">{sellerDisplayName}</span>
+                        )}
                         <p className="text-xs text-slate-500 dark:text-slate-400">Ver mais achadinhos deste Zaca</p>
                       </div>
                     </div>
                     
-                    {product.user.whatsappLink ? (
+                    {sellerWhatsappLink ? (
                       <Button
                         onClick={handleWhatsAppRedirect} variant="outline"
                         className="w-full border-green-500 text-green-600 hover:bg-green-500/10 hover:text-green-700 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-600/20 dark:hover:text-green-300 transition-colors"
@@ -461,7 +426,7 @@ export default function ProductDetailPage() {
         {relatedProducts.length > 0 && (
             <RelatedProducts 
                 title="Quem viu este, curtiu estes também, cumpadi!"
-                products={relatedProducts}
+                products={relatedProducts} 
                 currentProductId={productId}
             />
         )}
@@ -470,3 +435,11 @@ export default function ProductDetailPage() {
     </div>
   );
 }
+
+// --- Componentes de Fallback ---
+const ProductPageSkeleton = () => (
+    <div className="flex flex-col min-h-screen"><Navbar /><main className="flex-grow py-8 lg:py-12"><div className="container mx-auto px-4"><Skeleton className="h-6 w-3/4 sm:w-1/2 mb-8 bg-slate-200 dark:bg-slate-700 rounded-md" /><div className="lg:grid lg:grid-cols-12 gap-10"><section className="lg:col-span-7"><Skeleton className="w-full aspect-square rounded-xl mb-4 bg-slate-300 dark:bg-slate-700" /></section><section className="lg:col-span-5 mt-8 lg:mt-0 space-y-5"><Skeleton className="h-10 w-4/5 rounded bg-slate-300 dark:bg-slate-700" /><Skeleton className="h-8 w-1/2 rounded bg-slate-300 dark:bg-slate-700" /><Skeleton className="h-20 w-full rounded bg-slate-200 dark:bg-slate-600" /></section></div></div></main><Footer /></div>
+);
+const ProductPageError = ({ error }: { error: string }) => (
+    <div className="flex flex-col min-h-screen"><Navbar /><main className="flex-grow flex items-center justify-center p-4"><div className="text-center bg-white dark:bg-slate-800 p-8 rounded-lg shadow-xl max-w-md"><AlertTriangle className="mx-auto h-16 w-16 text-zaca-vermelho mb-4" /><h1 className="text-2xl font-bangers text-zaca-vermelho mb-2">Xiii, Deu Ruim!</h1><p className="text-slate-700 dark:text-slate-300 mb-6">{error}</p><Button asChild className="bg-zaca-azul hover:bg-zaca-azul/90 text-white"><Link href="/products"><ArrowLeft className="mr-2 h-4 w-4"/>Ver outros Achadinhos</Link></Button></div></main><Footer /></div>
+);

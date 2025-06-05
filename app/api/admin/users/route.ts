@@ -6,10 +6,13 @@ import prisma from '@/lib/prisma';
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    console.log('Admin API session:', session);
+    
+    // Proteção: Somente usuários com a role 'ADMIN' podem prosseguir
     if (!session || session.user?.role !== 'ADMIN') {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
+
+    // Busca todos os usuários e seleciona os campos relevantes
     const users = await prisma.user.findMany({
       select: {
         id: true,
@@ -22,25 +25,17 @@ export async function GET(request: Request) {
         role: true,
         createdAt: true,
         updatedAt: true,
-        products: {
+        products: { // Inclui um resumo dos produtos de cada usuário
           select: {
             id: true,
             name: true,
             price: true,
-            onPromotion: true,
-            quantity: true,
-            createdAt: true,
-            updatedAt: true,
           },
         },
-        reservations: {
+        reservations: { // Inclui um resumo das reservas de cada usuário
           select: {
             id: true,
-            quantity: true,
             status: true,
-            createdAt: true,
-            updatedAt: true,
-            productId: true,
           },
         },
       },
@@ -48,6 +43,7 @@ export async function GET(request: Request) {
         createdAt: 'desc',
       },
     });
+
     return NextResponse.json(users, { status: 200 });
   } catch (error) {
     console.error('Error fetching users for admin:', error);

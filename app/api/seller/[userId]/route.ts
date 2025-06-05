@@ -1,5 +1,6 @@
+// app/api/seller/[userId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma'; //
+import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
   const { userId } = params;
@@ -9,17 +10,17 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
   }
 
   try {
-    const seller = await prisma.user.findUnique({
+    const sellerProfile = await prisma.seller.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        name: true, // Nome pessoal do usuário/vendedor
-        email: false, // Geralmente não exibimos email publicamente
-        image: true, // Avatar do vendedor
-        whatsappLink: true,
-        storeName: true, // << NOVO CAMPO ADICIONADO
-        profileDescription: true,
-        sellerBannerImageUrl: true, // << NOVO CAMPO ADICIONADO
+      include: {
+        // Inclui dados do usuário relacionado (nome, avatar)
+        user: {
+          select: {
+            name: true,
+            image: true,
+          }
+        },
+        // Inclui os produtos do vendedor
         products: {
           orderBy: { createdAt: 'desc' },
           include: {
@@ -29,18 +30,25 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
       },
     });
 
-    if (!seller) {
-      return NextResponse.json({ error: 'Vendedor não encontrado (Seller not found)' }, { status: 404 });
+    if (!sellerProfile) {
+      return NextResponse.json({ error: 'Perfil de vendedor não encontrado (Seller not found)' }, { status: 404 });
     }
 
-    return NextResponse.json(seller, { status: 200 });
+    // Combinar os dados para um formato de resposta amigável para o frontend
+    const responseData = {
+      id: sellerProfile.id,
+      name: sellerProfile.user.name,
+      image: sellerProfile.user.image,
+      storeName: sellerProfile.storeName,
+      whatsappLink: sellerProfile.whatsappLink,
+      profileDescription: sellerProfile.profileDescription,
+      sellerBannerImageUrl: sellerProfile.sellerBannerImageUrl,
+      products: sellerProfile.products,
+    };
+
+    return NextResponse.json(responseData, { status: 200 });
   } catch (error) {
     console.error('Error fetching seller profile API ROUTE:', error);
-    try {
-      return NextResponse.json({ error: 'Erro interno do servidor ao buscar perfil do vendedor', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
-    } catch (responseError) {
-      console.error('Failed to construct JSON error response in API route:', responseError);
-      return new Response('Internal server error', { status: 500 });
-    }
+    return NextResponse.json({ error: 'Erro interno do servidor ao buscar perfil do vendedor', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }

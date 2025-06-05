@@ -1,99 +1,91 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { redirect } from "next/navigation";
-import Image from 'next/image';
+import prisma from "@/lib/prisma";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from "@/components/ui/card";
+import { Users, Package, Shapes, LineChart, DollarSign, Activity } from 'lucide-react';
 
-interface AdminUser {
-  id: string;
-  name: string | null;
-  email: string | null;
-  emailVerified: Date | null;
-  image: string | null;
-  whatsappLink: string | null;
-  profileDescription: string | null;
-  role?: string | null;
-  createdAt: string;
-  updatedAt: string;
+// Funções para buscar os dados diretamente do banco de dados no servidor
+async function getStats() {
+  // Executa todas as contagens em paralelo para mais eficiência
+  const [userCount, productCount, categoryCount] = await Promise.all([
+    prisma.user.count(),
+    prisma.product.count(),
+    prisma.category.count()
+  ]);
+  return { userCount, productCount, categoryCount };
 }
 
-async function getUsersForAdmin(): Promise<AdminUser[]> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/admin/users`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    cache: 'no-store',
-    credentials: 'include',
-  });
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error("Failed to fetch users for admin:", errorText);
-    return [];
-  }
-  return res.json();
+// Placeholder para o futuro gráfico de usuários
+function UserChartPlaceholder() {
+    return (
+        <Card className="col-span-1 lg:col-span-2 xl:col-span-3">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <LineChart className="h-5 w-5 text-blue-500" />
+                    Novos Usuários
+                </CardTitle>
+                <CardDescription>
+                    Gráfico mostrando o crescimento de usuários nos últimos meses (a ser implementado).
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center justify-center h-64 bg-slate-50 dark:bg-slate-800/50 rounded-b-xl">
+                <p className="text-slate-500">Dados do gráfico virão aqui.</p>
+            </CardContent>
+        </Card>
+    )
 }
 
-export default async function AdminDashboardPage() {
-  const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'ADMIN') {
-    redirect('/');
-  }
-  const users = await getUsersForAdmin();
+export default async function AdminDashboardOverviewPage() {
+  const { userCount, productCount, categoryCount } = await getStats();
+
   return (
-    <div className="container mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-8 text-center">Painel do Administrador</h1>
-      <div className="bg-white shadow-xl rounded-lg p-6 mb-8">
-        <h2 className="text-2xl font-semibold mb-6 text-gray-800">Todos os Usuários</h2>
-        {users.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avatar</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verificado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WhatsApp</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Criado em</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Atualizado em</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {user.image ? (
-                        <Image src={user.image} alt={user.name || 'Avatar'} width={40} height={40} className="rounded-full" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white">
-                          {user.name?.charAt(0).toUpperCase() || 'U'}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.name || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {user.emailVerified ? (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Sim</span>
-                      ) : (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Não</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.whatsappLink || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(user.createdAt).toLocaleString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(user.updatedAt).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-600">Nenhum usuário encontrado ou falha ao carregar.</p>
-        )}
+    <>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold md:text-2xl">Visão Geral</h1>
       </div>
-    </div>
+      
+      {/* Cards de Estatísticas */}
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 xl:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Usuários Totais</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{userCount}</div>
+            <p className="text-xs text-muted-foreground">Usuários cadastrados na plataforma</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Produtos Cadastrados</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{productCount}</div>
+            <p className="text-xs text-muted-foreground">Itens disponíveis no marketplace</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Categorias</CardTitle>
+            <Shapes className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{categoryCount}</div>
+            <p className="text-xs text-muted-foreground">Categorias de produtos ativas</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Placeholder para os Gráficos */}
+      <div className="grid gap-4 md:gap-8">
+        <UserChartPlaceholder />
+      </div>
+    </>
   );
 }

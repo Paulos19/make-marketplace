@@ -15,6 +15,7 @@ export interface Category {
 
 // Tipo Unificado e Central para Produtos
 export interface Product {
+  seller: any;
   id: string;
   name: string;
   description: string | null;

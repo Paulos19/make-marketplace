@@ -152,7 +152,7 @@ export default function Navbar() {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild className="cursor-pointer group focus:bg-zaca-lilas/10 dark:focus:bg-zaca-lilas/5">
-                        <Link href="/dashboard/reservations" className="flex items-center text-slate-700 dark:text-slate-300 group-hover:text-zaca-roxo dark:group-hover:text-zaca-lilas">
+                        <Link href="/dashboard/sales" className="flex items-center text-slate-700 dark:text-slate-300 group-hover:text-zaca-roxo dark:group-hover:text-zaca-lilas">
                           <ListOrdered className="mr-2 h-4 w-4" /><span>Minhas Reservas</span>
                         </Link>
                   </DropdownMenuItem>
