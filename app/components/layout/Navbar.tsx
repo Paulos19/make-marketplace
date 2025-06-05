@@ -1,10 +1,10 @@
 "use client";
 
-import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,166 +13,171 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+} from '@/components/ui/dropdown-menu';
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
   SheetClose,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { 
-  ShoppingBag, LogIn, LogOut, PlusCircle, 
-  LayoutDashboard, Settings, UserCircle2, Menu, X, ShieldCheck, ListOrdered
+} from '@/components/ui/sheet';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Menu,
+  ShoppingCart,
+  Heart,
+  UserCircle2,
+  LayoutDashboard,
+  LogOut,
+  LogIn,
+  Home,
+  Package2,
+  UserPlus
 } from 'lucide-react';
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from '@/lib/utils';
+import { UserRole } from '@prisma/client';
+import { Separator } from '@/components/ui/separator';
 
 export default function Navbar() {
   const { data: session, status } = useSession();
-  const isLoading = status === 'loading';
+  const user = session?.user;
   const pathname = usePathname();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
+  const navLinks = [
+    { href: '/', label: 'Início' },
+    { href: '/products', label: 'Achadinhos' },
+    // Adicione mais links aqui se necessário
+  ];
 
-  const userRole = session?.user?.role;
-  const isAdmin = userRole === 'ADMIN';
-  const isSellerOrAdmin = userRole === 'ADMIN' || userRole === 'SELLER';
-  const isCommonUser = userRole === 'USER';
+  const getAvatarFallback = (name?: string | null) => {
+    if (!name) return <UserCircle2 />;
+    return name.trim().split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
 
-  let fallbackContent: React.ReactNode = <UserCircle2 className="h-6 w-6" />;
-  if (session?.user?.name) {
-    const initials = session.user.name.trim().split(' ').map(n => n[0]).join('').toUpperCase();
-    if (initials) {
-      fallbackContent = initials.substring(0, 2);
-    }
-  }
-
-  const commonButtonLinkClasses = (href: string, isMobile = false) => 
-    cn(
-      `flex items-center text-sm font-medium transition-colors duration-200 ease-in-out`,
-      isMobile ? "w-full justify-start px-4 py-3" : "px-3 py-2 rounded-md",
-      pathname === href 
-        ? 'bg-zaca-lilas/20 text-zaca-roxo dark:bg-zaca-lilas/10 dark:text-zaca-lilas' 
-        : 'text-slate-700 dark:text-slate-300 hover:bg-zaca-lilas/10 hover:text-zaca-roxo dark:hover:bg-zaca-lilas/5 dark:hover:text-zaca-lilas'
-    );
-  
   return (
-    <nav 
-      className={cn(
-        "sticky top-0 z-50 w-full transition-all duration-300 ease-in-out",
-        isScrolled 
-          ? "bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg shadow-lg border-b border-slate-200 dark:border-slate-800" 
-          : "bg-transparent border-b border-transparent"
-      )}
-    >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Link href="/" className="hover:opacity-90 transition-opacity" aria-label="Zacaplace Home">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 dark:border-slate-800/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        
+        {/* Logo */}
+        <div className="flex items-center">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
             <Image src="/logo.svg" alt="Zacaplace Logo" width={160} height={45} priority />
           </Link>
+        </div>
+        
+        {/* Navegação Desktop (visível em telas grandes) */}
+        <nav className="hidden lg:flex flex-1 items-center justify-center">
+          <ul className="flex items-center space-x-6 text-sm font-medium">
+            {navLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className={cn(
+                    "transition-colors hover:text-zaca-azul dark:hover:text-zaca-lilas",
+                    pathname === link.href ? "text-zaca-roxo dark:text-zaca-lilas font-semibold" : "text-slate-600 dark:text-slate-300"
+                  )}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-          <div className="hidden md:flex items-center space-x-1">
-            <Button asChild variant="ghost" size="sm" className={commonButtonLinkClasses("/products")}>
-              <Link href="/products"><ShoppingBag className="sm:mr-2 h-4 w-4" /><span className="hidden sm:inline">Achadinhos</span></Link>
-            </Button>
-            {isSellerOrAdmin && (
-              <Button asChild variant="ghost" size="sm" className={commonButtonLinkClasses("/dashboard/add-product")}>
-                <Link href="/dashboard/add-product"><PlusCircle className="sm:mr-2 h-4 w-4" /><span className="hidden sm:inline">Vender Agora!</span></Link>
-              </Button>
-            )}
-          </div>
-
-          <div className="hidden md:flex items-center space-x-3">
-            {isLoading ? (
-              <><Skeleton className="h-9 w-24 rounded-md" /><Skeleton className="h-9 w-9 rounded-full" /></>
-            ) : session?.user ? (
+        {/* Ícones e Login/Usuário */}
+        <div className="flex items-center justify-end space-x-2 sm:space-x-4">
+          <Button variant="ghost" size="icon" aria-label="Favoritos">
+            <Heart className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" aria-label="Carrinho">
+            <ShoppingCart className="h-5 w-5" />
+          </Button>
+          
+          <div className="hidden lg:flex items-center">
+            {status === 'loading' ? (
+              <div className="h-10 w-24 rounded-md bg-slate-200 dark:bg-slate-700 animate-pulse" />
+            ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
-                    <Avatar className="h-10 w-10 border-2 border-transparent hover:border-zaca-magenta transition-all">
-                      <AvatarImage src={session.user.image || undefined} alt={session.user.name || 'User avatar'} />
-                      <AvatarFallback className="bg-zaca-roxo text-white text-sm font-semibold">{fallbackContent}</AvatarFallback>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.image ?? undefined} alt={user.name ?? 'Avatar'} />
+                      <AvatarFallback className="bg-zaca-roxo text-white font-bold">{getAvatarFallback(user.name)}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-60 mt-2 shadow-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal py-3 px-3">
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-semibold leading-none text-slate-900 dark:text-slate-50">{session.user.name || 'Usuário'}</p>
-                      <p className="text-xs leading-none text-slate-500 dark:text-slate-400">{session.user.email}</p>
+                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="dark:bg-slate-700" />
-                  
-                  {isSellerOrAdmin && (
-                    <>
-                      <DropdownMenuItem asChild className="cursor-pointer group focus:bg-zaca-lilas/10 dark:focus:bg-zaca-lilas/5">
-                        <Link href="/dashboard" className="flex items-center text-slate-700 dark:text-slate-300 group-hover:text-zaca-roxo dark:group-hover:text-zaca-lilas">
-                          <LayoutDashboard className="mr-2 h-4 w-4" /><span>Painel do Zaca</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="cursor-pointer group focus:bg-zaca-lilas/10 dark:focus:bg-zaca-lilas/5">
-                        <Link href="/dashboard/settings" className="flex items-center text-slate-700 dark:text-slate-300 group-hover:text-zaca-roxo dark:group-hover:text-zaca-lilas">
-                          <Settings className="mr-2 h-4 w-4" /><span>Ajustes da Loja</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  
-                  {isCommonUser && (
-                     <DropdownMenuItem asChild className="cursor-pointer group focus:bg-zaca-lilas/10 dark:focus:bg-zaca-lilas/5">
-                        <Link href="/account/settings" className="flex items-center text-slate-700 dark:text-slate-300 group-hover:text-zaca-roxo dark:group-hover:text-zaca-lilas">
-                          <Settings className="mr-2 h-4 w-4" /><span>Configurações</span>
-                        </Link>
-                      </DropdownMenuItem>
-                  )}
-
-                  {isAdmin && (
-                    <DropdownMenuItem asChild className="cursor-pointer group focus:bg-zaca-lilas/10 dark:focus:bg-zaca-lilas/5">
-                      <Link href="/admin-dashboard" className="flex items-center text-slate-700 dark:text-slate-300 group-hover:text-zaca-roxo dark:group-hover:text-zaca-lilas">
-                        <ShieldCheck className="mr-2 h-4 w-4" /><span>Painel Super Zaca</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem asChild className="cursor-pointer group focus:bg-zaca-lilas/10 dark:focus:bg-zaca-lilas/5">
-                        <Link href="/dashboard/sales" className="flex items-center text-slate-700 dark:text-slate-300 group-hover:text-zaca-roxo dark:group-hover:text-zaca-lilas">
-                          <ListOrdered className="mr-2 h-4 w-4" /><span>Minhas Reservas</span>
-                        </Link>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Painel</Link>
                   </DropdownMenuItem>
-
-                  <DropdownMenuSeparator className="dark:bg-slate-700" />
-                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })} className="cursor-pointer text-zaca-vermelho focus:text-zaca-vermelho focus:bg-red-50 dark:focus:bg-red-700/20 dark:focus:text-red-400 group">
-                    <LogOut className="mr-2 h-4 w-4" /><span>Sair da Turma</span>
+                  {user.role === UserRole.ADMIN && (
+                     <DropdownMenuItem asChild>
+                       <Link href="/admin-dashboard"><UserCircle2 className="mr-2 h-4 w-4" /> Painel Admin</Link>
+                     </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
+                    <LogOut className="mr-2 h-4 w-4" /> Sair
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild size="sm" className="bg-gradient-to-r from-zaca-roxo to-zaca-magenta hover:from-zaca-roxo/90 hover:to-zaca-magenta/90 text-white font-semibold shadow-md">
-                <Link href="/auth/signin"><LogIn className="h-4 w-4 mr-2" />Entrar na Bagunça</Link>
+              <Button asChild>
+                <Link href="/auth/signin">Entrar</Link>
               </Button>
             )}
           </div>
-          {/* Menu Mobile */}
-          <div className="md:hidden flex items-center">{/* ... (O código do Sheet irá aqui) ... */}</div>
+
+          {/* <<< CORREÇÃO PRINCIPAL AQUI >>> */}
+          {/* Botão de Menu Mobile (visível em telas pequenas) */}
+          <div className="flex items-center lg:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Abrir menu">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-full max-w-xs sm:max-w-sm">
+                <nav className="flex flex-col space-y-4 mt-8">
+                  {navLinks.map((link) => (
+                    <SheetClose key={link.href} asChild>
+                       <Link
+                        href={link.href}
+                        className={cn(
+                          "text-lg font-medium transition-colors hover:text-zaca-azul dark:hover:text-zaca-lilas p-2 rounded-md",
+                          pathname === link.href ? "text-zaca-roxo bg-slate-100 dark:text-zaca-lilas dark:bg-slate-800" : "text-slate-700 dark:text-slate-200"
+                        )}
+                      >
+                        {link.label}
+                      </Link>
+                    </SheetClose>
+                  ))}
+                  <Separator />
+                  {user ? (
+                    <>
+                      <SheetClose asChild><Link href="/dashboard" className="flex items-center text-lg font-medium"><LayoutDashboard className="mr-2 h-5 w-5"/>Painel</Link></SheetClose>
+                      {user.role === UserRole.ADMIN && <SheetClose asChild><Link href="/admin-dashboard" className="flex items-center text-lg font-medium"><UserCircle2 className="mr-2 h-5 w-5"/>Painel Admin</Link></SheetClose>}
+                      <Button variant="outline" onClick={() => signOut({ callbackUrl: '/' })}><LogOut className="mr-2 h-5 w-5"/>Sair</Button>
+                    </>
+                  ) : (
+                    <>
+                      <SheetClose asChild><Link href="/auth/signin" className="flex items-center text-lg font-medium"><LogIn className="mr-2 h-5 w-5"/>Entrar</Link></SheetClose>
+                      <SheetClose asChild><Link href="/auth/signup"><Button className="w-full bg-zaca-azul hover:bg-zaca-azul/90"><UserPlus className="mr-2 h-5 w-5"/>Criar Conta</Button></Link></SheetClose>
+                    </>
+                  )}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+          
         </div>
       </div>
-    </nav>
+    </header>
   );
 }
+
