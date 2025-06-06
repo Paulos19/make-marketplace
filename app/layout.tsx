@@ -1,14 +1,13 @@
-// app/layout.tsx
 import type { Metadata } from 'next';
-import { Inter, Bangers } from 'next/font/google';
+import { Inter, Montserrat } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/sonner';
 import AuthProvider from '@/app/components/AuthProvider';
-import prisma from '@/lib/prisma'; // Importar prisma
+import prisma from '@/lib/prisma';
 
 const fontSans = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const fontBangers = Bangers({ subsets: ['latin'], weight: '400', variable: '--font-display' });
+const fontBangers = Montserrat({ subsets: ['latin'], weight: '700', variable: '--font-display' });
 
 export const metadata: Metadata = {
   title: 'Zacaplace - O Marketplace dos Achadinhos',

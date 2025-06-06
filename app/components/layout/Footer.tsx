@@ -34,7 +34,7 @@ export default function Footer() {
               <input
                 type="email"
                 id="FooterEmail"
-                placeholder="didimoco@trapalhoes.com"
+                placeholder="zacaplace@email.com"
                 className="w-full rounded-md border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800 px-4 py-3 text-slate-700 dark:text-slate-200 shadow-sm transition focus:border-zaca-azul dark:focus:border-zaca-lilas focus:ring-1 focus:ring-zaca-azul dark:focus:ring-zaca-lilas"
               />
               <button
@@ -53,7 +53,6 @@ export default function Footer() {
                 <li><Link href="/about" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Sobre o Zacaplace</Link></li>
                 <li><Link href="/terms" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Termos de Serviço</Link></li>
                 <li><Link href="/privacy" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Política de Privacidade</Link></li>
-                <li><Link href="/careers" className="text-slate-700 transition hover:text-zaca-azul dark:text-slate-300 dark:hover:text-zaca-lilas">Trabalhe Conosco</Link></li>
               </ul>
             </div>
             <div>

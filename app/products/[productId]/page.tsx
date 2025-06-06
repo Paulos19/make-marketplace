@@ -127,8 +127,9 @@ export default function ProductDetailPage() {
     
     const whatsappLink = product.user.whatsappLink;
     const productName = product.name;
+    const priceProduct = product.price;
     const sellerName = product.user.name || 'vendedor(a)';
-    const message = `Olá, ${sellerName}! Tenho interesse no produto que vi no Zacaplace:\n\n*Produto:* ${productName}\n*Quantidade:* ${selectedQuantity}\n\nAinda está disponível? Gostaria de combinar a entrega/pagamento.`;
+    const message = `Olá, ${sellerName}! \n\nTenho interesse no produto que vi no Zacaplace:\n\n*Produto:* ${productName}\n*Quantidade:* ${selectedQuantity}\n*Preço:* R$ ${priceProduct} \n\nAinda está disponível? Gostaria de combinar a entrega/pagamento.`;
     const encodedMessage = encodeURIComponent(message);
 
     let finalWhatsAppUrl = whatsappLink;
