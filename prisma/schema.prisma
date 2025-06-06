@@ -133,3 +133,9 @@ model ThemeSettings {
 
   updatedAt DateTime @updatedAt
 }
+
+model NewsletterSubscription {
+  id        String   @id @default(cuid())
+  email     String   @unique // Garante que um email só possa ser cadastrado uma vez
+  createdAt DateTime @default(now())
+}

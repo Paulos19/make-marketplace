@@ -204,3 +204,52 @@ export const sendPasswordResetEmail = async ({ email, token }: PasswordResetEmai
 
   await sendMail({ to: email, subject, html, text });
 };
+
+interface ContactFormEmailParams {
+  fromName: string;
+  fromEmail: string;
+  message: string;
+}
+
+/**
+ * Envia uma notificação por e-mail para o administrador do site
+ * com a mensagem enviada através do formulário de contato.
+ */
+export const sendContactFormEmail = async ({
+  fromName,
+  fromEmail,
+  message,
+}: ContactFormEmailParams) => {
+  const siteName = "Zacaplace";
+  // O e-mail será enviado para o endereço de e-mail do administrador/suporte
+  const adminEmail = process.env.EMAIL_FROM; // Usando o mesmo e-mail do .env
+
+  if (!adminEmail) {
+    console.error("EMAIL_FROM não está definido no .env para receber e-mails de contato.");
+    throw new Error("O servidor não está configurado para receber mensagens de contato.");
+  }
+
+  const subject = `Nova Mensagem de Contato de ${fromName} - ${siteName}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+      <h2>Nova Mensagem Recebida do Formulário de Contato do Zacaplace</h2>
+      <p>Você recebeu uma nova mensagem de um visitante do site.</p>
+      <hr style="border: 0; border-top: 1px solid #eee;">
+      <p><strong>Nome:</strong> ${fromName}</p>
+      <p><strong>E-mail do Remetente:</strong> <a href="mailto:${fromEmail}">${fromEmail}</a></p>
+      <h3>Mensagem:</h3>
+      <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; border-radius: 5px; white-space: pre-wrap;">${message}</div>
+      <hr style="border: 0; border-top: 1px solid #eee;">
+      <p style="font-size: 12px; color: #777;">Esta mensagem foi enviada através do formulário de contato do site ${siteName}.</p>
+    </div>
+  `;
+  const text = `Nova mensagem de ${fromName} (${fromEmail}):\n\n${message}`;
+
+  await sendMail({
+    to: adminEmail, // Envia para si mesmo (o admin)
+    replyTo: fromEmail, // Permite responder diretamente ao usuário a partir do seu cliente de e-mail
+    subject,
+    html,
+    text,
+  });
+};

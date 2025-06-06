@@ -1,9 +1,51 @@
-// app/components/layout/Footer.tsx
+"use client"; // <<< ADICIONADO para permitir o uso de hooks (useState)
+
+import { useState } from 'react'; // <<< ADICIONADO para gerenciar o estado do formulário
 import Link from 'next/link';
 import Image from 'next/image';
-import { Facebook, Instagram } from 'lucide-react';
+import { Facebook, Instagram, Twitter, Youtube, Linkedin, Loader2 } from 'lucide-react'; // <<< ÍCONES ADICIONADOS
+import { toast } from 'sonner'; // <<< ADICIONADO para notificações
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Função para lidar com o envio do formulário da newsletter
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Por favor, insira um e-mail válido.");
+      return;
+    }
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Usa a mensagem de erro da API (ex: "Este e-mail já está cadastrado")
+        throw new Error(data.message || 'Falha ao se inscrever. Tente novamente.');
+      }
+      
+      toast.success("Inscrição confirmada!", { 
+        description: "Você agora receberá as melhores ofertas do Zacaplace!" 
+      });
+      setEmail(''); // Limpa o campo após o sucesso
+
+    } catch (err: any) {
+      toast.error("Ô psit, deu erro!", { 
+        description: err.message || "Não foi possível completar sua inscrição."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <footer className="bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 print:hidden">
       <div className="mx-auto max-w-screen-xl px-4 pb-8 pt-16 sm:px-6 lg:px-8">
@@ -29,18 +71,25 @@ export default function Footer() {
               Cadastre seu e-mail para não perder nenhuma promoção ou lançamento dos seus vendedores favoritos. Prometemos não ser chatos igual o Sargento Pincel!
             </p>
 
-            <form className="mt-6 flex flex-col sm:flex-row gap-4">
+            {/* <<< FORMULÁRIO ATUALIZADO COM LÓGICA >>> */}
+            <form onSubmit={handleSubscribe} className="mt-6 flex flex-col sm:flex-row gap-4">
               <label htmlFor="FooterEmail" className="sr-only"> Email </label>
               <input
                 type="email"
                 id="FooterEmail"
                 placeholder="zacaplace@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
                 className="w-full rounded-md border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800 px-4 py-3 text-slate-700 dark:text-slate-200 shadow-sm transition focus:border-zaca-azul dark:focus:border-zaca-lilas focus:ring-1 focus:ring-zaca-azul dark:focus:ring-zaca-lilas"
               />
               <button
                 type="submit"
-                className="inline-block shrink-0 rounded-md border border-zaca-azul bg-zaca-azul px-6 py-3 text-sm font-bold text-white transition hover:bg-zaca-azul/90 focus:outline-none focus:ring-2 focus:ring-zaca-azul focus:ring-offset-2 dark:focus:ring-offset-slate-900 active:bg-zaca-azul/80"
+                disabled={isLoading}
+                className="inline-flex items-center justify-center shrink-0 rounded-md border border-zaca-azul bg-zaca-azul px-6 py-3 text-sm font-bold text-white transition hover:bg-zaca-azul/90 focus:outline-none focus:ring-2 focus:ring-zaca-azul focus:ring-offset-2 dark:focus:ring-offset-slate-900 active:bg-zaca-azul/80 disabled:opacity-60"
               >
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Quero Receber!
               </button>
             </form>
@@ -82,8 +131,6 @@ export default function Footer() {
                 <a href="#" target="_blank" rel="noreferrer" className="text-slate-700 transition hover:text-zaca-magenta dark:text-slate-300 dark:hover:text-zaca-magenta" aria-label="Instagram do Zacaplace">
                   <Instagram className="h-5 w-5" />
                 </a>
-              </li>
-              <li>
               </li>
             </ul>
           </div>
