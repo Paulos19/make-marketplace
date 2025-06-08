@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { UserRole } from '@prisma/client';
 
+// GET: Busca produtos e normaliza os dados para o frontend.
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const userIdParam = searchParams.get('userId'); 
@@ -12,29 +13,37 @@ export async function GET(request: Request) {
   try {
     const queryOptions: any = {
       orderBy: { createdAt: 'desc' },
-      // << RELAÇÃO CORRIGIDA >>
-      // Voltamos a incluir o 'user' diretamente
       include: {
         user: { 
-          select: {
-            id: true,
-            name: true,
-            image: true,
-            whatsappLink: true,
-            storeName: true,
-          },
+          select: { id: true, name: true, image: true, whatsappLink: true, storeName: true },
         },
-        categories: true,
+        category: true, // Busca a relação singular 'category'
       },
     };
 
-    // << FILTRO CORRIGIDO >>
-    // Filtra por 'userId' novamente
     if (userIdParam) {
       queryOptions.where = { userId: userIdParam };
     } 
     
-    const products = await prisma.product.findMany(queryOptions);
+    const productsFromDb = await prisma.product.findMany(queryOptions);
+
+    // Normaliza os dados para garantir que o frontend receba a estrutura que espera.
+    const products = productsFromDb.map(product => {
+      // O 'as any' é usado aqui para facilitar a manipulação do objeto
+      const productForFrontend: any = { ...product };
+
+      // Garante que o frontend receba 'categories' como um array
+      productForFrontend.categories = product.categoryId ? [product.categoryId] : [];
+      
+      // Garante que o campo 'images' exista e seja um array
+      productForFrontend.images = product.images || [];
+
+      // Remove o campo singular 'category' para evitar confusão no frontend
+      delete productForFrontend.category;
+      
+      return productForFrontend;
+    });
+    
     return NextResponse.json(products);
 
   } catch (error) {
@@ -43,10 +52,12 @@ export async function GET(request: Request) {
   }
 }
 
+// POST: Cria um produto, garantindo que os dados são salvos com os nomes corretos do DB.
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
 
-  if (!session || !session.user || !session.user.id) {
+  // CORREÇÃO: A verificação foi dividida para garantir a inferência de tipo correta.
+  if (!session || !session.user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
   
@@ -56,31 +67,24 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, description, price, quantity, imageUrls, categoryIds } = body;
-
-    // << CRIAÇÃO CORRIGIDA >>
-    // O produto é conectado diretamente ao 'userId' da sessão
-    const createData: any = {
-      name,
-      description,
-      price: parseFloat(price),
-      quantity: parseInt(quantity),
-      imageUrls,
-      user: {
-        connect: {
-          id: session.user.id,
-        },
-      },
-    };
-
-    if (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) {
-      createData.categories = {
-        connect: categoryIds.map((id: string) => ({ id })),
-      };
+    const { name, description, price, quantity, imageUrls, categoryId, onPromotion, originalPrice } = body;
+    
+    if (!categoryId) {
+      return NextResponse.json({ error: 'A categoria do produto é obrigatória.' }, { status: 400 });
     }
 
     const product = await prisma.product.create({
-      data: createData,
+      data: {
+        name,
+        description,
+        price: parseFloat(price),
+        quantity: parseInt(quantity, 10),
+        images: imageUrls, // Salva os dados no campo correto do banco: 'images'
+        onPromotion: onPromotion || false,
+        originalPrice: onPromotion ? parseFloat(originalPrice) : null,
+        user: { connect: { id: session.user.id } }, // Agora TypeScript sabe que session.user existe
+        category: { connect: { id: categoryId } },
+      },
     });
 
     return NextResponse.json(product, { status: 201 });

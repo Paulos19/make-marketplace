@@ -95,7 +95,7 @@ export async function GET(request: Request) {
     const reservations = await prisma.reservation.findMany({
       where: { userId: session.user.id },
       include: {
-        product: { select: { id: true, name: true, imageUrls: true, price: true } },
+        product: { select: { id: true, name: true, images: true, price: true } },
       },
       orderBy: { createdAt: 'desc' },
     });

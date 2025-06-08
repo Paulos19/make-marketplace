@@ -1,169 +1,158 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
-import { z } from 'zod';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { ReservationStatus } from '@prisma/client';
 
-interface RouteParams {
-  params: {
-    reservationId: string;
-  };
-}
-
-// Handler para excluir uma reserva
-export async function DELETE(request: Request, { params }: RouteParams) {
+/**
+ * PATCH /api/reservations/[reservationId]
+ * Permite que um cliente (comprador) CANCELE uma reserva que ele mesmo fez.
+ * Apenas funciona se a reserva estiver com o status 'PENDING'.
+ */
+export async function PATCH(
+  req: Request,
+  { params }: { params: { reservationId: string } }
+) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.id) {
-      return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
+    const body = await req.json();
+    const { status } = body;
+
+    // 1. Validação de segurança e de dados
+    if (!session?.user?.id) {
+      return new NextResponse('Não autorizado', { status: 401 });
     }
 
-    const { reservationId } = params;
-
-    if (!reservationId) {
-      return NextResponse.json({ message: 'Reservation ID is required' }, { status: 400 });
+    if (!params.reservationId) {
+      return new NextResponse('ID da reserva não encontrado', { status: 400 });
     }
 
-    // Transação para garantir atomicidade
-    const deletedReservation = await prisma.$transaction(async (tx) => {
-      // Encontrar a reserva para verificar o proprietário e obter productId e quantity
-      const reservation = await tx.reservation.findUnique({
-        where: { id: reservationId },
-        select: { userId: true, productId: true, quantity: true, status: true },
-      });
+    // Esta rota só permite a ação de cancelar
+    if (status !== ReservationStatus.CANCELED) {
+      return new NextResponse('Ação não permitida', { status: 403 });
+    }
 
-      if (!reservation) {
-        throw new Error('Reservation not found');
-      }
-
-      // Verificar se o usuário logado é o proprietário da reserva
-      if (reservation.userId !== session.user?.id) {
-        throw new Error('Forbidden: You can only delete your own reservations');
-      }
-
-      // Excluir a reserva
-      await tx.reservation.delete({
-        where: { id: reservationId },
-      });
-
-      // Incrementar a quantidade do produto de volta
-      // Só devolver ao estoque se a reserva não estava, por exemplo, 'CANCELLED_BY_SELLER' ou algo que já ajustou o estoque.
-      // Para o fluxo atual, PENDING e CONFIRMED (se excluído pelo usuário) devem devolver.
-      // Se o status for 'COMPLETED' ou 'SHIPPED', a exclusão pode ter regras diferentes.
-      // Por simplicidade, vamos assumir que a exclusão de PENDING/CONFIRMED devolve ao estoque.
-      if (reservation.status === 'PENDING' || reservation.status === 'CONFIRMED') {
-         await tx.product.update({
-            where: { id: reservation.productId },
-            data: {
-            quantity: {
-                increment: reservation.quantity,
-            },
-            },
-        });
-      }
-      
-      return reservation; // Retorna a reserva deletada para possível log ou referência
+    // 2. Verificar se a reserva existe e pertence ao utilizador logado
+    const reservationToUpdate = await prisma.reservation.findFirst({
+      where: {
+        id: params.reservationId,
+        userId: session.user.id, // Garante que o cliente só pode cancelar a sua própria reserva
+      },
     });
 
-    return NextResponse.json({ message: 'Reservation deleted successfully', reservation: deletedReservation }, { status: 200 });
-
-  } catch (error) {
-    console.error("Delete reservation error:", error);
-    if (error instanceof Error) {
-      if (error.message === 'Reservation not found') {
-        return NextResponse.json({ message: error.message }, { status: 404 });
-      }
-      if (error.message.startsWith('Forbidden')) {
-        return NextResponse.json({ message: error.message }, { status: 403 });
-      }
+    if (!reservationToUpdate) {
+      return new NextResponse(
+        'Reserva não encontrada ou não pertence a este utilizador',
+        { status: 404 }
+      );
     }
-    return NextResponse.json({ message: 'Could not delete reservation' }, { status: 500 });
+
+    // 3. Regra de negócio: Só pode cancelar se estiver pendente
+    if (reservationToUpdate.status !== ReservationStatus.PENDING) {
+      return new NextResponse('Esta reserva não pode mais ser cancelada', {
+        status: 403,
+      });
+    }
+
+    // 4. Iniciar uma transação para garantir a consistência dos dados
+    const [updatedReservation] = await prisma.$transaction([
+      // Atualiza o status da reserva para 'CANCELED'
+      prisma.reservation.update({
+        where: {
+          id: params.reservationId,
+        },
+        data: {
+          status: ReservationStatus.CANCELED,
+        },
+      }),
+      // Atualiza o status do produto de volta para 'AVAILABLE'
+      prisma.product.update({
+        where: {
+          id: reservationToUpdate.productId,
+        },
+        data: {
+          isReserved: false,
+        },
+      }),
+    ]);
+
+    return NextResponse.json(updatedReservation);
+  } catch (error) {
+    console.error('[RESERVATION_PATCH]', error);
+    return new NextResponse('Internal Error', { status: 500 });
   }
 }
 
-// Handler para atualizar o status de uma reserva (ex: confirmar pedido)
-const updateReservationSchema = z.object({
-  status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']), // Changed CANCELLED_BY_USER to CANCELLED
-});
-
-export async function PATCH(request: Request, { params }: RouteParams) {
+/**
+ * DELETE /api/reservations/[reservationId]
+ * Permite que um VENDEDOR remova/rejeite uma reserva feita em um de seus produtos.
+ * Esta ação remove completamente o registo da reserva.
+ */
+export async function DELETE(
+  req: Request,
+  { params }: { params: { reservationId: string } }
+) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.id) {
-      return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
+
+    // 1. Validação de segurança e de dados
+    if (!session?.user?.id) {
+      return new NextResponse('Não autorizado', { status: 401 });
     }
 
-    const { reservationId } = params;
-    if (!reservationId) {
-      return NextResponse.json({ message: 'Reservation ID is required' }, { status: 400 });
+    if (!params.reservationId) {
+      return new NextResponse('ID da reserva não encontrado', { status: 400 });
     }
 
-    const body = await request.json();
-    const validation = updateReservationSchema.safeParse(body);
-
-    if (!validation.success) {
-      return NextResponse.json({ message: 'Invalid input', errors: validation.error.errors }, { status: 400 });
-    }
-
-    const { status: newStatus } = validation.data;
-
-    // Encontrar a reserva para verificar o proprietário
-    const reservationToCheck = await prisma.reservation.findUnique({
-      where: { id: reservationId },
-      select: { userId: true, status: true, productId: true, quantity: true },
+    // 2. Encontrar a reserva e o produto associado para verificar a propriedade
+    const reservation = await prisma.reservation.findUnique({
+      where: {
+        id: params.reservationId,
+      },
+      select: {
+        productId: true,
+        product: {
+          select: {
+            userId: true, // ID do Vendedor
+          },
+        },
+      },
     });
 
-    if (!reservationToCheck) {
-      return NextResponse.json({ message: 'Reservation not found' }, { status: 404 });
+    if (!reservation) {
+      return new NextResponse('Reserva não encontrada', { status: 404 });
     }
 
-    if (reservationToCheck.userId !== session.user.id) {
-      return NextResponse.json({ message: 'Forbidden: You can only update your own reservations' }, { status: 403 });
+    // 3. Regra de negócio: Apenas o vendedor do produto pode deletar a reserva
+    if (reservation.product.userId !== session.user.id) {
+      return new NextResponse(
+        'Ação não permitida. Apenas o vendedor do produto pode remover esta reserva.',
+        { status: 403 }
+      );
     }
 
-    // Lógica de transição de status (exemplo simples)
-    // Se estiver cancelando uma reserva PENDING ou CONFIRMED, devolver ao estoque.
-    if (newStatus === 'CANCELLED' && (reservationToCheck.status === 'PENDING' || reservationToCheck.status === 'CONFIRMED')) { // Changed CANCELLED_BY_USER to CANCELLED
-        await prisma.$transaction(async (tx) => {
-            await tx.product.update({
-                where: { id: reservationToCheck.productId },
-                data: {
-                    quantity: {
-                        increment: reservationToCheck.quantity,
-                    },
-                },
-            });
-            await tx.reservation.update({
-                where: { id: reservationId },
-                data: { status: newStatus },
-            });
-        });
-    } else {
-        // Para outras atualizações de status (ex: PENDING -> CONFIRMED)
-        await prisma.reservation.update({
-            where: { id: reservationId },
-            data: { status: newStatus },
-        });
-    }
+    // 4. Iniciar uma transação para garantir a consistência dos dados
+    const [deletedReservation] = await prisma.$transaction([
+      // Deleta a reserva
+      prisma.reservation.delete({
+        where: {
+          id: params.reservationId,
+        },
+      }),
+      // Atualiza o produto para ficar disponível novamente
+      prisma.product.update({
+        where: {
+          id: reservation.productId,
+        },
+        data: {
+          isReserved: false,
+        },
+      }),
+    ]);
 
-    const updatedReservation = await prisma.reservation.findUnique({
-        where: { id: reservationId },
-        include: { product: { select: { id: true, name: true, imageUrls: true, price: true } } }
-    });
-
-    return NextResponse.json(updatedReservation, { status: 200 });
-
+    return NextResponse.json(deletedReservation);
   } catch (error) {
-    console.error("Update reservation error:", error);
-    if (error instanceof Error) {
-      if (error.message === 'Reservation not found') {
-        return NextResponse.json({ message: error.message }, { status: 404 });
-      }
-       if (error.message.startsWith('Forbidden')) {
-        return NextResponse.json({ message: error.message }, { status: 403 });
-      }
-    }
-    return NextResponse.json({ message: 'Could not update reservation' }, { status: 500 });
+    console.error('[RESERVATION_DELETE]', error);
+    return new NextResponse('Internal Error', { status: 500 });
   }
 }

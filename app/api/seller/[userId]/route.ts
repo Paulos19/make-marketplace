@@ -41,7 +41,7 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
             createdAt: 'desc',
           },
           include: {
-            categories: {
+            category: {
               select: {
                 id: true,
                 name: true,

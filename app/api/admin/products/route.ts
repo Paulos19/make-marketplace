@@ -21,7 +21,7 @@ export async function GET(request: Request) {
             email: true,
           },
         },
-        categories: { // Inclui as categorias do produto
+        category: { // Inclui as categorias do produto
           select: {
             name: true,
           }

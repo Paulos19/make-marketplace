@@ -42,7 +42,7 @@ const emailBuilderSchema = z.object({
 
 type EmailBuilderValues = z.infer<typeof emailBuilderSchema>;
 
-type ProductForSelection = Pick<Product, 'id' | 'name' | 'imageUrls'>;
+type ProductForSelection = Pick<Product, 'id' | 'name' | 'images'>;
 
 interface EmailBuilderClientProps {
     productsForSelection: ProductForSelection[];
@@ -69,8 +69,8 @@ export function EmailBuilderClient({ productsForSelection }: EmailBuilderClientP
 
     const handleProductSelect = (product: ProductForSelection) => {
         form.setValue('headline', product.name);
-        if (product.imageUrls.length > 0) {
-            form.setValue('imageUrl', product.imageUrls[0]);
+        if (product.images.length > 0) {
+            form.setValue('imageUrl', product.images[0]);
         }
         form.setValue('ctaLink', `${process.env.NEXT_PUBLIC_APP_URL || ''}/products/${product.id}`);
         toast.info(`Dados do produto "${product.name}" preenchidos no formulário.`);

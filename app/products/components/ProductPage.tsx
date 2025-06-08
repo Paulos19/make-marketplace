@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface UserInfo { /* ... definição mantida ... */ id: string; name?: string | null; whatsappLink?: string | null; }
 interface Category { /* ... definição mantida ... */ id: string; name: string; }
-interface Product { /* ... definição mantida ... */ id: string; name: string; description?: string | null; price: number; originalPrice?: number | null; onPromotion?: boolean | null; imageUrls: string[]; user: UserInfo; createdAt: string; categories: Category[]; }
+interface Product { /* ... definição mantida ... */ id: string; name: string; description?: string | null; price: number; originalPrice?: number | null; onPromotion?: boolean | null; images: string[]; user: UserInfo; createdAt: string; categories: Category[]; }
 
 const ProductCard = ({ product }: { product: Product }) => (
   <Link href={`/products/${product.id}`} className="block group rounded-lg overflow-hidden focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2" aria-label={`Ver detalhes de ${product.name}`}>
@@ -15,7 +15,7 @@ const ProductCard = ({ product }: { product: Product }) => (
         {/* Usando next/image */}
         <div className="aspect-[4/3] w-full relative"> {/* Container para aspect ratio */}
           <Image 
-            src={product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '/img-placeholder.png'} // Tenha um placeholder em /public
+            src={product.images && product.images.length > 0 ? product.images[0] : '/img-placeholder.png'} // Tenha um placeholder em /public
             alt={`Imagem de ${product.name}`}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-110"

@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { ProductForm } from "./components/ProductForm"; // O formulário será um componente separado
+import Navbar from "@/app/components/layout/Navbar";
 
 // Função para buscar as categorias no servidor
 async function getCategories() {
@@ -21,6 +22,8 @@ export default async function AddProductPage() {
   const categories = await getCategories();
 
   return (
+    <>
+    <Navbar/>
     <div className="container mx-auto max-w-4xl py-8 px-4">
       <header className="mb-8 text-center">
         <h1 className="text-4xl sm:text-5xl font-bangers tracking-wider text-zaca-roxo dark:text-zaca-lilas filter drop-shadow-sm">
@@ -34,5 +37,6 @@ export default async function AddProductPage() {
       {/* Renderiza o formulário como um Client Component, passando os dados iniciais */}
       <ProductForm availableCategories={categories} />
     </div>
+    </>
   );
 }

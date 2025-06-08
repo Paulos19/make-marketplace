@@ -253,8 +253,8 @@ export default function ProductDetailPage() {
                 <CardContent className="p-2 sm:p-3">
                   <Carousel setApi={setCarouselApi} className="w-full">
                     <CarouselContent>
-                      {product.imageUrls && product.imageUrls.length > 0 ? (
-                        product.imageUrls.map((url, index) => (
+                      {product.images && product.images.length > 0 ? (
+                        product.images.map((url, index) => (
                           <CarouselItem key={index}>
                             <div className="aspect-square w-full relative bg-slate-100 dark:bg-slate-700 rounded-lg overflow-hidden">
                               <Image
@@ -273,7 +273,7 @@ export default function ProductDetailPage() {
                         </CarouselItem>
                       )}
                     </CarouselContent>
-                    {product.imageUrls && product.imageUrls.length > 1 && (
+                    {product.images && product.images.length > 1 && (
                       <>
                         <CarouselPrevious className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 sm:h-10 sm:w-10 bg-white/80 hover:bg-white dark:bg-black/50 dark:hover:bg-black/80 shadow-md text-slate-700 dark:text-slate-200" />
                         <CarouselNext className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-10 h-9 w-9 sm:h-10 sm:w-10 bg-white/80 hover:bg-white dark:bg-black/50 dark:hover:bg-black/80 shadow-md text-slate-700 dark:text-slate-200" />
@@ -282,9 +282,9 @@ export default function ProductDetailPage() {
                   </Carousel>
                 </CardContent>
               </Card>
-              {product.imageUrls && product.imageUrls.length > 1 && (
+              {product.images && product.images.length > 1 && (
                 <div className="mt-3 grid grid-cols-4 sm:grid-cols-5 gap-1.5 sm:gap-2">
-                  {product.imageUrls.map((url, index) => (
+                  {product.images.map((url, index) => (
                     <button
                       key={index} onClick={() => carouselApi?.scrollTo(index)}
                       className={`aspect-square w-full rounded-md overflow-hidden border-2 transition-all duration-150

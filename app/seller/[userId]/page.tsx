@@ -34,7 +34,7 @@ interface SellerProduct {
   price: number;
   originalPrice?: number | null;
   onPromotion?: boolean | null;
-  imageUrls: string[];
+  images: string[];
   categories: SellerCategory[];
   createdAt: string; // ou Date
 }
@@ -71,7 +71,7 @@ const SellerProductCard = ({ product }: { product: SellerProduct }) => (
           <CardHeader className="p-0 relative border-b dark:border-slate-700/50">
             <div className="aspect-square w-full relative bg-slate-100 dark:bg-slate-700 rounded-t-lg overflow-hidden">
               <Image
-                src={product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '/img-placeholder.png'} 
+                src={product.images && product.images.length > 0 ? product.images[0] : '/img-placeholder.png'} 
                 alt={`Imagem de ${product.name}`}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-110"

@@ -22,7 +22,7 @@ export interface Product {
   price: number;
   originalPrice?: number | null;
   onPromotion?: boolean | null | undefined; // <- O tipo correto e unificado
-  imageUrls: string[];
+  images: string[];
   user: UserInfo;
   createdAt: string;
   categories: Category[];

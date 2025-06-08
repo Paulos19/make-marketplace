@@ -10,30 +10,28 @@ export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    // Proteção: Apenas usuários logados e com a role SELLER ou ADMIN podem acessar
     if (!session?.user?.id || (session.user.role !== UserRole.SELLER && session.user.role !== UserRole.ADMIN)) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
 
     const sellerId = session.user.id;
 
-    const sales = await prisma.reservation.findMany({
+    const salesFromDb = await prisma.reservation.findMany({
       where: {
-        // << LÓGICA CORRIGIDA >>
-        // Filtra as reservas onde o produto pertence ao 'userId' do vendedor logado
         product: {
           userId: sellerId,
         },
       },
       include: {
-        product: { // Inclui detalhes do produto
+        product: {
           select: {
             id: true,
             name: true,
-            imageUrls: true,
+            // CORREÇÃO 1: Usar 'images', o nome correto do campo no schema do DB.
+            images: true, 
           },
         },
-        user: { // Inclui detalhes do comprador (user) que fez a reserva
+        user: { 
           select: {
             id: true,
             name: true,
@@ -44,6 +42,20 @@ export async function GET(request: Request) {
       orderBy: {
         createdAt: 'desc',
       },
+    });
+
+    // CORREÇÃO 2: Normalizar os dados para enviar 'imageUrls' para o frontend.
+    // Isso garante que o componente que exibe os dados não quebre.
+    const sales = salesFromDb.map(sale => {
+        // Pega o campo 'images' do produto e cria um novo campo 'imageUrls'
+        const { images, ...restOfProduct } = sale.product;
+        return {
+            ...sale,
+            product: {
+                ...restOfProduct,
+                imageUrls: images // Renomeia 'images' para 'imageUrls'
+            }
+        };
     });
 
     return NextResponse.json(sales, { status: 200 });

@@ -15,7 +15,7 @@ async function getAllProducts() {
     const products = await prisma.product.findMany({
       include: {
         user: { select: { name: true, email: true } },
-        categories: { select: { name: true } },
+        category: { select: { name: true } },
       },
       orderBy: {
         createdAt: 'desc',
@@ -64,7 +64,7 @@ export default async function AdminProductsPage() {
                       alt={product.name}
                       className="aspect-square rounded-md object-cover"
                       height="64"
-                      src={product.imageUrls[0] || '/img-placeholder.png'}
+                      src={product.images[0] || '/img-placeholder.png'}
                       width="64"
                     />
                   </TableCell>

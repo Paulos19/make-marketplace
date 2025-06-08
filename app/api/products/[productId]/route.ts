@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: { productI
             profileDescription: true,
           },
         },
-        categories: true,
+        category: true,
       },
     });
 

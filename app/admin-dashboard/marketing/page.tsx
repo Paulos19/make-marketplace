@@ -3,8 +3,9 @@ import prisma from "@/lib/prisma";
 import { Product } from "@prisma/client";
 import { EmailBuilderClient } from "../components/EmailBuilderClient";
 
+
 // Função para buscar os produtos que podem ser destacados no email
-async function getProductsForSelection(): Promise<Pick<Product, 'id' | 'name' | 'imageUrls'>[]> {
+async function getProductsForSelection(): Promise<Pick<Product, 'id' | 'name' | 'images'>[]> {
     try {
         const products = await prisma.product.findMany({
             take: 100, // Limita a 100 produtos para a seleção
@@ -12,7 +13,7 @@ async function getProductsForSelection(): Promise<Pick<Product, 'id' | 'name' | 
             select: {
                 id: true,
                 name: true,
-                imageUrls: true,
+                images: true,
             }
         });
         return products;

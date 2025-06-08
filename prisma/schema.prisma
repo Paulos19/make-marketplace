@@ -78,22 +78,24 @@ model VerificationToken {
 
 // Produto agora se relaciona diretamente com User
 model Product {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   name          String
-  description   String?
+  description   String
   price         Float
   originalPrice Float?
-  onPromotion   Boolean  @default(false)
+  images        String[]
+  categoryId    String
+  userId        String
+  isFeatured    Boolean  @default(false)
+  isReserved    Boolean  @default(false) // <-- Adicione esta linha
   quantity      Int      @default(1)
-  imageUrls     String[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  onPromotion   Boolean  @default(false) //
 
-  // << RELAÇÃO CORRIGIDA >>
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  categories   Category[]
+  category     Category      @relation(fields: [categoryId], references: [id])
+  user         User          @relation(fields: [userId], references: [id])
   reservations Reservation[]
 }
 
@@ -103,12 +105,20 @@ model Category {
   products Product[]
 }
 
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  SOLD
+  CANCELED
+}
+
 model Reservation {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   userId    String
   productId String
-  quantity  Int
-  status    String   @default("PENDING")
+  status    ReservationStatus @default(PENDING)
+  quantity  Int 
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -117,15 +127,15 @@ model Reservation {
 }
 
 model ThemeSettings {
-  id      String @id @default(cuid()) // Apenas um registro existirá nesta tabela
-  
+  id String @id @default(cuid()) // Apenas um registro existirá nesta tabela
+
   // Exemplo de cores da marca que serão customizáveis
   // Armazenaremos como string no formato HSL: "262 64% 49%"
-  zaca_roxo  String?
-  zaca_azul  String?
-  zaca_magenta String?
+  zaca_roxo     String?
+  zaca_azul     String?
+  zaca_magenta  String?
   zaca_vermelho String?
-  
+
   // Exemplo de fontes que serão customizáveis
   // Armazenaremos o nome da fonte, ex: 'Roboto', 'Montserrat'
   font_sans    String?
@@ -138,4 +148,14 @@ model NewsletterSubscription {
   id        String   @id @default(cuid())
   email     String   @unique // Garante que um email só possa ser cadastrado uma vez
   createdAt DateTime @default(now())
+}
+
+model HomePageBanner {
+  id        String   @id @default(uuid())
+  title     String
+  imageUrl  String
+  linkUrl   String? // O link pode ser opcional
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

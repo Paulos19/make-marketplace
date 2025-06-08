@@ -44,6 +44,7 @@ export default function Navbar() {
   const navLinks = [
     { href: '/', label: 'Início' },
     { href: '/products', label: 'Achadinhos' },
+    { href: '/sellers', label: 'Vendedores' }
     // Adicione mais links aqui se necessário
   ];
 
@@ -84,12 +85,17 @@ export default function Navbar() {
 
         {/* Ícones e Login/Usuário */}
         <div className="flex items-center justify-end space-x-2 sm:space-x-4">
+          <Link href='/my-reservations'>
           <Button variant="ghost" size="icon" aria-label="Favoritos">
             <Heart className="h-5 w-5" />
           </Button>
+          </Link>
+
+          <Link href='/sellers'>
           <Button variant="ghost" size="icon" aria-label="Carrinho">
             <ShoppingCart className="h-5 w-5" />
           </Button>
+          </Link>
           
           <div className="hidden lg:flex items-center">
             {status === 'loading' ? (

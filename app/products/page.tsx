@@ -36,7 +36,7 @@ interface Product {
   price: number;
   originalPrice?: number | null;
   onPromotion?: boolean | null | undefined; // Definição correta que permite null
-  imageUrls: string[];
+  images: string[];
   user: UserInfo;
   createdAt: string;
   categories: Category[];
@@ -155,9 +155,9 @@ export default function AllProductsPage() {
     const sourceForBanner = bannerProductsData.length > 0 ? bannerProductsData : allProductsData;
     if (sourceForBanner.length === 0) return null;
 
-    const promoProducts = sourceForBanner.filter(p => p.onPromotion && p.imageUrls && p.imageUrls.length > 0);
+    const promoProducts = sourceForBanner.filter(p => p.onPromotion && p.images && p.images.length > 0);
     if (promoProducts.length > 0) return promoProducts[Math.floor(Math.random() * promoProducts.length)];
-    return sourceForBanner.find(p => p.imageUrls && p.imageUrls.length > 0) || sourceForBanner[0];
+    return sourceForBanner.find(p => p.images && p.images.length > 0) || sourceForBanner[0];
   }, [allProductsData, bannerProductsData]);
 
   const BannerSkeleton = () => (
@@ -251,13 +251,13 @@ export default function AllProductsPage() {
               </div>
             ) : (
               <motion.div 
-                className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5 sm:gap-x-5 sm:gap-y-6"
+                className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5 sm:gap-x-5 sm:gap-y-6 max-w-full overflow-x-hidden"
                 variants={cardListVariants}
                 initial="hidden"
                 animate="visible"
               >
                 {filteredProductsForGrid.map((product) => (
-                  <motion.div key={product.id} variants={itemVariants}>
+                  <motion.div key={product.id} variants={itemVariants} className="w-full">
                     <ProductCard product={product} />
                   </motion.div>
                 ))}
