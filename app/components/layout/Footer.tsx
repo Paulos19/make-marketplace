@@ -128,7 +128,7 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" target="_blank" rel="noreferrer" className="text-slate-700 transition hover:text-zaca-magenta dark:text-slate-300 dark:hover:text-zaca-magenta" aria-label="Instagram do Zacaplace">
+                <a href="https://www.instagram.com/zacaplace_setelagoas?igsh=c3o4bXN2emhoY29o&utm_source=qr" target="_blank" rel="noreferrer" className="text-slate-700 transition hover:text-zaca-magenta dark:text-slate-300 dark:hover:text-zaca-magenta" aria-label="Instagram do Zacaplace">
                   <Instagram className="h-5 w-5" />
                 </a>
               </li>
