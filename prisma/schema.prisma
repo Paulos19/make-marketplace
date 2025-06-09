@@ -171,3 +171,20 @@ model HomepageSection {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
+
+model MarketingCampaign {
+  id        String   @id @default(cuid())
+  status    String   @default("DRAFT") 
+  subject   String
+  headline  String
+  body      String
+  ctaText   String
+  ctaLink   String
+  imageUrl  String
+
+  targetAudienceJson String 
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sentAt    DateTime?
+}

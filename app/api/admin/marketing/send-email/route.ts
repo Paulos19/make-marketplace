@@ -6,94 +6,103 @@ import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 import { Resend } from 'resend';
-import MarketingEmail from '@/app/components/emails/MarketingEmail'; // Importa o template React
-import * as React from 'react'; // <<< ADICIONADO: Importa o React para usar React.createElement
+import MarketingEmail from '@/app/components/emails/MarketingEmail';
+import * as React from 'react';
 
-// Inicializa o cliente Resend com a chave de API do .env
+// 1. Inicialização do Cliente Resend
+// Certifique-se que RESEND_API_KEY está no seu arquivo .env.local
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Schema de validação para os dados recebidos do formulário
+// 2. Schema de Validação com Zod
+// Define a estrutura esperada do corpo da requisição, incluindo o campo de teste.
 const emailBuilderSchema = z.object({
-    targetAudience: z.object({
-        newsletter: z.boolean(),
-        allUsers: z.boolean(),
-    }).refine(data => data.newsletter || data.allUsers, { message: "Selecione pelo menos um público-alvo." }),
-    subject: z.string().min(5, "O assunto é muito curto."),
-    headline: z.string().min(5, "O título é muito curto."),
-    body: z.string().min(20, "O corpo do email é muito curto."),
-    ctaText: z.string().min(3, "O texto do botão é muito curto."),
-    ctaLink: z.string().url("O link do botão deve ser uma URL válida."),
-    imageUrl: z.string().url("A URL da imagem deve ser válida."),
+  isTest: z.boolean().optional(), // Flag para identificar se é um envio de teste
+  targetAudience: z.object({
+      newsletter: z.boolean(),
+      allUsers: z.boolean(),
+  }).optional(), // O público só é necessário se não for um teste
+  subject: z.string().min(5, "O assunto deve ter pelo menos 5 caracteres."),
+  headline: z.string().min(5, "O título principal é muito curto."),
+  body: z.string().min(20, "O corpo do email precisa ter mais conteúdo."),
+  ctaText: z.string().min(3, "O texto do botão é muito curto."),
+  ctaLink: z.string().url("O link do botão deve ser uma URL válida."),
+  imageUrl: z.string().url("A URL da imagem do banner é obrigatória e deve ser válida."),
 });
 
+// 3. Função Principal da Rota (POST)
 export async function POST(request: Request) {
   try {
+    // 4. Verificação de Segurança
     const session = await getServerSession(authOptions);
-    if (session?.user?.role !== UserRole.ADMIN) {
-      return NextResponse.json({ message: 'Acesso negado. Apenas administradores podem enviar campanhas.' }, { status: 403 });
+    // Garante que o usuário está logado, é um ADMIN e possui um email (necessário para receber o teste)
+    if (session?.user?.role !== UserRole.ADMIN || !session?.user?.email) {
+      return NextResponse.json({ message: 'Acesso negado ou email do admin não encontrado.' }, { status: 403 });
     }
 
     const emailContent = await request.json();
     const validation = emailBuilderSchema.safeParse(emailContent);
+
     if (!validation.success) {
       return NextResponse.json({ message: 'Dados do email inválidos.', errors: validation.error.format() }, { status: 400 });
     }
 
-    const { targetAudience, subject, ...templateProps } = validation.data;
+    const { isTest, targetAudience, subject, ...templateProps } = validation.data;
+    const adminEmail = session.user.email;
+    let finalRecipients: string[] = [];
 
-    // 1. Buscar a lista de e-mails dos destinatários com base na seleção do admin
-    const emailPromises: Promise<{ email: string | null }[]>[] = [];
-
-    if (targetAudience.newsletter) {
-      emailPromises.push(prisma.newsletterSubscription.findMany({ select: { email: true } }));
+    // 5. Lógica para Definir os Destinatários
+    if (isTest) {
+      // Se for um teste, o único destinatário é o próprio admin
+      finalRecipients = [adminEmail];
+    } else if (targetAudience) {
+      // Se for uma campanha real, busca os emails do banco de dados
+      const emailPromises: Promise<{ email: string | null }[]>[] = [];
+      
+      if (targetAudience.newsletter) {
+        emailPromises.push(prisma.newsletterSubscription.findMany({ select: { email: true } }));
+      }
+      if (targetAudience.allUsers) {
+        emailPromises.push(prisma.user.findMany({ where: { email: { not: null } }, select: { email: true } }));
+      }
+      
+      const emailResults = await Promise.all(emailPromises);
+      
+      // Limpa, normaliza e remove duplicatas da lista de emails
+      const emailsToSend = emailResults.flat().map(result => result.email).filter((email): email is string => !!email);
+      finalRecipients = [...new Set(emailsToSend)];
     }
-    if (targetAudience.allUsers) {
-      emailPromises.push(prisma.user.findMany({ where: { email: { not: null } }, select: { email: true } }));
+
+    if (finalRecipients.length === 0) {
+      return NextResponse.json({ message: "Nenhum destinatário válido foi encontrado para esta campanha." }, { status: 400 });
     }
     
-    const emailResults = await Promise.all(emailPromises);
-    
-    const emailsToSend = emailResults
-      .flat() // Achata o array de arrays
-      .map(result => result.email) // Extrai os emails
-      .filter((email): email is string => typeof email === 'string' && email.length > 0); // Filtra nulos/vazios e garante o tipo string
-
-    // Remove duplicatas
-    const uniqueEmails = [...new Set(emailsToSend)];
-
-    if (uniqueEmails.length === 0) {
-        return NextResponse.json({ message: "Nenhum destinatário encontrado para o público selecionado." }, { status: 400 });
-    }
-    
-    const BATCH_SIZE = 999; 
+    // 6. Envio em Lotes para Evitar Limites da API
+    const BATCH_SIZE = 999; // Limite do Resend é 1000 por chamada
     const emailBatches: string[][] = [];
-    for (let i = 0; i < uniqueEmails.length; i += BATCH_SIZE) {
-        emailBatches.push(uniqueEmails.slice(i, i + BATCH_SIZE));
+    for (let i = 0; i < finalRecipients.length; i += BATCH_SIZE) {
+        emailBatches.push(finalRecipients.slice(i, i + BATCH_SIZE));
     }
 
-    console.log(`Iniciando envio de campanha para ${uniqueEmails.length} destinatário(s) em ${emailBatches.length} lote(s).`);
+    console.log(`Iniciando envio para ${finalRecipients.length} destinatário(s) em ${emailBatches.length} lote(s).`);
 
-    // 2. Enviar os e-mails usando Resend em lotes
     for (const batch of emailBatches) {
-        const { data, error } = await resend.emails.send({
-          from: process.env.EMAIL_SENDER || 'Zacaplace <nao-responda@seu-dominio-verificado.com>',
-          to: batch,
-          subject: subject,
-          // <<< CORREÇÃO AQUI: Passar o componente usando React.createElement >>>
-          react: React.createElement(MarketingEmail, { ...templateProps, subject }),
-        });
-
-        if (error) {
-          console.error("Erro do Resend ao enviar um lote:", error);
-        } else {
-          console.log(`Lote de ${batch.length} e-mails enviado com sucesso. ID do primeiro e-mail: ${data?.id}`);
-        }
+      await resend.emails.send({
+        from: process.env.EMAIL_SENDER || 'Zacaplace <onboarding@resend.dev>',
+        to: batch,
+        subject: isTest ? `[TESTE] ${subject}` : subject,
+        react: React.createElement(MarketingEmail, { ...templateProps, subject }),
+      });
     }
 
-    return NextResponse.json({ message: `Campanha de email disparada com sucesso para ${uniqueEmails.length} destinatário(s)!` }, { status: 200 });
+    // 7. Resposta de Sucesso
+    const successMessage = isTest
+        ? "Email de teste enviado com sucesso para seu email de administrador!"
+        : `Campanha enviada com sucesso para ${finalRecipients.length} destinatário(s)!`;
+
+    return NextResponse.json({ message: successMessage }, { status: 200 });
 
   } catch (error) {
     console.error("Erro na API de envio de marketing:", error);
-    return NextResponse.json({ message: "Erro interno do servidor." }, { status: 500 });
+    return NextResponse.json({ message: "Ocorreu um erro interno no servidor. Verifique os logs." }, { status: 500 });
   }
 }
