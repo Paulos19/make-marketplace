@@ -7,10 +7,12 @@ import { UserRole } from "@prisma/client";
 import { v4 as uuidv4 } from 'uuid';
 import { sendVerificationEmail } from "@/lib/nodemailer";
 
+// <<< INÍCIO DA CORREÇÃO >>>
 const registerUserSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um email válido." }),
   name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
   password: z.string().min(6, { message: "A senha precisa ter no mínimo 6 caracteres." }),
+  confirmPassword: z.string().min(6, { message: "A confirmação da senha é obrigatória." }),
   role: z.enum([UserRole.USER, UserRole.SELLER]),
   whatsappLink: z.string().url().optional().nullable(),
 }).superRefine((data, ctx) => {
@@ -21,7 +23,12 @@ const registerUserSchema = z.object({
       path: ["whatsappLink"],
     });
   }
+}).refine(data => data.password === data.confirmPassword, {
+    message: "As senhas não coincidem, cumpadi!",
+    path: ["confirmPassword"], // O erro será associado ao campo de confirmação
 });
+// <<< FIM DA CORREÇÃO >>>
+
 
 export async function POST(request: Request) {
   try {
@@ -33,6 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: errorMessage }, { status: 400 });
     }
 
+    // O campo confirmPassword é usado apenas para validação e não é extraído aqui
     const { email, name, password, whatsappLink, role } = validation.data;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -42,8 +50,6 @@ export async function POST(request: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // << LÓGICA CORRIGIDA >>
-    // Cria um único registro User, incluindo whatsappLink se for um vendedor
     const newUser = await prisma.user.create({
       data: {
         email,

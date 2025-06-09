@@ -1,0 +1,10 @@
+/* Esconde a barra de rolagem padrão para navegadores baseados em WebKit (Chrome, Safari) */
+.horizontal-scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Esconde a barra de rolagem para outros navegadores (Firefox) - pode não funcionar em todos, mas é uma boa prática */
+  .horizontal-scroll-container {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }

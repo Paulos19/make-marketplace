@@ -3,24 +3,24 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 
-// GET: Busca todos os usuários com a role de SELLER
+// GET: Busca todos os usuários com a role de SELLER que optaram por aparecer na página
 export async function GET() {
   try {
     const sellers = await prisma.user.findMany({
+      // <<< INÍCIO DA CORREÇÃO >>>
       where: {
         role: UserRole.SELLER,
-        // Opcional: Adicionar um filtro para garantir que o perfil está visível
-        // Ex: name: { not: null },
+        showInSellersPage: true, // Filtra apenas vendedores que querem aparecer
       },
-      // Selecionamos os campos públicos e necessários para os cards
+      // <<< FIM DA CORREÇÃO >>>
       select: {
         id: true,
         name: true,
-        image: true, // Foto de perfil
-        storeName: true, // Nome da loja
-        whatsappLink: true, // Para o botão de contato
-        sellerBannerImageUrl: true, // A nova imagem do banner
-        profileDescription: true, // Uma breve descrição para o card
+        image: true,
+        storeName: true,
+        whatsappLink: true,
+        sellerBannerImageUrl: true,
+        profileDescription: true,
       },
       orderBy: {
         createdAt: 'desc',

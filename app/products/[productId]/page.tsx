@@ -36,8 +36,32 @@ import Navbar from '@/app/components/layout/Navbar';
 import Footer from '@/app/components/layout/Footer';
 import RelatedProducts from '../components/RelatedProducts'; 
 
-// Tipos (Importante: Product deve incluir user, onPromotion, originalPrice)
-import type { Product, Category as CategoryInfo } from '@/lib/types';
+// Tipos
+interface UserInfo {
+  id: string;
+  name?: string | null;
+  whatsappLink?: string | null;
+  image?: string | null;
+  storeName?: string | null;
+}
+interface CategoryInfo {
+    id: string;
+    name: string;
+}
+interface Product {
+  id: string;
+  name: string;
+  description?: string | null;
+  price: number;
+  originalPrice?: number | null;
+  onPromotion?: boolean | null;
+  images: string[];
+  user: UserInfo;
+  createdAt: string;
+  categories: CategoryInfo[];
+  quantity: number;
+}
+
 
 const mainVariants: Variants = {
   hidden: { opacity: 0 },
@@ -63,6 +87,7 @@ export default function ProductDetailPage() {
   const [isReserving, setIsReserving] = useState(false);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [currentImageSlide, setCurrentImageSlide] = useState(0);
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     if (productId) {
@@ -84,8 +109,8 @@ export default function ProductDetailPage() {
             const primaryCategoryId = productData.categories[0].id;
             const relatedResponse = await fetch(`/api/products?categoryId=${primaryCategoryId}&limit=${PRODUCTS_PER_RELATED_ROW + 1}&all=true`);
             if (relatedResponse.ok) {
-              const relatedData: Product[] = await relatedResponse.json();
-              setRelatedProducts(relatedData.filter(p => p.id !== productId && p.user).slice(0, PRODUCTS_PER_RELATED_ROW));
+              const relatedData = await relatedResponse.json();
+              setRelatedProducts(relatedData.filter((p: Product) => p.id !== productId && p.user).slice(0, PRODUCTS_PER_RELATED_ROW));
             }
           }
         } catch (err: any) {
@@ -102,21 +127,11 @@ export default function ProductDetailPage() {
   }, [productId]);
 
   useEffect(() => {
-    if (!carouselApi) {
-      return;
-    }
-    const onSelect = () => {
-      if (carouselApi) {
-        setCurrentImageSlide(carouselApi.selectedScrollSnap());
-      }
-    };
+    if (!carouselApi) return;
+    const onSelect = () => carouselApi && setCurrentImageSlide(carouselApi.selectedScrollSnap());
     carouselApi.on("select", onSelect);
     onSelect();
-    return () => {
-      if (carouselApi) {
-        carouselApi.off("select", onSelect);
-      }
-    };
+    return () => { carouselApi && carouselApi.off("select", onSelect) };
   }, [carouselApi]);
 
   const openWhatsAppWithMessage = useCallback(() => {
@@ -146,9 +161,7 @@ export default function ProductDetailPage() {
     window.open(finalWhatsAppUrl, '_blank', 'noopener,noreferrer');
   }, [product, selectedQuantity]);
 
-  const handleWhatsAppRedirect = () => {
-    openWhatsAppWithMessage();
-  };
+  const handleWhatsAppRedirect = () => openWhatsAppWithMessage();
 
   const handleQuantityChange = (amount: number) => {
     setSelectedQuantity((prev) => {
@@ -194,29 +207,62 @@ export default function ProductDetailPage() {
 
   const getAvatarFallback = (name?: string | null) => name ? name.trim().split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : <UserCircle2 />;
   
-  const shareProduct = () => {
-    if (navigator.share && product) {
-      navigator.share({ title: product.name, text: `Olha que achadinho: ${product.name}!`, url: window.location.href })
-      .catch((error) => console.log('Erro ao compartilhar:', error));
-    } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(window.location.href)
-        .then(() => toast.success("Link do produto copiado!"))
-        .catch(() => toast.error("Falha ao copiar o link."));
-    } else {
-      toast.error("Compartilhamento não suportado neste navegador.");
+  const shareProduct = async () => {
+    if (!product) return;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: `Olha que achadinho encontrei no Zacaplace: ${product.name}!`,
+          url: window.location.href,
+        });
+        return;
+      } catch (error) {
+        console.log('Compartilhamento nativo cancelado, usando fallback de link curto.', error);
+      }
+    }
+
+    setIsSharing(true);
+    try {
+      const response = await fetch('/api/shortener', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: window.location.href,
+          title: product.name,
+          description: product.description || `Confira este produto incrível no Zacaplace!`,
+          imageUrl: product.images[0] || null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Não foi possível gerar um link curto. Copiando o link completo.");
+      }
+
+      const data = await response.json();
+      const shortUrl = `${window.location.origin}/s/${data.shortCode}`;
+
+      await navigator.clipboard.writeText(shortUrl);
+      toast.success("Link encurtado copiado!", {
+        description: `O link ${shortUrl} está pronto para ser compartilhado.`,
+      });
+
+    } catch (error) {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.warning("Link copiado!", {
+        description: error instanceof Error ? error.message : "Copiamos o link completo para você.",
+      });
+    } finally {
+      setIsSharing(false);
     }
   };
 
-  if (loading) {
-    return <ProductPageSkeleton />;
-  }
-
-  if (error || !product || !product.user) { 
-    return <ProductPageError error={error || "Produto não encontrado ou dados do vendedor ausentes."} />;
-  }
+  if (loading) return <ProductPageSkeleton />;
+  if (error || !product || !product.user) return <ProductPageError error={error || "Produto não encontrado ou dados do vendedor ausentes."} />;
 
   const seller = product.user;
-  const sellerDisplayName = seller.storeName || seller.name || "Vendedor Zaca";
+  const sellerDisplayName = seller.storeName || seller.name || 'Vendedor Zaca';
   const sellerAvatar = seller.image;
   const sellerWhatsappLink = seller.whatsappLink;
   const sellerIdForLink = seller.id;
@@ -231,7 +277,6 @@ export default function ProductDetailPage() {
         animate="visible"
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Breadcrumbs */}
           <motion.div variants={itemVariants} className="mb-6 text-sm text-slate-500 dark:text-slate-400 flex items-center space-x-1.5 flex-wrap">
             <Link href="/" className="hover:text-zaca-azul dark:hover:text-zaca-lilas">Zacaplace</Link>
             <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" />
@@ -247,7 +292,6 @@ export default function ProductDetailPage() {
           </motion.div>
 
           <div className="lg:grid lg:grid-cols-12 lg:gap-10 xl:gap-16 items-start">
-            {/* Seção de Imagens do Produto */}
             <motion.section variants={itemVariants} aria-labelledby="product-images" className="lg:col-span-7 xl:col-span-7">
               <Card className="shadow-xl overflow-hidden bg-white dark:bg-slate-800/50 border dark:border-slate-700/60 rounded-xl">
                 <CardContent className="p-2 sm:p-3">
@@ -300,7 +344,6 @@ export default function ProductDetailPage() {
               )}
             </motion.section>
 
-            {/* Seção de Detalhes do Produto */}
             <motion.section variants={itemVariants} aria-labelledby="product-details" className="lg:col-span-5 xl:col-span-5 mt-8 lg:mt-0 space-y-6">
               {product.categories && product.categories.length > 0 && (
                 <div className="flex flex-wrap gap-2">
@@ -316,7 +359,6 @@ export default function ProductDetailPage() {
                 {product.name}
               </h1>
 
-              {/* Lógica de Exibição de Preço Promocional */}
               <div className="flex items-baseline gap-x-3">
                 {product.onPromotion && product.originalPrice != null && product.originalPrice > product.price && (
                   <p className="text-xl text-slate-500 dark:text-slate-400 line-through" aria-label={`De R$ ${product.originalPrice.toFixed(2)}`}>
@@ -370,14 +412,17 @@ export default function ProductDetailPage() {
                   {isReserving ? <Loader2 className="mr-2 h-5 w-5 animate-spin"/> : <ShoppingCart className="mr-2 h-5 w-5" />}
                   {isReserving ? "Reservando..." : (product.quantity === 0 ? "Esgotado!" : "Reservar e Contatar Vendedor")}
                 </Button>
-                 <Button variant="outline" size="lg" onClick={shareProduct} className="w-full text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700/50">
-                    <Share2 className="mr-2 h-5 w-5"/> Compartilhar Achadinho
+                 <Button variant="outline" size="lg" onClick={shareProduct} disabled={isSharing} className="w-full text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+                    {isSharing ? (
+                        <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Gerando link...</>
+                    ) : (
+                        <><Share2 className="mr-2 h-5 w-5"/> Compartilhar Achadinho</>
+                    )}
                 </Button>
               </div>
 
               <Separator className="my-6 dark:bg-slate-700/80" />
 
-              {/* Card do Vendedor - Acessa dados através de 'seller' (product.user) */}
               {seller && (
                 <Card className="bg-slate-50 dark:bg-slate-800/60 border dark:border-slate-200 dark:border-slate-700/50 shadow-sm rounded-xl">
                   <CardHeader className="pb-3 pt-4">

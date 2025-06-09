@@ -44,7 +44,8 @@ export default function Navbar() {
   const navLinks = [
     { href: '/', label: 'Início' },
     { href: '/products', label: 'Achadinhos' },
-    { href: '/sellers', label: 'Vendedores' }
+    { href: '/sellers', label: 'Vendedores' },
+    { href: '/dashboard/add-product', label: 'Adicionar Produtos' },
     // Adicione mais links aqui se necessário
   ];
 
@@ -60,7 +61,7 @@ export default function Navbar() {
         {/* Logo */}
         <div className="flex items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Image src="/logo.svg" alt="Zacaplace Logo" width={160} height={45} priority />
+            <Image src="/zacaplace.svg" alt="Zacaplace Logo" width={200} height={60} priority />
           </Link>
         </div>
         

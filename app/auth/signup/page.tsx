@@ -12,6 +12,7 @@ import { Loader2, User, Building } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { PasswordInput } from "@/components/ui/PasswordInput"; // <<< INÍCIO DA CORREÇÃO 1: Importar o novo componente
 
 type AccountType = 'USER' | 'SELLER';
 
@@ -20,6 +21,7 @@ export default function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
 
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +32,12 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem. Verifica aí, cumpadi!");
+      return;
+    }
+
     setIsLoading(true);
 
     if (accountType === 'SELLER' && !whatsappNumber) {
@@ -46,8 +54,7 @@ export default function SignUpPage() {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // << PONTO CRÍTICO: Garantir que 'role: accountType' seja enviado no corpo
-        body: JSON.stringify({ name, email, password, whatsappLink, role: accountType }),
+        body: JSON.stringify({ name, email, password, confirmPassword, whatsappLink, role: accountType }),
       });
 
       const data = await response.json();
@@ -144,10 +151,16 @@ export default function SignUpPage() {
                 <Label htmlFor="email">Email</Label>
                 <Input type="email" id="email" placeholder="seuemail@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={isLoading} className="mt-1"/>
               </div>
+              {/* <<< INÍCIO DA CORREÇÃO 2: Usar PasswordInput >>> */}
               <div>
                 <Label htmlFor="password">Senha</Label>
-                <Input type="password" id="password" placeholder="Uma senha bem forte, psit!" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isLoading} className="mt-1"/>
+                <PasswordInput id="password" placeholder="Uma senha bem forte, psit!" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={isLoading} className="mt-1"/>
               </div>
+              <div>
+                <Label htmlFor="confirmPassword">Confirme a Senha</Label>
+                <PasswordInput id="confirmPassword" placeholder="Repete a senha aqui, cumpadi!" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required disabled={isLoading} className="mt-1"/>
+              </div>
+              {/* <<< FIM DA CORREÇÃO 2 >>> */}
               
               {accountType === 'SELLER' && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.3 }}>

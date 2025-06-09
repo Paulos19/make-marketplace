@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { Resolver, useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,22 +12,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'; //
-import { Input } from '@/components/ui/input'; //
-import { Textarea } from '@/components/ui/textarea'; //
+} from '@/components/ui/form'; 
+import { Input } from '@/components/ui/input'; 
+import { Textarea } from '@/components/ui/textarea'; 
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import ImageUpload from '@/app/components/ImageUpload'; //
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; //
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'; //
-import { Skeleton } from '@/components/ui/skeleton'; //
-import { User, Mail, Link as LinkIcon, Store, Image as ImageIconLucide, FileText, Save, UserCircle2, Loader2, Trash2 } from 'lucide-react';
-import Navbar from '@/app/components/layout/Navbar'; //
+import ImageUpload from '@/app/components/ImageUpload'; 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'; 
+import { Skeleton } from '@/components/ui/skeleton'; 
+import { User, Store, Image as ImageIconLucide, Save, UserCircle2, Loader2 } from 'lucide-react';
+import Navbar from '@/app/components/layout/Navbar'; 
 import Image from 'next/image';
+import { Switch } from '@/components/ui/switch';
 
-// Schema Zod Atualizado
+// Schema Zod Atualizado para incluir showInSellersPage
 const formSchema = z.object({
   name: z.string().min(2, {
     message: 'O nome deve ter pelo menos 2 caracteres.',
@@ -36,7 +37,7 @@ const formSchema = z.object({
   }).optional().nullable(),
   email: z.string().email({ 
     message: 'Por favor, insira um email válido.',
-  }), // Email geralmente não é editável, mas mantemos para exibição
+  }),
   whatsappLink: z.string().url({
     message: 'Insira uma URL válida (ex: https://wa.me/SEUNUMERO).',
   }).or(z.literal('')).optional().nullable(),
@@ -48,8 +49,7 @@ const formSchema = z.object({
   profileDescription: z.string().max(500, {
     message: 'A descrição do perfil não pode ter mais de 500 caracteres.',
   }).optional().nullable(),
-  // Os campos de URL de imagem (profileImageUrl, sellerBannerImageUrl) serão gerenciados pelo estado
-  // e não diretamente pelo react-hook-form, mas incluídos no payload do submit.
+  showInSellersPage: z.boolean().default(false), // Novo campo
 });
 
 // Interface UserData Atualizada
@@ -62,6 +62,7 @@ interface UserData {
   storeName?: string | null;
   sellerBannerImageUrl?: string | null;
   profileDescription?: string | null;
+  showInSellersPage?: boolean | null; // Novo campo
 }
 
 export default function SettingsPage() {
@@ -76,18 +77,19 @@ export default function SettingsPage() {
   const [initialDataLoading, setInitialDataLoading] = useState(true); 
 
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as Resolver<z.infer<typeof formSchema>>,
     defaultValues: {
       name: '',
       email: '',
       whatsappLink: '',
       storeName: '',
       profileDescription: '',
+      showInSellersPage: false,
     },
   });
 
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.id) { // Adicionado session?.user?.id para segurança
+    if (status === 'authenticated' && session?.user?.id) {
       setInitialDataLoading(true);
       fetch('/api/user') 
         .then((res) => {
@@ -99,10 +101,11 @@ export default function SettingsPage() {
             setUserData(data);
             form.reset({
               name: data.name || '',
-              email: data.email || '', // Email geralmente não é editável
+              email: data.email || '',
               whatsappLink: data.whatsappLink || '',
               storeName: data.storeName || '',
               profileDescription: data.profileDescription || '',
+              showInSellersPage: data.showInSellersPage || false,
             });
             setProfileImageUrl(data.image || null);
             setSellerBannerImageUrlState(data.sellerBannerImageUrl || null);
@@ -132,6 +135,7 @@ export default function SettingsPage() {
       profileDescription: values.profileDescription || null,
       image: profileImageUrl, 
       sellerBannerImageUrl: sellerBannerImageUrlState,
+      showInSellersPage: values.showInSellersPage,
     };
 
     try {
@@ -147,21 +151,15 @@ export default function SettingsPage() {
         throw new Error(responseData.message || responseData.error || 'Falha ao atualizar perfil');
       }
       
-      // Atualiza a sessão do NextAuth localmente se os dados relevantes da sessão mudaram
       const sessionUpdateData: any = {};
       if (responseData.name !== session?.user?.name) sessionUpdateData.name = responseData.name;
       if (responseData.image !== session?.user?.image) sessionUpdateData.image = responseData.image;
-      // Adicione outros campos da sessão que você quer atualizar, se houver
-      // whatsappLink, storeName, sellerBannerImageUrl não estão na sessão por padrão
       
       if (Object.keys(sessionUpdateData).length > 0) {
         await update({ user: { ...session?.user, ...sessionUpdateData } });
       }
 
-
       toast.success('Seu perfil foi atualizado com sucesso!');
-      // Opcional: forçar recarregamento dos dados do usuário se necessário ou confiar na atualização da sessão
-      // router.refresh(); // pode não ser necessário se a sessão for atualizada corretamente
     } catch (error: any) {
       console.error('Erro no onSubmit settings:', error);
       const errMsg = error.errors ? JSON.stringify(error.errors) : error.message;
@@ -233,7 +231,6 @@ export default function SettingsPage() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 items-start">
-            {/* Coluna da Esquerda: Imagem de Perfil e Imagem do Banner */}
             <div className="lg:col-span-1 space-y-8">
               <Card className="shadow-xl dark:bg-slate-800/70 border dark:border-slate-700/60">
                 <CardHeader>
@@ -251,7 +248,7 @@ export default function SettingsPage() {
                   </Avatar>
                   <ImageUpload
                     onUploadComplete={(urls) => urls.length > 0 && setProfileImageUrl(urls[0])}
-                    userId={userData.id} // Para subpasta única
+                    userId={userData.id}
                     maxFiles={1}
                     storagePath={`profile_pictures/`}
                     currentFiles={profileImageUrl ? [profileImageUrl] : []}
@@ -285,7 +282,6 @@ export default function SettingsPage() {
               </Card>
             </div>
 
-            {/* Coluna da Direita: Informações do Perfil e Loja */}
             <div className="lg:col-span-2 space-y-8">
               <Card className="shadow-xl dark:bg-slate-800/70 border dark:border-slate-700/60">
                 <CardHeader>
@@ -344,6 +340,28 @@ export default function SettingsPage() {
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <FormField
+                    control={form.control}
+                    name="showInSellersPage"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 dark:border-slate-700">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base dark:text-slate-200">
+                            Exibir na Página de Vendedores
+                          </FormLabel>
+                          <FormDescription className="dark:text-slate-400">
+                            Ative para que seu card de vendedor apareça na página pública de vendedores.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
             </div>
@@ -360,7 +378,7 @@ export default function SettingsPage() {
               {isSubmitting ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Salvando as 'Zacarias-formações'...</>
               ) : (
-                <><Save className="mr-2 h-5 w-5" /> Salvar Mudanças do Zaca!</>
+                <><Save className="mr-2 h-5 w-5" /> Salvar Alterações do Zaca!</>
               )}
             </Button>
           </div>

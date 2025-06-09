@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -28,6 +25,7 @@ model User {
 
   // Campos de Vendedor (opcionais, preenchidos apenas se role for SELLER)
   storeName            String?
+  showInSellersPage    Boolean  @default(false)
   whatsappLink         String?
   profileDescription   String?
   sellerBannerImageUrl String?
@@ -39,6 +37,7 @@ model User {
   sessions     Session[]
   products     Product[] // Um usuário (vendedor) pode ter muitos produtos
   reservations Reservation[] // Um usuário (comprador) pode ter muitas reservas
+  ShortLink    ShortLink[]
 }
 
 model Account {
@@ -113,11 +112,11 @@ enum ReservationStatus {
 }
 
 model Reservation {
-  id        String   @id @default(uuid())
+  id        String            @id @default(uuid())
   userId    String
   productId String
   status    ReservationStatus @default(PENDING)
-  quantity  Int 
+  quantity  Int
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -161,30 +160,49 @@ model HomePageBanner {
 }
 
 model HomepageSection {
-  id                String   @id @default(cuid())
-  title             String   // Título interno para identificar a seção no painel admin
-  bannerImageUrl    String
-  bannerFontColor   String   @default("#FFFFFF") // Cor do texto do banner, padrão branco
-  productIds        String[] // Array de IDs dos produtos a serem exibidos
-  order             Int      @default(0) // Para definir a ordem de exibição na homepage
-  isActive          Boolean  @default(true) // Para ativar ou desativar a seção
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id              String   @id @default(cuid())
+  title           String // Título interno para identificar a seção no painel admin
+  bannerImageUrl  String
+  bannerFontColor String   @default("#FFFFFF") // Cor do texto do banner, padrão branco
+  productIds      String[] // Array de IDs dos produtos a serem exibidos
+  order           Int      @default(0) // Para definir a ordem de exibição na homepage
+  isActive        Boolean  @default(true) // Para ativar ou desativar a seção
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model MarketingCampaign {
-  id        String   @id @default(cuid())
-  status    String   @default("DRAFT") 
-  subject   String
-  headline  String
-  body      String
-  ctaText   String
-  ctaLink   String
-  imageUrl  String
+  id       String @id @default(cuid())
+  status   String @default("DRAFT")
+  subject  String
+  headline String
+  body     String
+  ctaText  String
+  ctaLink  String
+  imageUrl String
 
-  targetAudienceJson String 
+  targetAudienceJson String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   sentAt    DateTime?
+}
+
+model ShortLink {
+  id          String   @id @default(cuid())
+  shortCode   String   @unique
+  originalUrl String
+  createdAt   DateTime @default(now())
+  
+  // <<< INÍCIO DA ALTERAÇÃO >>>
+  clicks      Int      @default(0)
+  title       String?  // Título para pré-visualização (og:title)
+  description String?  // Descrição para pré-visualização (og:description)
+  imageUrl    String?  // Imagem para pré-visualização (og:image)
+  // <<< FIM DA ALTERAÇÃO >>>
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutDashboard, PlusCircle, Settings, LogOut, Menu, UserCircle2, ShoppingBag, Edit3, AlertTriangle, Loader2 } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Settings, LogOut, Menu, UserCircle2, ShoppingBag, Edit3, AlertTriangle, Loader2, LinkIcon } from 'lucide-react';
 
 // CORREÇÃO: A interface agora usa 'images' para corresponder ao banco de dados.
 interface Product {
@@ -27,6 +27,7 @@ const SidebarNavLinks = ({ isMobile = false, closeSheet }: { isMobile?: boolean,
   const navItems = [
     { href: "/dashboard", label: "Painel Principal", icon: LayoutDashboard },
     { href: "/dashboard/add-product", label: "Adicionar Produto", icon: PlusCircle },
+    { href: "/dashboard/link-shortener", label: "Encurtador de Links", icon: LinkIcon },
     { href: "/dashboard/sales", label: "Minhas Vendas", icon: ShoppingBag },
     { href: "/dashboard/settings", label: "Configurações", icon: Settings },
   ];
@@ -82,7 +83,7 @@ export default function DashboardPage() {
     <div className="flex h-screen bg-gray-100 dark:bg-slate-950">
       <aside className="hidden lg:flex lg:flex-col w-64 border-r dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="flex items-center justify-center h-20 border-b dark:border-slate-800 px-6">
-          <Link href="/"><Image src="/logo.svg" alt="Logo" width={150} height={40} /></Link>
+          <Link href="/"><Image src="/zacaplace.svg" alt="Logo" width={150} height={40} /></Link>
         </div>
         <div className="flex-grow"><SidebarNavLinks /></div>
         <div className="p-4 border-t dark:border-slate-800">
@@ -92,7 +93,7 @@ export default function DashboardPage() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="lg:hidden flex items-center justify-between h-16 bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4">
-          <Link href="/"><Image src="/logo.svg" alt="Logo" width={120} height={35} /></Link>
+          <Link href="/"><Image src="/zacaplace.svg" alt="Logo" width={120} height={35} /></Link>
           <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}><SheetTrigger asChild><Button variant="ghost" size="icon"><Menu /></Button></SheetTrigger><SheetContent side="left" className="w-72 p-0"><SidebarNavLinks isMobile closeSheet={() => setIsMobileSidebarOpen(false)} /></SheetContent></Sheet>
         </header>
 

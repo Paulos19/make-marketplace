@@ -1,12 +1,11 @@
-import { SellerCard } from './components/SellerCard'; // Importa o novo card
+import { SellerCard } from './components/SellerCard';
 import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
-import { Store, AlertTriangle } from 'lucide-react';
-import { motion } from 'framer-motion'; // Framer Motion é para Client Components, mas podemos usar no layout
+import { Store } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 
-// Tipagem para os dados que a página espera
+// Tipagem para os dados que a página espera (inalterada)
 interface Seller {
   id: string;
   name: string | null;
@@ -17,11 +16,16 @@ interface Seller {
   profileDescription: string | null;
 }
 
-// Busca os dados no servidor
+// Busca os dados no servidor, agora com o filtro de exibição
 async function getSellers(): Promise<Seller[]> {
     try {
         const sellers = await prisma.user.findMany({
-            where: { role: UserRole.SELLER },
+            // <<< INÍCIO DA CORREÇÃO: Adicionado filtro para exibir apenas vendedores que optaram por aparecer >>>
+            where: { 
+                role: UserRole.SELLER,
+                showInSellersPage: true,
+            },
+            // <<< FIM DA CORREÇÃO >>>
             select: {
                 id: true,
                 name: true,

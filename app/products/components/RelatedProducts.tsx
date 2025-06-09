@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, Variants } from 'framer-motion';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Carousel,
   CarouselContent,
@@ -11,26 +11,43 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Badge } from '@/components/ui/badge';
-import type { Product } from '@/lib/types'; // << IMPORTAÇÃO DO TIPO CENTRAL
+
+// <<< INÍCIO DA CORREÇÃO 1: Definir a tipagem correta localmente >>>
+// Esta tipagem corresponde aos dados que a API realmente envia.
+interface UserInfo {
+  id: string;
+  name?: string | null;
+}
+interface ProductForCarousel {
+  id: string;
+  name: string;
+  price: number;
+  images: string[]; // O campo correto é 'images', não 'imageUrls'
+  user: UserInfo;   // O campo correto é 'user', não 'seller'
+  originalPrice?: number | null;
+  onPromotion?: boolean | null;
+}
 
 interface RelatedProductsProps {
   title: string;
-  products: Product[]; // << USA O TIPO IMPORTADO
-  currentProductId?: string; // Para evitar mostrar o produto atual na lista
+  products: ProductForCarousel[]; // Usando a tipagem correta
+  currentProductId?: string;
 }
+// <<< FIM DA CORREÇÃO 1 >>>
 
 // Card compacto para produtos relacionados
-const RelatedProductCard = ({ product }: { product: Product }) => ( // << USA O TIPO IMPORTADO
+const RelatedProductCard = ({ product }: { product: ProductForCarousel }) => (
   <Card className="group relative flex flex-col h-full overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 ease-in-out bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 hover:border-zaca-magenta dark:hover:border-zaca-magenta">
     <Link href={`/products/${product.id}`} className="block aspect-square w-full relative" aria-label={product.name}>
+      {/* <<< INÍCIO DA CORREÇÃO 2: Usar 'images' em vez de 'imageUrls' >>> */}
       <Image
-        src={product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '/img-placeholder.png'} // Tenha um placeholder
+        src={product.images && product.images.length > 0 ? product.images[0] : '/img-placeholder.png'}
         alt={product.name}
         fill
         className="object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
         sizes="(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 15vw"
       />
+      {/* <<< FIM DA CORREÇÃO 2 >>> */}
       {product.onPromotion && (
         <div className="absolute top-1.5 right-1.5 bg-zaca-vermelho text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm shadow-md">
           OFERTA
@@ -54,7 +71,6 @@ const RelatedProductCard = ({ product }: { product: Product }) => ( // << USA O 
         </span>
       </div>
     </CardContent>
-    {/* Pode adicionar um CardFooter com botão "Ver Detalhes" se desejar */}
   </Card>
 );
 
@@ -87,8 +103,8 @@ export default function RelatedProducts({ title, products, currentProductId }: R
         <Carousel
           opts={{
             align: "start",
-            slidesToScroll: 'auto', // Permite scroll mais natural
-            containScroll: 'trimSnaps', // Evita scroll excessivo no final
+            slidesToScroll: 'auto',
+            containScroll: 'trimSnaps',
           }}
           className="w-full"
         >
@@ -96,13 +112,12 @@ export default function RelatedProducts({ title, products, currentProductId }: R
             {filteredProducts.map((product) => (
               <CarouselItem
                 key={product.id}
-                className="pl-2.5 md:pl-4 basis-[55%] xs:basis-[48%] sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6" // Ajustado para mais itens
+                className="pl-2.5 md:pl-4 basis-[55%] xs:basis-[48%] sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6"
               >
                 <RelatedProductCard product={product} />
               </CarouselItem>
             ))}
           </CarouselContent>
-          {/* Mostrar setas apenas se houver mais itens do que o visível */}
           {filteredProducts.length > 5 && <CarouselPrevious className="hidden sm:flex text-slate-800 dark:text-slate-200 bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 shadow-md" />}
           {filteredProducts.length > 5 && <CarouselNext className="hidden sm:flex text-slate-800 dark:text-slate-200 bg-white/80 dark:bg-slate-700/80 hover:bg-white dark:hover:bg-slate-600 shadow-md" />}
         </Carousel>

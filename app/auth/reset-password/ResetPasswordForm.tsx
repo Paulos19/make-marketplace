@@ -1,7 +1,7 @@
 // app/auth/reset-password/ResetPasswordForm.tsx
 "use client";
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ArrowLeft, KeyRound, CheckCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { PasswordInput } from '@/components/ui/PasswordInput'; // <<< INÍCIO DA CORREÇÃO 1
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -23,7 +24,6 @@ export default function ResetPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Verifica se o token existe na montagem do componente
   useEffect(() => {
     if (!token) {
       setError("Token de redefinição não encontrado ou inválido. Por favor, solicite um novo link.");
@@ -104,11 +104,11 @@ export default function ResetPasswordForm() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* <<< INÍCIO DA CORREÇÃO 2: Usar PasswordInput >>> */}
             <div className="space-y-2">
               <Label htmlFor="password">Nova Senha</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -118,9 +118,8 @@ export default function ResetPasswordForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirme a Nova Senha</Label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 placeholder="********"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -128,6 +127,7 @@ export default function ResetPasswordForm() {
                 disabled={isLoading}
               />
             </div>
+            {/* <<< FIM DA CORREÇÃO 2 >>> */}
             {error && <p className="text-sm font-medium text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

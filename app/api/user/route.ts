@@ -5,7 +5,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 
-// Schema de validação para o PUT (permanece o mesmo)
+// <<< INÍCIO DA CORREÇÃO 1: Adicionar o novo campo ao schema de validação >>>
 const updateUserSchema = z.object({
   name: z.string().min(2).max(50).optional().nullable(),
   image: z.string().url().nullable().optional(),
@@ -13,10 +13,11 @@ const updateUserSchema = z.object({
   storeName: z.string().min(2).max(50).nullable().optional(),
   sellerBannerImageUrl: z.string().url().nullable().optional(),
   profileDescription: z.string().max(500).nullable().optional(),
+  showInSellersPage: z.boolean().optional(), // Novo campo booleano
 });
+// <<< FIM DA CORREÇÃO 1 >>>
 
-
-// GET: Busca os dados do usuário logado
+// GET: Busca os dados do usuário logado (permanece igual)
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
@@ -25,8 +26,6 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // CORREÇÃO: Removido o 'include: { seller: ... }'
-    // Agora buscamos o usuário diretamente.
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
@@ -35,7 +34,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });
     }
 
-    // A resposta já contém todos os campos necessários.
     return NextResponse.json(user, { status: 200 });
   } catch (error) {
     console.error('Erro ao buscar usuário:', error);
@@ -44,7 +42,7 @@ export async function GET(req: NextRequest) {
 }
 
 
-// PUT: Atualiza os dados do usuário
+// PUT: Atualiza os dados do usuário (permanece igual, pois o schema já foi atualizado)
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
@@ -59,11 +57,9 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ message: 'Dados inválidos', errors: validation.error.format() }, { status: 400 });
     }
 
-    // CORREÇÃO: Todos os dados são atualizados diretamente no modelo User.
-    // Não há mais separação entre dados de User e Seller.
     const updatedUser = await prisma.user.update({
         where: { id: session.user.id },
-        data: validation.data, // Passa todos os dados validados diretamente
+        data: validation.data,
     });
 
     return NextResponse.json(updatedUser, { status: 200 });

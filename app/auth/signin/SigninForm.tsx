@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from 'next/image'; // <<< Adicionar import do Image
+import Image from 'next/image';
 
 // Next-Auth imports
 import { signIn, getProviders } from "next-auth/react";
@@ -17,7 +17,9 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
 // lucide-react icon imports
-import { Ghost, AlertCircle, LogIn } from "lucide-react"; // Removido ChromeIcon, adicionado LogIn
+import { Ghost, AlertCircle, LogIn, Eye, EyeOff, Loader2 } from "lucide-react"; 
+import { PasswordInput } from "@/components/ui/PasswordInput"; // <<< INÍCIO DA CORREÇÃO 1
+import { toast } from "sonner";
 
 // Tipagem para os providers do Next-Auth
 type Provider = Awaited<ReturnType<typeof getProviders>>;
@@ -50,11 +52,8 @@ export default function SigninForm() {
     };
     fetchProvidersAsync();
 
-    // Exibe a mensagem de sucesso se o email foi verificado
     if (searchParams.get('emailVerified') === 'true') {
-        // Você pode usar 'sonner' aqui se quiser um toast mais elegante
-        // toast.success(searchParams.get('message') || 'Email verificado com sucesso! Por favor, faça login.');
-        // Por simplicidade, usaremos um alerta ou uma mensagem no estado de erro/sucesso.
+        toast.success(searchParams.get('message') || 'Email verificado com sucesso! Por favor, faça login.');
     }
 
   }, [searchParams]);
@@ -109,14 +108,13 @@ export default function SigninForm() {
 
   return (
     <div className="w-full max-w-md space-y-6">
-      {/* Logo e Título */}
       <div className="text-center">
         <Link href="/">
             <Image
                 src="/loginLogo.png"
                 alt="Zacaplace Logo"
-                width={200} // Ajuste a largura conforme o design do seu logo
-                height={60} // Ajuste a altura conforme o design do seu logo
+                width={200}
+                height={60}
                 className="mx-auto"
                 priority
             />
@@ -126,7 +124,6 @@ export default function SigninForm() {
         </p>
       </div>
 
-      {/* Mensagem de Erro */}
       {error && (
         <div className="rounded-md bg-red-100 dark:bg-red-900/30 p-4 border border-red-200 dark:border-red-700/50">
           <div className="flex items-start">
@@ -136,7 +133,6 @@ export default function SigninForm() {
         </div>
       )}
 
-      {/* Formulário de Credenciais */}
       <form onSubmit={handleSubmitCredentials} className="space-y-4">
         <div>
           <Label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
@@ -156,12 +152,12 @@ export default function SigninForm() {
           />
         </div>
 
+        {/* <<< INÍCIO DA CORREÇÃO 2: Usar PasswordInput >>> */}
         <div>
           <Label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
             Senha
           </Label>
-          <Input
-            type="password"
+          <PasswordInput
             id="password"
             name="password"
             autoComplete="current-password"
@@ -173,9 +169,10 @@ export default function SigninForm() {
             className="h-11 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-50 dark:placeholder-slate-500 focus:ring-zaca-roxo focus:border-zaca-roxo dark:focus:ring-zaca-lilas dark:focus:border-zaca-lilas"
           />
         </div>
+        {/* <<< FIM DA CORREÇÃO 2 >>> */}
         
         <div className="text-right">
-            <Link href="/auth/forgot-password" // Futura página de esqueci a senha
+            <Link href="/auth/forgot-password"
                 className="text-xs font-medium text-zaca-azul hover:text-zaca-roxo dark:text-zaca-lilas dark:hover:text-white hover:underline">
                 Esqueceu sua senha?
             </Link>
@@ -184,14 +181,11 @@ export default function SigninForm() {
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-gradient-to-r from-zaca-roxo to-zaca-magenta hover:from-zaca-roxo/90 hover:to-zaca-magenta/90 py-3 text-base font-semibold text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.03]"
+          className="w-full bg-gradient-to-r from-zaca-roxo to-zaca-magenta hover:from-zaca-roxo/90 hover:to-zaca-magenta/90 py-3 text-base font-semibold text-white shadow-lg"
         >
           {isLoading ? (
             <div className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+              <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
               Entrando na 'Zacafesta'...
             </div>
           ) : (
