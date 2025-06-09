@@ -40,7 +40,7 @@ export function BannerForm({ onSuccess }: BannerFormProps) {
       await axios.post('/api/admin/banners', values);
       toast.success('Banner criado com sucesso!');
       form.reset();
-      onSuccess(); // Chama a função para recarregar a lista
+      onSuccess();
     } catch (error) {
       toast.error('Ocorreu um erro ao criar o banner.');
       console.error(error);
@@ -63,11 +63,22 @@ export function BannerForm({ onSuccess }: BannerFormProps) {
                 <FormItem>
                   <FormLabel>Imagem do Banner</FormLabel>
                   <FormControl>
+                    {/* <<< INÍCIO DA CORREÇÃO >>> */}
                     <ImageUpload
-                      value={field.value ? [field.value] : []}
-                      onChange={(url) => field.onChange(url)}
-                      onRemove={() => field.onChange('')}
+                      maxFiles={1}
+                      // A prop para arquivos existentes é `currentFiles`
+                      currentFiles={field.value ? [field.value] : []}
+                      // A prop para quando o upload termina é `onUploadComplete`
+                      onUploadComplete={(urls) => {
+                        // O uploader retorna um array de URLs, pegamos a primeira
+                        if (urls.length > 0) {
+                          field.onChange(urls[0]);
+                        }
+                      }}
+                      // A prop para remover um arquivo é `onRemoveFile`
+                      onRemoveFile={() => field.onChange('')}
                     />
+                    {/* <<< FIM DA CORREÇÃO >>> */}
                   </FormControl>
                   <FormMessage />
                 </FormItem>

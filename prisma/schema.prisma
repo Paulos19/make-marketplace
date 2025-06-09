@@ -159,3 +159,15 @@ model HomePageBanner {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model HomepageSection {
+  id                String   @id @default(cuid())
+  title             String   // Título interno para identificar a seção no painel admin
+  bannerImageUrl    String
+  bannerFontColor   String   @default("#FFFFFF") // Cor do texto do banner, padrão branco
+  productIds        String[] // Array de IDs dos produtos a serem exibidos
+  order             Int      @default(0) // Para definir a ordem de exibição na homepage
+  isActive          Boolean  @default(true) // Para ativar ou desativar a seção
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
