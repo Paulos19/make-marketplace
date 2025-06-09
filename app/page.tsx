@@ -136,7 +136,7 @@ export default async function HomePage() {
       <main>
         <DynamicHeroBanner />
 
-        <div className="flex flex-col gap-16 md:gap-24 py-16 md:py-40">
+        <div className="flex flex-col gap-20 md:gap-24 py-48 md:py-40">
           {combinedSections.map((section) => (
             <div key={`${section.type}-${section.id}`}>
               {section.component}
