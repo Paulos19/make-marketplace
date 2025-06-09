@@ -11,7 +11,7 @@ const fontBangers = Montserrat({ subsets: ['latin'], weight: '700', variable: '-
 
 export const metadata: Metadata = {
   title: 'Zacaplace - O Marketplace dos Achadinhos',
-  description: 'Compre e venda produtos de maquiagem com os melhores preços!',
+  description: 'Compre e venda produtos com os melhores preços em Sete Lagoas, MG!',
 };
 
 // Função para buscar o tema do banco de dados
