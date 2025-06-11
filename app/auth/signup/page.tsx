@@ -92,7 +92,7 @@ export default function SignUpPage() {
           />
           <div className="hidden lg:relative lg:block lg:p-12">
             <Link className="block" href="/">
-              <Image className="bg-transparent backdrop:blur-md border-sky-100" src="/logo.svg" alt="Zacaplace Logo" width={400} height={50} />
+              <Image className="bg-transparent backdrop:blur-md border-sky-100" src="/zacalogo.svg" alt="Zacaplace Logo" width={400} height={50} />
             </Link>
             <h2 className="mt-6 text-2xl font-bold text-white sm:text-3xl md:text-4xl font-bangers tracking-wider filter drop-shadow-lg">
               Bem-vindo à Turma do Zaca!
