@@ -111,7 +111,7 @@ export default function SigninForm() {
       <div className="text-center">
         <Link href="/">
             <Image
-                src="/zacaLogo1.svg"
+                src="/zacaLogo2.svg"
                 alt="Zacaplace Logo"
                 width={200}
                 height={60}

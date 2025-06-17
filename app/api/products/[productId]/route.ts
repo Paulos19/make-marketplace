@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'; 
 
-// GET para um único produto
+// GET para um único produto (sem alterações)
 export async function GET(request: NextRequest, { params }: { params: { productId: string } }) {
   const { productId } = params;
   if (!productId) {
@@ -14,9 +14,8 @@ export async function GET(request: NextRequest, { params }: { params: { productI
   try {
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      // << RELAÇÃO CORRIGIDA >>
       include: {
-        user: { // Inclui o usuário vendedor
+        user: { 
           select: {
             id: true,
             name: true,
@@ -33,7 +32,11 @@ export async function GET(request: NextRequest, { params }: { params: { productI
     if (!product) {
       return NextResponse.json({ error: 'Produto não encontrado' }, { status: 404 });
     }
-    return NextResponse.json(product, { status: 200 });
+    // Normaliza os dados para o frontend esperar 'categories' como um array
+    const { category, ...rest } = product;
+    const productForFrontend = { ...rest, categories: category ? [category] : [] };
+
+    return NextResponse.json(productForFrontend, { status: 200 });
   } catch (error) {
     console.error('Erro ao buscar produto:', error);
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
@@ -51,21 +54,36 @@ export async function PUT(request: NextRequest, { params }: { params: { productI
     try {
         const product = await prisma.product.findUnique({
             where: { id: productId },
-            select: { userId: true } // Seleciona userId para verificar permissão
+            select: { userId: true }
         });
 
         if (!product) {
             return NextResponse.json({ error: 'Produto não encontrado' }, { status: 404 });
         }
-        // << VERIFICAÇÃO CORRIGIDA >>
+        
         if (product.userId !== session.user.id) {
             return NextResponse.json({ error: 'Sem permissão para editar' }, { status: 403 });
         }
 
         const body = await request.json();
+
+        // <<< INÍCIO DA CORREÇÃO >>>
+        // Desestruturamos os campos do corpo da requisição.
+        // O frontend envia 'imageUrls' e 'categoryIds', mas o banco espera 'images' e 'categoryId'.
+        const { imageUrls, categoryIds, ...restOfBody } = body;
+
+        // Construímos o objeto de dados com os nomes de campo corretos para o Prisma.
+        const dataToUpdate = {
+          ...restOfBody,
+          images: imageUrls, // Mapeamos 'imageUrls' para o campo 'images' do banco de dados.
+          // Como o produto só pode ter uma categoria, pegamos o primeiro ID do array.
+          ...(categoryIds && categoryIds.length > 0 && { categoryId: categoryIds[0] }),
+        };
+        // <<< FIM DA CORREÇÃO >>>
+
         const updatedProduct = await prisma.product.update({
             where: { id: productId },
-            data: body,
+            data: dataToUpdate, // Usamos o objeto de dados corrigido.
         });
 
         return NextResponse.json(updatedProduct, { status: 200 });
@@ -75,7 +93,7 @@ export async function PUT(request: NextRequest, { params }: { params: { productI
     }
 }
 
-// DELETE para remover produto
+// DELETE para remover produto (sem alterações)
 export async function DELETE(request: NextRequest, { params }: { params: { productId: string } }) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.id) {
@@ -93,7 +111,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { produ
             return NextResponse.json({ error: 'Produto não encontrado' }, { status: 404 });
         }
 
-        // << VERIFICAÇÃO CORRIGIDA >>
         if (product.userId !== session.user.id) {
             return NextResponse.json({ error: 'Sem permissão para remover' }, { status: 403 });
         }

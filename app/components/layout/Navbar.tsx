@@ -61,7 +61,7 @@ export default function Navbar() {
         {/* Logo */}
         <div className="flex items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Image src="/zacalogo1.svg" alt="Zacaplace Logo" width={200} height={60} priority />
+            <Image src="/zacalogo2.svg" alt="Zacaplace Logo" width={200} height={60} priority />
           </Link>
         </div>
         
