@@ -50,7 +50,7 @@ export default function LoginPageContainer() {
           {/* Usar next/image aqui é altamente recomendado para a imagem principal */}
           <img 
             alt="Painel de maquiagem e produtos de beleza MakeStore"
-            src="/signin.jpg" // Certifique-se que esta imagem está em /public/signin.jpg
+            src="/login.png" // Certifique-se que esta imagem está em /public/signin.jpg
             className="absolute inset-0 h-full w-full object-cover opacity-80"
           />
           <div className="hidden lg:relative lg:block lg:p-12">

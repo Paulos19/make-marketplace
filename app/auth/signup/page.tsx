@@ -85,15 +85,12 @@ export default function SignUpPage() {
         <aside className="relative flex h-32 items-end bg-gray-900 lg:col-span-5 lg:h-full xl:col-span-6">
           <Image
             alt="Painel de maquiagem Zacaplace"
-            src="/signup.jpg"
+            src="/login.png"
             className="absolute inset-0 h-full w-full object-cover opacity-80"
             fill
             priority
           />
           <div className="hidden lg:relative lg:block lg:p-12">
-            <Link className="block" href="/">
-              <Image className="bg-transparent backdrop:blur-md border-sky-100" src="/zacalogo2.svg" alt="Zacaplace Logo" width={400} height={50} />
-            </Link>
             <h2 className="mt-6 text-2xl font-bold text-white sm:text-3xl md:text-4xl font-bangers tracking-wider filter drop-shadow-lg">
               Bem-vindo à Turma do Zaca!
             </h2>
