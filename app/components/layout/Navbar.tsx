@@ -120,7 +120,7 @@ export default function Navbar() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Painel</Link>
+                    <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Minha Loja</Link>
                   </DropdownMenuItem>
                   {user.role === UserRole.ADMIN && (
                      <DropdownMenuItem asChild>
@@ -167,7 +167,7 @@ export default function Navbar() {
                   <Separator />
                   {user ? (
                     <>
-                      <SheetClose asChild><Link href="/dashboard" className="flex items-center text-lg font-medium"><LayoutDashboard className="mr-2 h-5 w-5"/>Painel</Link></SheetClose>
+                      <SheetClose asChild><Link href="/dashboard" className="flex items-center text-lg font-medium"><LayoutDashboard className="mr-2 h-5 w-5"/>Minha Loja</Link></SheetClose>
                       {user.role === UserRole.ADMIN && <SheetClose asChild><Link href="/admin-dashboard" className="flex items-center text-lg font-medium"><UserCircle2 className="mr-2 h-5 w-5"/>Painel Admin</Link></SheetClose>}
                       <Button variant="outline" onClick={() => signOut({ callbackUrl: '/' })}><LogOut className="mr-2 h-5 w-5"/>Sair</Button>
                     </>
