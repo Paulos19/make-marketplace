@@ -55,7 +55,7 @@ export default function Navbar() {
   ];
 
   const userNavLinks = [
-    { href: '/my-reservations', label: 'Minhas Reservas', icon: Heart },
+    { href: '/my-reservations', label: 'Favoritos', icon: Heart },
     { href: '/dashboard', label: 'Minha Loja', icon: LayoutDashboard },
   ];
 

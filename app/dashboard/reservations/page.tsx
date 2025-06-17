@@ -150,7 +150,7 @@ export default function MyReservationsPage() {
             <Button variant="outline" onClick={() => router.back()} className="mb-6 sm:mb-0">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
             </Button>
-            <h1 className="text-2xl sm:text-3xl font-bold text-center text-sky-700 dark:text-sky-500 flex-grow">Minhas Reservas</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-center text-sky-700 dark:text-sky-500 flex-grow">Favoritos</h1>
         </div>
 
         {isLoading ? (

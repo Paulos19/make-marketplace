@@ -289,7 +289,7 @@ export default function SellerProfilePage() {
                     className="bg-btn-fale-vendedor text-btn-fale-vendedor-foreground hover:bg-btn-fale-vendedor-hover shadow-md hover:shadow-lg transition-all transform hover:scale-105 font-semibold"
                   >
                     <a href={seller.whatsappLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
-                      <MessageSquareText className="w-5 h-5" /> Contatar o Zaca
+                      <MessageSquareText className="w-5 h-5" /> Contatar Vendedor
                     </a>
                   </Button>
                 )}
