@@ -1,3 +1,4 @@
+// app/components/layout/Navbar.tsx
 "use client";
 
 import { useSession, signOut } from 'next-auth/react';
@@ -29,12 +30,11 @@ import {
   LayoutDashboard,
   LogOut,
   LogIn,
-  Home,
-  Package2,
   UserPlus
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
 import { Separator } from '@/components/ui/separator';
+import { GlobalSearchCommand } from '../search/GlobalSearchCommand';
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -46,7 +46,6 @@ export default function Navbar() {
     { href: '/products', label: 'Achadinhos' },
     { href: '/sellers', label: 'Vendedores' },
     { href: '/dashboard/add-product', label: 'Adicionar Produtos' },
-    // Adicione mais links aqui se necessário
   ];
 
   const getAvatarFallback = (name?: string | null) => {
@@ -58,46 +57,52 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 dark:border-slate-800/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
-        {/* Logo */}
-        <div className="flex items-center">
+        {/* Logo & Navegação Desktop */}
+        <div className="flex items-center gap-6">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Image src="/zacalogo2.svg" alt="Zacaplace Logo" width={200} height={60} priority />
           </Link>
+          <nav className="hidden lg:flex">
+            <ul className="flex items-center space-x-6 text-sm font-medium">
+              {navLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className={cn(
+                      "transition-colors hover:text-zaca-azul dark:hover:text-zaca-lilas",
+                      pathname === link.href ? "text-zaca-roxo dark:text-zaca-lilas font-semibold" : "text-slate-600 dark:text-slate-300"
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
         
-        {/* Navegação Desktop (visível em telas grandes) */}
-        <nav className="hidden lg:flex flex-1 items-center justify-center">
-          <ul className="flex items-center space-x-6 text-sm font-medium">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className={cn(
-                    "transition-colors hover:text-zaca-azul dark:hover:text-zaca-lilas",
-                    pathname === link.href ? "text-zaca-roxo dark:text-zaca-lilas font-semibold" : "text-slate-600 dark:text-slate-300"
-                  )}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        {/* <<< 2. AJUSTE DE LAYOUT E ADIÇÃO DO COMPONENTE DE BUSCA >>> */}
+        <div className="flex flex-1 items-center justify-end gap-x-2">
+          {/* Componente de Busca Global */}
+          <div className="w-full flex-1 md:w-auto md:flex-none">
+            <GlobalSearchCommand />
+          </div>
 
-        {/* Ícones e Login/Usuário */}
-        <div className="flex items-center justify-end space-x-2 sm:space-x-4">
           <Link href='/my-reservations'>
-          <Button variant="ghost" size="icon" aria-label="Favoritos">
-            <Heart className="h-5 w-5" />
-          </Button>
+            <Button variant="ghost" size="icon" aria-label="Favoritos" className="hidden sm:inline-flex">
+              <Heart className="h-5 w-5" />
+            </Button>
           </Link>
 
           <Link href='/sellers'>
-          <Button variant="ghost" size="icon" aria-label="Carrinho">
-            <ShoppingCart className="h-5 w-5" />
-          </Button>
+            <Button variant="ghost" size="icon" aria-label="Carrinho" className="hidden sm:inline-flex">
+              <ShoppingCart className="h-5 w-5" />
+            </Button>
           </Link>
           
+          <Separator orientation="vertical" className="h-6 hidden sm:block" />
+
+          {/* Autenticação Desktop */}
           <div className="hidden lg:flex items-center">
             {status === 'loading' ? (
               <div className="h-10 w-24 rounded-md bg-slate-200 dark:bg-slate-700 animate-pulse" />
@@ -120,7 +125,7 @@ export default function Navbar() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Minha Loja</Link>
+                    <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Painel</Link>
                   </DropdownMenuItem>
                   {user.role === UserRole.ADMIN && (
                      <DropdownMenuItem asChild>
@@ -140,8 +145,7 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* <<< CORREÇÃO PRINCIPAL AQUI >>> */}
-          {/* Botão de Menu Mobile (visível em telas pequenas) */}
+          {/* Menu Mobile */}
           <div className="flex items-center lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -167,7 +171,7 @@ export default function Navbar() {
                   <Separator />
                   {user ? (
                     <>
-                      <SheetClose asChild><Link href="/dashboard" className="flex items-center text-lg font-medium"><LayoutDashboard className="mr-2 h-5 w-5"/>Minha Loja</Link></SheetClose>
+                      <SheetClose asChild><Link href="/dashboard" className="flex items-center text-lg font-medium"><LayoutDashboard className="mr-2 h-5 w-5"/>Painel</Link></SheetClose>
                       {user.role === UserRole.ADMIN && <SheetClose asChild><Link href="/admin-dashboard" className="flex items-center text-lg font-medium"><UserCircle2 className="mr-2 h-5 w-5"/>Painel Admin</Link></SheetClose>}
                       <Button variant="outline" onClick={() => signOut({ callbackUrl: '/' })}><LogOut className="mr-2 h-5 w-5"/>Sair</Button>
                     </>
@@ -181,10 +185,8 @@ export default function Navbar() {
               </SheetContent>
             </Sheet>
           </div>
-          
         </div>
       </div>
     </header>
   );
 }
-
