@@ -4,8 +4,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
+import { revalidatePath } from 'next/cache'; // <<< 1. IMPORTAR revalidatePath
 
-// <<< INÍCIO DA CORREÇÃO 1: Adicionar o novo campo ao schema de validação >>>
 const updateUserSchema = z.object({
   name: z.string().min(2).max(50).optional().nullable(),
   image: z.string().url().nullable().optional(),
@@ -13,11 +13,10 @@ const updateUserSchema = z.object({
   storeName: z.string().min(2).max(50).nullable().optional(),
   sellerBannerImageUrl: z.string().url().nullable().optional(),
   profileDescription: z.string().max(500).nullable().optional(),
-  showInSellersPage: z.boolean().optional(), // Novo campo booleano
+  showInSellersPage: z.boolean().optional(),
 });
-// <<< FIM DA CORREÇÃO 1 >>>
 
-// GET: Busca os dados do usuário logado (permanece igual)
+// GET: Busca os dados do usuário logado
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
@@ -42,7 +41,7 @@ export async function GET(req: NextRequest) {
 }
 
 
-// PUT: Atualiza os dados do usuário (permanece igual, pois o schema já foi atualizado)
+// PUT: Atualiza os dados do usuário
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
@@ -61,6 +60,12 @@ export async function PUT(req: NextRequest) {
         where: { id: session.user.id },
         data: validation.data,
     });
+    
+    // <<< 2. ADICIONAR REVALIDAÇÃO APÓS ATUALIZAR O USUÁRIO >>>
+    // Revalida a página principal de listagem de vendedores.
+    revalidatePath('/sellers');
+    // Revalida a página de perfil específica do vendedor que foi atualizada.
+    revalidatePath(`/seller/${updatedUser.id}`);
 
     return NextResponse.json(updatedUser, { status: 200 });
   } catch (error) {
