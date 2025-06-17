@@ -1,3 +1,4 @@
+// app/dashboard/page.tsx
 "use client";
 
 import { useSession, signOut } from 'next-auth/react';
@@ -29,7 +30,7 @@ const SidebarNavLinks = ({ isMobile = false, closeSheet }: { isMobile?: boolean,
     { href: "/dashboard/add-product", label: "Adicionar Produto", icon: PlusCircle },
     { href: "/dashboard/link-shortener", label: "Encurtador de Links", icon: LinkIcon },
     { href: "/dashboard/sales", label: "Minhas Vendas", icon: ShoppingBag },
-    { href: "/dashboard/settings", label: "Configurações", icon: Settings },
+    { href: "/dashboard/settings", label: "Configurações da Loja", icon: Settings },
   ];
 
   return (
@@ -73,9 +74,7 @@ export default function DashboardPage() {
     return <div className="flex h-screen w-screen items-center justify-center"><Loader2 className="w-16 h-16 animate-spin text-sky-500" /></div>;
   }
   
-  // CORREÇÃO: Verificação robusta que resolve o erro de tipo 'session.user' is possibly 'undefined'.
   if (!session || !session.user) {
-    // Pode retornar um skeleton ou redirecionar, mas para o erro de tipo, isto é suficiente.
     return <div className="flex h-screen w-screen items-center justify-center">A carregar dados do usuário...</div>;
   }
 
@@ -98,7 +97,22 @@ export default function DashboardPage() {
         </header>
 
         <main className="flex-1 overflow-auto p-6 space-y-8">
-          <Card><CardHeader><CardTitle className="text-3xl font-bangers">Painel do Vendedor</CardTitle><CardDescription>Bem-vindo, {session.user.name?.split(' ')[0]}!</CardDescription></CardHeader></Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-3xl font-bangers">Painel do Vendedor</CardTitle>
+              <CardDescription>Bem-vindo, {session.user.name?.split(' ')[0]}!</CardDescription>
+              {/* <<< BOTÃO ADICIONADO AQUI >>> */}
+              <div className="pt-4">
+                <Button asChild variant="outline">
+                  <Link href="/dashboard/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Ir para Configurações da Loja
+                  </Link>
+                </Button>
+              </div>
+              {/* <<< FIM DA ADIÇÃO >>> */}
+            </CardHeader>
+          </Card>
           <section>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold">Seus Produtos</h2>
@@ -116,7 +130,6 @@ export default function DashboardPage() {
                   <Card key={product.id} className="flex flex-col">
                     <CardHeader className="p-0 border-b">
                       <div className="relative w-full aspect-square">
-                        {/* CORREÇÃO: Usa 'images' e tem uma verificação de segurança. */}
                         <Image src={(product.images && product.images.length > 0) ? product.images[0] : '/img-placeholder.png'} alt={product.name} fill className="object-cover" />
                       </div>
                     </CardHeader>

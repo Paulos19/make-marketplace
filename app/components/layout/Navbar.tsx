@@ -30,7 +30,12 @@ import {
   LayoutDashboard,
   LogOut,
   LogIn,
-  UserPlus
+  UserPlus,
+  Home,
+  Package2,
+  Store,
+  Plus,
+  PlusCircle, // <<< Ícone adicionado
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
 import { Separator } from '@/components/ui/separator';
@@ -41,11 +46,17 @@ export default function Navbar() {
   const user = session?.user;
   const pathname = usePathname();
 
-  const navLinks = [
-    { href: '/', label: 'Início' },
-    { href: '/products', label: 'Achadinhos' },
-    { href: '/sellers', label: 'Vendedores' },
-    { href: '/dashboard/add-product', label: 'Adicionar Produtos' },
+  // Estrutura de links reorganizada para clareza
+  const mainNavLinks = [
+    { href: '/', label: 'Início', icon: Home },
+    { href: '/products', label: 'Achadinhos', icon: Package2 },
+    { href: '/sellers', label: 'Vendedores', icon: Store },
+    { href: '/dashboard/add-product', label: 'Adicionar Produtos', icon: PlusCircle },
+  ];
+
+  const userNavLinks = [
+    { href: '/my-reservations', label: 'Minhas Reservas', icon: Heart },
+    { href: '/dashboard', label: 'Minha Loja', icon: LayoutDashboard },
   ];
 
   const getAvatarFallback = (name?: string | null) => {
@@ -57,14 +68,13 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 dark:border-slate-800/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
         
-        {/* Logo & Navegação Desktop */}
         <div className="flex items-center gap-6">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Image src="/zacalogo2.svg" alt="Zacaplace Logo" width={200} height={60} priority />
           </Link>
           <nav className="hidden lg:flex">
             <ul className="flex items-center space-x-6 text-sm font-medium">
-              {navLinks.map((link) => (
+              {mainNavLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
@@ -81,9 +91,7 @@ export default function Navbar() {
           </nav>
         </div>
         
-        {/* <<< 2. AJUSTE DE LAYOUT E ADIÇÃO DO COMPONENTE DE BUSCA >>> */}
         <div className="flex flex-1 items-center justify-end gap-x-2">
-          {/* Componente de Busca Global */}
           <div className="w-full flex-1 md:w-auto md:flex-none">
             <GlobalSearchCommand />
           </div>
@@ -95,14 +103,13 @@ export default function Navbar() {
           </Link>
 
           <Link href='/sellers'>
-            <Button variant="ghost" size="icon" aria-label="Carrinho" className="hidden sm:inline-flex">
-              <ShoppingCart className="h-5 w-5" />
+            <Button variant="ghost" size="icon" aria-label="Vendedores" className="hidden sm:inline-flex">
+              <Store className="h-5 w-5" />
             </Button>
           </Link>
           
           <Separator orientation="vertical" className="h-6 hidden sm:block" />
 
-          {/* Autenticação Desktop */}
           <div className="hidden lg:flex items-center">
             {status === 'loading' ? (
               <div className="h-10 w-24 rounded-md bg-slate-200 dark:bg-slate-700 animate-pulse" />
@@ -124,9 +131,11 @@ export default function Navbar() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Painel</Link>
-                  </DropdownMenuItem>
+                  {userNavLinks.map(link => (
+                    <DropdownMenuItem key={link.href} asChild>
+                      <Link href={link.href}><link.icon className="mr-2 h-4 w-4" /> {link.label}</Link>
+                    </DropdownMenuItem>
+                  ))}
                   {user.role === UserRole.ADMIN && (
                      <DropdownMenuItem asChild>
                        <Link href="/admin-dashboard"><UserCircle2 className="mr-2 h-4 w-4" /> Painel Admin</Link>
@@ -145,7 +154,7 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Menu Mobile */}
+          {/* <<< INÍCIO DA CORREÇÃO NO MENU MOBILE >>> */}
           <div className="flex items-center lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -154,30 +163,45 @@ export default function Navbar() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-full max-w-xs sm:max-w-sm">
-                <nav className="flex flex-col space-y-4 mt-8">
-                  {navLinks.map((link) => (
+                <nav className="flex flex-col space-y-2 mt-8">
+                  {mainNavLinks.map((link) => (
                     <SheetClose key={link.href} asChild>
                        <Link
                         href={link.href}
                         className={cn(
-                          "text-lg font-medium transition-colors hover:text-zaca-azul dark:hover:text-zaca-lilas p-2 rounded-md",
+                          "flex items-center gap-3 text-lg font-medium transition-colors hover:text-zaca-azul dark:hover:text-zaca-lilas p-2 rounded-md",
                           pathname === link.href ? "text-zaca-roxo bg-slate-100 dark:text-zaca-lilas dark:bg-slate-800" : "text-slate-700 dark:text-slate-200"
                         )}
                       >
+                        <link.icon className="h-5 w-5" />
                         {link.label}
                       </Link>
                     </SheetClose>
                   ))}
-                  <Separator />
+                  <Separator className="my-4" />
                   {user ? (
                     <>
-                      <SheetClose asChild><Link href="/dashboard" className="flex items-center text-lg font-medium"><LayoutDashboard className="mr-2 h-5 w-5"/>Painel</Link></SheetClose>
-                      {user.role === UserRole.ADMIN && <SheetClose asChild><Link href="/admin-dashboard" className="flex items-center text-lg font-medium"><UserCircle2 className="mr-2 h-5 w-5"/>Painel Admin</Link></SheetClose>}
+                      {userNavLinks.map(link => (
+                        <SheetClose key={link.href} asChild>
+                          <Link href={link.href} className="flex items-center gap-3 text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas">
+                            <link.icon className="mr- h-5 w-5" />
+                            {link.label}
+                          </Link>
+                        </SheetClose>
+                      ))}
+                      {user.role === UserRole.ADMIN && (
+                        <SheetClose asChild>
+                          <Link href="/admin-dashboard" className="flex items-center gap-3 text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas">
+                            <UserCircle2 className="mr- h-5 w-5"/>Painel Admin
+                          </Link>
+                        </SheetClose>
+                      )}
+                      <Separator className="my-4" />
                       <Button variant="outline" onClick={() => signOut({ callbackUrl: '/' })}><LogOut className="mr-2 h-5 w-5"/>Sair</Button>
                     </>
                   ) : (
                     <>
-                      <SheetClose asChild><Link href="/auth/signin" className="flex items-center text-lg font-medium"><LogIn className="mr-2 h-5 w-5"/>Entrar</Link></SheetClose>
+                      <SheetClose asChild><Link href="/auth/signin" className="flex items-center gap-3 text-lg font-medium p-2 rounded-md"><LogIn className="mr- h-5 w-5"/>Entrar</Link></SheetClose>
                       <SheetClose asChild><Link href="/auth/signup"><Button className="w-full bg-zaca-azul hover:bg-zaca-azul/90"><UserPlus className="mr-2 h-5 w-5"/>Criar Conta</Button></Link></SheetClose>
                     </>
                   )}
@@ -185,6 +209,7 @@ export default function Navbar() {
               </SheetContent>
             </Sheet>
           </div>
+          {/* <<< FIM DA CORREÇÃO >>> */}
         </div>
       </div>
     </header>
