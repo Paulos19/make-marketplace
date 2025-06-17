@@ -34,17 +34,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { Form } from '@/components/ui/form';
 
 interface Category {
   id: string;
   name: string;
 }
 
+// O schema do formulário continua a usar 'imageUrls' para consistência interna
 const productFormSchema = z.object({
   name: z.string().min(3, { message: 'O nome deve ter pelo menos 3 caracteres.' }),
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: 'O preço deve ser um número positivo.' }),
-  quantity: z.coerce.number().int().min(0, { message: 'A quantidade não pode ser negativa.' }).default(0), // Adicionado quantity ao schema
+  quantity: z.coerce.number().int().min(0, { message: 'A quantidade não pode ser negativa.' }).default(0),
   onPromotion: z.boolean().default(false),
   originalPrice: z.coerce.number().positive({ message: 'O preço original deve ser positivo.' }).optional().nullable(),
   imageUrls: z.array(z.string().url({ message: 'Por favor, insira URLs válidas.' })).default([]),
@@ -57,20 +59,21 @@ const productFormSchema = z.object({
 }, {
   message: 'Se em promoção, o preço original deve ser informado e maior que o preço promocional.',
   path: ['originalPrice'], 
-}).refine(data => {
-  if (!data.onPromotion && data.originalPrice !== null && data.originalPrice !== undefined) {
-  }
-  return true;
 });
-
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
 
-interface ProductData extends ProductFormValues {
+interface ProductData {
   id: string;
   userId: string;
+  name: string;
+  description: string | null;
+  price: number;
+  quantity: number;
+  onPromotion: boolean | null;
+  originalPrice: number | null;
+  images: string[]; // <<< A API envia o campo 'images'
   categories?: Category[];
-  quantity: number; // Garantir que quantity esteja na interface
 }
 
 export default function EditProductPage() {
@@ -92,7 +95,7 @@ export default function EditProductPage() {
       name: '',
       description: '',
       price: 0,
-      quantity: 0, // Adicionado valor padrão para quantity
+      quantity: 0,
       onPromotion: false,
       originalPrice: null,
       imageUrls: [],
@@ -130,17 +133,22 @@ export default function EditProductPage() {
           setProduct(data);
           
           const currentCategoryIds = data.categories?.map(cat => cat.id) || [];
+          
+          // <<< INÍCIO DA CORREÇÃO >>>
+          // Mapeamos o campo 'images' (vindo da API) para o campo 'imageUrls' do formulário
           form.reset({
             name: data.name,
             description: data.description || '',
             price: data.price,
-            quantity: data.quantity || 0, // Adicionado quantity ao reset do formulário
+            quantity: data.quantity || 0,
             onPromotion: data.onPromotion || false,
             originalPrice: data.originalPrice || null,
-            imageUrls: data.imageUrls || [],
+            imageUrls: data.images || [], // AQUI está a correção chave
             categoryIds: currentCategoryIds,
           });
-          setUploadedImageUrls(data.imageUrls || []);
+          setUploadedImageUrls(data.images || []); // Também atualizamos o estado local
+          // <<< FIM DA CORREÇÃO >>>
+
           setSelectedCategories(new Set(currentCategoryIds));
         } catch (error) {
           console.error(error);
@@ -157,8 +165,9 @@ export default function EditProductPage() {
   const onSubmit: SubmitHandler<ProductFormValues> = async (data: ProductFormValues) => {
     setIsSubmitting(true);
     try {
+      // O payload continua enviando 'imageUrls', mas a API já foi corrigida para lidar com isso
       const payload: any = {
-        ...data, // data já inclui quantity devido ao schema
+        ...data,
         imageUrls: uploadedImageUrls,
         categoryIds: Array.from(selectedCategories),
         originalPrice: data.onPromotion ? data.originalPrice : null,
@@ -193,13 +202,15 @@ export default function EditProductPage() {
 
   const handleImageUploadComplete = (urls: string[]) => {
     const newUrls = urls.filter(url => !uploadedImageUrls.includes(url));
-    setUploadedImageUrls(prevUrls => [...prevUrls, ...newUrls]);
-    form.setValue('imageUrls', [...uploadedImageUrls, ...newUrls], { shouldValidate: true });
+    const allUrls = [...uploadedImageUrls, ...newUrls];
+    setUploadedImageUrls(allUrls);
+    form.setValue('imageUrls', allUrls, { shouldValidate: true });
   };
 
   const handleRemoveImage = (urlToRemove: string) => {
-    setUploadedImageUrls(prevUrls => prevUrls.filter(url => url !== urlToRemove));
-    form.setValue('imageUrls', uploadedImageUrls.filter(url => url !== urlToRemove), { shouldValidate: true });
+    const newUrls = uploadedImageUrls.filter(url => url !== urlToRemove);
+    setUploadedImageUrls(newUrls);
+    form.setValue('imageUrls', newUrls, { shouldValidate: true });
   };
 
   const handleCategoryToggle = (categoryId: string) => {
@@ -250,150 +261,98 @@ export default function EditProductPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div>
-              <Label htmlFor="name">Nome do Produto</Label>
-              <Input id="name" {...form.register('name')} className="mt-1" />
-              {form.formState.errors.name && <p className="text-sm text-red-500 mt-1">{form.formState.errors.name.message}</p>}
-            </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <div>
+                    <Label htmlFor="name">Nome do Produto</Label>
+                    <Input id="name" {...form.register('name')} className="mt-1" />
+                    {form.formState.errors.name && <p className="text-sm text-red-500 mt-1">{form.formState.errors.name.message}</p>}
+                </div>
 
-            <div>
-              <Label htmlFor="description">Descrição (Opcional)</Label>
-              <Textarea id="description" {...form.register('description')} rows={4} className="mt-1" />
-            </div>
-            
-            {}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-              <div>
-                <Label htmlFor="price">Preço (R$)</Label>
-                <Input id="price" type="number" step="0.01" {...form.register('price')} className="mt-1" />
-                {form.formState.errors.price && <p className="text-sm text-red-500 mt-1">{form.formState.errors.price.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="quantity">Quantidade em Estoque</Label>
-                <Input id="quantity" type="number" {...form.register('quantity')} className="mt-1" />
-                {form.formState.errors.quantity && <p className="text-sm text-red-500 mt-1">{form.formState.errors.quantity.message}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mt-6 md:mt-0">
-              <div className="space-y-2 pt-1 md:pt-0">
-                 <div className="flex items-center space-x-2 mt-1 md:mt-7"> 
+                <div>
+                    <Label htmlFor="description">Descrição (Opcional)</Label>
+                    <Textarea id="description" {...form.register('description')} rows={4} className="mt-1" />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <div>
+                        <Label htmlFor="price">Preço (R$)</Label>
+                        <Input id="price" type="number" step="0.01" {...form.register('price')} className="mt-1" />
+                        {form.formState.errors.price && <p className="text-sm text-red-500 mt-1">{form.formState.errors.price.message}</p>}
+                    </div>
+                    <div>
+                        <Label htmlFor="quantity">Quantidade em Estoque</Label>
+                        <Input id="quantity" type="number" {...form.register('quantity')} className="mt-1" />
+                        {form.formState.errors.quantity && <p className="text-sm text-red-500 mt-1">{form.formState.errors.quantity.message}</p>}
+                    </div>
+                </div>
+                
+                <div className="flex items-center space-x-2 pt-2"> 
                     <Controller
                         name="onPromotion"
                         control={form.control}
                         render={({ field }) => (
-                            <Checkbox
-                                id="onPromotion"
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
+                            <Checkbox id="onPromotion" checked={field.value} onCheckedChange={field.onChange} />
                         )}
                     />
-                    <Label htmlFor="onPromotion" className="font-medium">
-                        Produto em Promoção?
-                    </Label>
+                    <Label htmlFor="onPromotion" className="font-medium cursor-pointer">Produto em Promoção?</Label>
                 </div>
-                {form.formState.errors.onPromotion && <p className="text-sm text-red-500 mt-1">{form.formState.errors.onPromotion.message}</p>}
-              </div>
-            </div>
-
-            {onPromotionValue && (
-              <div>
-                <Label htmlFor="originalPrice">Preço Original (R$) - Antes da Promoção</Label>
-                <Input id="originalPrice" type="number" step="0.01" {...form.register('originalPrice')} className="mt-1" />
-                {form.formState.errors.originalPrice && <p className="text-sm text-red-500 mt-1">{form.formState.errors.originalPrice.message}</p>}
-              </div>
-            )}
-
-            {}
-            <div>
-              <Label>Categorias</Label>
-              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={popoverOpen}
-                    className="w-full justify-between mt-1"
-                  >
-                    {selectedCategoriesText}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
-                  <Command>
-                    <CommandInput placeholder="Buscar categoria..." />
-                    <CommandList>
-                      <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
-                      <CommandGroup>
-                        {availableCategories.map((category) => (
-                          <CommandItem
-                            key={category.id}
-                            value={category.name} 
-                            onSelect={() => {
-                              handleCategoryToggle(category.id);
-                            }}
-                          >
-                            <Checkbox
-                              className="mr-2"
-                              checked={selectedCategories.has(category.id)}
-                              onCheckedChange={() => handleCategoryToggle(category.id)}
-                              onClick={(e) => e.stopPropagation()} 
-                            />
-                            {category.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {form.formState.errors.categoryIds && <p className="text-sm text-red-500 mt-1">{form.formState.errors.categoryIds.message}</p>}
-            </div>
-
-            <div>
-              <Label>Imagens do Produto</Label>
-              <ImageUpload
-                onUploadComplete={handleImageUploadComplete}
-                maxFiles={5} 
-                storagePath={`products/${product.userId}/${productId}`}
-                currentFiles={uploadedImageUrls}
-                onRemoveFile={handleRemoveImage}
-              />
-              {form.formState.errors.imageUrls && <p className="text-sm text-red-500 mt-1">{form.formState.errors.imageUrls.message}</p>}
-              {uploadedImageUrls.length > 0 && (
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {uploadedImageUrls.map((url, index) => (
-                    <div key={index} className="relative group">
-                      <img src={url} alt={`Imagem do produto ${index + 1}`} className="rounded-md object-cover h-32 w-full" />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleRemoveImage(url)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <CardFooter className="flex justify-end pt-8 px-0">
-              <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting} className="mr-3">
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-sky-600 hover:bg-sky-700 text-white">
-                {isSubmitting ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>
-                ) : (
-                  'Salvar Alterações'
+                {onPromotionValue && (
+                  <div>
+                    <Label htmlFor="originalPrice">Preço Original (R$) - Antes da Promoção</Label>
+                    <Input id="originalPrice" type="number" step="0.01" {...form.register('originalPrice')} className="mt-1" />
+                    {form.formState.errors.originalPrice && <p className="text-sm text-red-500 mt-1">{form.formState.errors.originalPrice.message}</p>}
+                  </div>
                 )}
-              </Button>
-            </CardFooter>
-          </form>
+                
+                <div>
+                  <Label>Categorias</Label>
+                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" aria-expanded={popoverOpen} className="w-full justify-between mt-1">
+                        {selectedCategoriesText}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] max-h-[--radix-popover-content-available-height] p-0">
+                      <Command>
+                        <CommandInput placeholder="Buscar categoria..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
+                          <CommandGroup>
+                            {availableCategories.map((category) => (
+                              <CommandItem key={category.id} value={category.name} onSelect={() => handleCategoryToggle(category.id)}>
+                                <Check className={`mr-2 h-4 w-4 ${selectedCategories.has(category.id) ? "opacity-100" : "opacity-0"}`} />
+                                {category.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {form.formState.errors.categoryIds && <p className="text-sm text-red-500 mt-1">{form.formState.errors.categoryIds.message}</p>}
+                </div>
+
+                <div>
+                  <Label>Imagens do Produto</Label>
+                  <ImageUpload
+                    onUploadComplete={handleImageUploadComplete}
+                    maxFiles={5} 
+                    storagePath={`products/${product.userId}/${productId}`}
+                    currentFiles={uploadedImageUrls}
+                    onRemoveFile={handleRemoveImage}
+                  />
+                  {form.formState.errors.imageUrls && <p className="text-sm text-red-500 mt-1">{form.formState.errors.imageUrls.message}</p>}
+                </div>
+                <CardFooter className="flex justify-end pt-8 px-0">
+                    <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting} className="mr-3">Cancelar</Button>
+                    <Button type="submit" disabled={isSubmitting} className="bg-sky-600 hover:bg-sky-700 text-white">
+                        {isSubmitting ? ( <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</> ) : ( 'Salvar Alterações' )}
+                    </Button>
+                </CardFooter>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>
