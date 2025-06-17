@@ -1,7 +1,7 @@
 // app/api/contact/route.ts
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { sendContactFormEmail } from '@/lib/nodemailer';
+import { sendContactFormEmail } from '@/lib/resend';
 
 // Schema para validar os dados do formulário
 const contactFormSchema = z.object({

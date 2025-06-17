@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { authOptions } from '../auth/[...nextauth]/route'; 
-import { sendReservationNotificationEmail } from '@/lib/nodemailer';
+import { sendReservationNotificationEmail } from '@/lib/resend';
 
 const reservationSchema = z.object({
   productId: z.string().min(1, "Product ID is required"),

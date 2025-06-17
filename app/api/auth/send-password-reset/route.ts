@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { sendPasswordResetEmail } from '@/lib/nodemailer';
+import { sendPasswordResetEmail } from '@/lib/resend';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Por favor, insira um email válido."),

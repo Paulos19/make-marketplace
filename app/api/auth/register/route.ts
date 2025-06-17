@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { UserRole } from "@prisma/client";
 import { v4 as uuidv4 } from 'uuid';
-import { sendVerificationEmail } from "@/lib/nodemailer";
+import { sendVerificationEmail } from "@/lib/resend";
 
 // <<< INÍCIO DA CORREÇÃO >>>
 const registerUserSchema = z.object({

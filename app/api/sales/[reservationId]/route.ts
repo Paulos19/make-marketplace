@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { authOptions } from '../../auth/[...nextauth]/route';
-import { sendOrderCompletionEmail } from '@/lib/nodemailer';
+import { sendOrderCompletionEmail } from '@/lib/resend';
 import { UserRole, ReservationStatus } from '@prisma/client';
 
 interface RouteParams {
