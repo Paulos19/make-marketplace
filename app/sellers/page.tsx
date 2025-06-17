@@ -54,10 +54,10 @@ export default async function SellersPage() {
       <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
         <header className="text-center mb-12 md:mb-16">
           <h1 className="text-4xl sm:text-5xl font-bangers tracking-wider text-zaca-roxo dark:text-zaca-lilas">
-            Nossos Vendedores Parceiros
+            Os Parceiros do Zaca
           </h1>
           <p className="mt-4 text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            Descubra os artesãos e criadores incríveis que fazem parte da comunidade Zacaplace.
+            Descubra quem são os empreendedores que fazem do Zacaplace um estouro, psit!
           </p>
         </header>
 
