@@ -1,9 +1,9 @@
-// app/api/products/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { UserRole } from '@prisma/client';
+import { revalidatePath } from 'next/cache'; // <<< 1. IMPORTAR revalidatePath
 
 // GET: Busca produtos e normaliza os dados para o frontend.
 export async function GET(request: Request) {
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
         user: { 
           select: { id: true, name: true, image: true, whatsappLink: true, storeName: true },
         },
-        category: true, // Busca a relação singular 'category'
+        category: true,
       },
     };
 
@@ -27,20 +27,11 @@ export async function GET(request: Request) {
     
     const productsFromDb = await prisma.product.findMany(queryOptions);
 
-    // Normaliza os dados para garantir que o frontend receba a estrutura que espera.
     const products = productsFromDb.map(product => {
-      // O 'as any' é usado aqui para facilitar a manipulação do objeto
       const productForFrontend: any = { ...product };
-
-      // Garante que o frontend receba 'categories' como um array
       productForFrontend.categories = product.categoryId ? [product.categoryId] : [];
-      
-      // Garante que o campo 'images' exista e seja um array
       productForFrontend.images = product.images || [];
-
-      // Remove o campo singular 'category' para evitar confusão no frontend
       delete productForFrontend.category;
-      
       return productForFrontend;
     });
     
@@ -56,7 +47,6 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
 
-  // CORREÇÃO: A verificação foi dividida para garantir a inferência de tipo correta.
   if (!session || !session.user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
@@ -79,13 +69,18 @@ export async function POST(request: Request) {
         description,
         price: parseFloat(price),
         quantity: parseInt(quantity, 10),
-        images: imageUrls, // Salva os dados no campo correto do banco: 'images'
+        images: imageUrls,
         onPromotion: onPromotion || false,
         originalPrice: onPromotion ? parseFloat(originalPrice) : null,
-        user: { connect: { id: session.user.id } }, // Agora TypeScript sabe que session.user existe
+        user: { connect: { id: session.user.id } },
         category: { connect: { id: categoryId } },
       },
     });
+    
+    // <<< 2. ADICIONAR REVALIDAÇÃO APÓS CRIAR PRODUTO >>>
+    revalidatePath('/'); // Revalida a HomePage
+    revalidatePath('/products'); // Revalida a página de listagem de todos os produtos
+    // <<< FIM DA ADIÇÃO >>>
 
     return NextResponse.json(product, { status: 201 });
   } catch (error) {

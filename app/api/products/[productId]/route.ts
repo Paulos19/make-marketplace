@@ -2,9 +2,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'; 
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { revalidatePath } from 'next/cache';
+import { UserRole } from '@prisma/client';
 
-// GET para um único produto (sem alterações)
+// GET para um único produto
 export async function GET(request: NextRequest, { params }: { params: { productId: string } }) {
   const { productId } = params;
   if (!productId) {
@@ -32,6 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: { productI
     if (!product) {
       return NextResponse.json({ error: 'Produto não encontrado' }, { status: 404 });
     }
+    
     // Normaliza os dados para o frontend esperar 'categories' como um array
     const { category, ...rest } = product;
     const productForFrontend = { ...rest, categories: category ? [category] : [] };
@@ -61,30 +64,28 @@ export async function PUT(request: NextRequest, { params }: { params: { productI
             return NextResponse.json({ error: 'Produto não encontrado' }, { status: 404 });
         }
         
-        if (product.userId !== session.user.id) {
+        if (product.userId !== session.user.id && session.user.role !== UserRole.ADMIN) {
             return NextResponse.json({ error: 'Sem permissão para editar' }, { status: 403 });
         }
 
         const body = await request.json();
-
-        // <<< INÍCIO DA CORREÇÃO >>>
-        // Desestruturamos os campos do corpo da requisição.
-        // O frontend envia 'imageUrls' e 'categoryIds', mas o banco espera 'images' e 'categoryId'.
         const { imageUrls, categoryIds, ...restOfBody } = body;
 
-        // Construímos o objeto de dados com os nomes de campo corretos para o Prisma.
         const dataToUpdate = {
           ...restOfBody,
-          images: imageUrls, // Mapeamos 'imageUrls' para o campo 'images' do banco de dados.
-          // Como o produto só pode ter uma categoria, pegamos o primeiro ID do array.
+          images: imageUrls,
           ...(categoryIds && categoryIds.length > 0 && { categoryId: categoryIds[0] }),
         };
-        // <<< FIM DA CORREÇÃO >>>
 
         const updatedProduct = await prisma.product.update({
             where: { id: productId },
-            data: dataToUpdate, // Usamos o objeto de dados corrigido.
+            data: dataToUpdate,
         });
+        
+        // Revalida os caches para refletir a atualização
+        revalidatePath('/');
+        revalidatePath('/products');
+        revalidatePath(`/products/${productId}`);
 
         return NextResponse.json(updatedProduct, { status: 200 });
     } catch (error) {
@@ -93,7 +94,7 @@ export async function PUT(request: NextRequest, { params }: { params: { productI
     }
 }
 
-// DELETE para remover produto (sem alterações)
+// DELETE para remover produto
 export async function DELETE(request: NextRequest, { params }: { params: { productId: string } }) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.id) {
@@ -111,13 +112,18 @@ export async function DELETE(request: NextRequest, { params }: { params: { produ
             return NextResponse.json({ error: 'Produto não encontrado' }, { status: 404 });
         }
 
-        if (product.userId !== session.user.id) {
+        // Permite que o próprio vendedor ou um admin exclua o produto
+        if (product.userId !== session.user.id && session.user.role !== UserRole.ADMIN) {
             return NextResponse.json({ error: 'Sem permissão para remover' }, { status: 403 });
         }
 
         await prisma.product.delete({
             where: { id: productId },
         });
+        
+        // Revalida os caches após a exclusão
+        revalidatePath('/');
+        revalidatePath('/products');
 
         return NextResponse.json({ message: 'Produto removido' }, { status: 200 });
     } catch (error) {
