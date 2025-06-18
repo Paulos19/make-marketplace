@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       });
       
       // Cria a notificação para o admin
-      const adminMessage = `Nova reserva de "${product.name}" (Qtd: ${reservedQuantity}) por ${session.user?.name}. Vendedor: ${product.user.name}.`;
+      const adminMessage = `${product.user?.name}, chegou uma nova reserva do "${product.name}" (Qtd: ${reservedQuantity}) por ${session.user?.name}, no Zacaplace. Psit...! Corre lá, dá uma bizoiada, uai!`;
       await tx.adminNotification.create({
           data: {
               message: adminMessage,
