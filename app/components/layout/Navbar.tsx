@@ -35,7 +35,9 @@ import {
   Package2,
   Store,
   Plus,
-  PlusCircle, // <<< Ícone adicionado
+  PlusCircle,
+  UserCircle,
+  LucideUserCircle2, // <<< Ícone adicionado
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
 import { Separator } from '@/components/ui/separator';
@@ -60,7 +62,7 @@ export default function Navbar() {
   ];
 
   const getAvatarFallback = (name?: string | null) => {
-    if (!name) return <UserCircle2 />;
+    if (!name) return <LucideUserCircle2 />;
     return name.trim().split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
 
