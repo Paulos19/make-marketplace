@@ -1,10 +1,10 @@
-// app/components/layout/Navbar.tsx
 "use client";
 
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +24,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Menu,
-  ShoppingCart,
   Heart,
   UserCircle2,
   LayoutDashboard,
@@ -34,10 +33,8 @@ import {
   Home,
   Package2,
   Store,
-  Plus,
-  PlusCircle,
-  UserCircle,
-  LucideUserCircle2, // <<< Ícone adicionado
+  ShoppingBag,
+  LucidePlusCircle, // Ícone para as vendas
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
 import { Separator } from '@/components/ui/separator';
@@ -47,22 +44,43 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const user = session?.user;
   const pathname = usePathname();
+  const [pendingSalesCount, setPendingSalesCount] = useState(0);
 
-  // Estrutura de links reorganizada para clareza
+  // Busca a contagem de reservas pendentes quando o usuário é um vendedor
+  useEffect(() => {
+    if (status === 'authenticated' && user?.role === UserRole.SELLER) {
+      const fetchPendingCount = async () => {
+        try {
+          const response = await fetch('/api/sales/pending-count');
+          if (response.ok) {
+            const data = await response.json();
+            setPendingSalesCount(data.count || 0);
+          }
+        } catch (error) {
+          console.error("Falha ao buscar contagem de vendas pendentes:", error);
+          setPendingSalesCount(0);
+        }
+      };
+      fetchPendingCount();
+    } else {
+      setPendingSalesCount(0); // Reseta a contagem se não for vendedor
+    }
+  }, [status, user]);
+
   const mainNavLinks = [
     { href: '/', label: 'Início', icon: Home },
     { href: '/products', label: 'Achadinhos', icon: Package2 },
     { href: '/sellers', label: 'Vendedores', icon: Store },
-    { href: '/dashboard/add-product', label: 'Adicionar Produtos', icon: PlusCircle },
+    { href: '/dashboard/add-product', label: 'Adicionar Produto', icon: LucidePlusCircle },
   ];
 
   const userNavLinks = [
-    { href: '/my-reservations', label: 'Favoritos', icon: Heart },
+    { href: '/my-reservations', label: 'Minhas Compras', icon: Heart },
     { href: '/dashboard', label: 'Minha Loja', icon: LayoutDashboard },
   ];
 
   const getAvatarFallback = (name?: string | null) => {
-    if (!name) return <LucideUserCircle2 />;
+    if (!name) return <UserCircle2 />;
     return name.trim().split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
 
@@ -99,16 +117,24 @@ export default function Navbar() {
           </div>
 
           <Link href='/my-reservations'>
-            <Button variant="ghost" size="icon" aria-label="Favoritos" className="hidden sm:inline-flex">
+            <Button variant="ghost" size="icon" aria-label="Minhas Compras" className="hidden sm:inline-flex">
               <Heart className="h-5 w-5" />
             </Button>
           </Link>
 
-          <Link href='/sellers'>
-            <Button variant="ghost" size="icon" aria-label="Vendedores" className="hidden sm:inline-flex">
-              <Store className="h-5 w-5" />
-            </Button>
-          </Link>
+          {/* <<< ÍCONE DE NOTIFICAÇÃO DE VENDAS PARA VENDEDORES (DESKTOP) >>> */}
+          {user?.role === UserRole.SELLER && (
+            <Link href='/dashboard/sales' className="relative">
+              <Button variant="ghost" size="icon" aria-label="Minhas Vendas" className="hidden sm:inline-flex">
+                <ShoppingBag className="h-5 w-5" />
+              </Button>
+              {pendingSalesCount > 0 && (
+                <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white shadow-lg">
+                  {pendingSalesCount}
+                </div>
+              )}
+            </Link>
+          )}
           
           <Separator orientation="vertical" className="h-6 hidden sm:block" />
 
@@ -156,7 +182,6 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* <<< INÍCIO DA CORREÇÃO NO MENU MOBILE >>> */}
           <div className="flex items-center lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -183,14 +208,26 @@ export default function Navbar() {
                   <Separator className="my-4" />
                   {user ? (
                     <>
-                      {userNavLinks.map(link => (
-                        <SheetClose key={link.href} asChild>
-                          <Link href={link.href} className="flex items-center gap-3 text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas">
-                            <link.icon className="mr- h-5 w-5" />
-                            {link.label}
-                          </Link>
-                        </SheetClose>
-                      ))}
+                      <SheetClose asChild><Link href="/my-reservations" className="flex items-center gap-3 text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas"><Heart className="mr- h-5 w-5"/>Minhas Compras</Link></SheetClose>
+                      <SheetClose asChild><Link href="/dashboard" className="flex items-center gap-3 text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas"><LayoutDashboard className="mr- h-5 w-5"/>Minha Loja</Link></SheetClose>
+
+                      {/* <<< ÍCONE DE NOTIFICAÇÃO DE VENDAS PARA VENDEDORES (MOBILE) >>> */}
+                      {user.role === UserRole.SELLER && (
+                          <SheetClose asChild>
+                              <Link href="/dashboard/sales" className="flex items-center justify-between text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas">
+                                  <div className="flex items-center gap-3">
+                                      <ShoppingBag className="mr- h-5 w-5" />
+                                      Minhas Vendas
+                                  </div>
+                                  {pendingSalesCount > 0 && (
+                                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-sm font-bold text-white">
+                                          {pendingSalesCount}
+                                      </div>
+                                  )}
+                              </Link>
+                          </SheetClose>
+                      )}
+
                       {user.role === UserRole.ADMIN && (
                         <SheetClose asChild>
                           <Link href="/admin-dashboard" className="flex items-center gap-3 text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas">
@@ -211,7 +248,6 @@ export default function Navbar() {
               </SheetContent>
             </Sheet>
           </div>
-          {/* <<< FIM DA CORREÇÃO >>> */}
         </div>
       </div>
     </header>

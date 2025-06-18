@@ -1,3 +1,4 @@
+// app/products/[productId]/page.tsx
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
@@ -28,13 +29,14 @@ import { Label } from '@/components/ui/label';
 // Ícones Lucide
 import {
   UserCircle2, MessageSquareText, ChevronRight, Store, Minus, Plus,
-  PackageOpen, AlertTriangle, ShoppingCart, ArrowLeft, Share2, Loader2
+  PackageOpen, AlertTriangle, ShoppingCart, ArrowLeft, Share2, Loader2, ArrowRight
 } from 'lucide-react';
 
 // Componentes de Layout
 import Navbar from '@/app/components/layout/Navbar';
 import Footer from '@/app/components/layout/Footer';
-import RelatedProducts from '../components/RelatedProducts'; 
+import RelatedProducts from '../components/RelatedProducts';
+import { ProductCard } from '../components/ProductCard'; // Reutilizando o ProductCard
 
 // Tipos
 interface UserInfo {
@@ -61,6 +63,10 @@ interface Product {
   categories: CategoryInfo[];
   quantity: number;
 }
+interface ExploreSectionData {
+  category: CategoryInfo;
+  products: Product[];
+}
 
 
 const mainVariants: Variants = {
@@ -73,6 +79,8 @@ const itemVariants: Variants = {
 };
 
 const PRODUCTS_PER_RELATED_ROW = 8;
+const CATEGORIES_TO_EXPLORE = 2; // Número de seções de categoria a serem exibidas
+const PRODUCTS_PER_EXPLORE_SECTION = 4; // Número de produtos por seção de categoria
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -81,6 +89,7 @@ export default function ProductDetailPage() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [exploreSections, setExploreSections] = useState<ExploreSectionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
@@ -91,12 +100,15 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (productId) {
-      const fetchProductAndRelated = async () => {
+      const fetchAllData = async () => {
         setLoading(true);
         setError(null);
         setProduct(null);
         setRelatedProducts([]);
+        setExploreSections([]);
+
         try {
+          // 1. Busca o produto principal
           const productResponse = await fetch(`/api/products/${productId}`);
           if (!productResponse.ok) {
             const errorData = await productResponse.json().catch(() => ({}));
@@ -105,21 +117,47 @@ export default function ProductDetailPage() {
           const productData: Product = await productResponse.json();
           setProduct(productData);
 
-          if (productData.categories && productData.categories.length > 0 && productData.user) {
-            const primaryCategoryId = productData.categories[0].id;
-            const relatedResponse = await fetch(`/api/products?categoryId=${primaryCategoryId}&limit=${PRODUCTS_PER_RELATED_ROW + 1}&all=true`);
-            if (relatedResponse.ok) {
-              const relatedData = await relatedResponse.json();
-              setRelatedProducts(relatedData.filter((p: Product) => p.id !== productId && p.user).slice(0, PRODUCTS_PER_RELATED_ROW));
-            }
+          // 2. Busca produtos relacionados e outras categorias em paralelo
+          const primaryCategoryId = productData.categories?.[0]?.id;
+          
+          const [relatedResponse, allCategoriesResponse] = await Promise.all([
+            primaryCategoryId ? fetch(`/api/products?categoryId=${primaryCategoryId}&limit=${PRODUCTS_PER_RELATED_ROW + 1}&all=true`) : Promise.resolve(null),
+            fetch('/api/categories')
+          ]);
+
+          // Processa produtos relacionados
+          if (relatedResponse?.ok) {
+            const relatedData = await relatedResponse.json();
+            setRelatedProducts(relatedData.filter((p: Product) => p.id !== productId && p.user).slice(0, PRODUCTS_PER_RELATED_ROW));
           }
+
+          // Processa seções de "Explore Mais"
+          if (allCategoriesResponse.ok) {
+            const allCategories: CategoryInfo[] = await allCategoriesResponse.json();
+            const otherCategories = allCategories.filter(c => c.id !== primaryCategoryId).slice(0, CATEGORIES_TO_EXPLORE);
+            
+            const exploreProductPromises = otherCategories.map(category => 
+              fetch(`/api/products?categoryId=${category.id}&limit=${PRODUCTS_PER_EXPLORE_SECTION}&all=true`).then(res => res.json())
+            );
+            
+            const exploreProductsResults = await Promise.all(exploreProductPromises);
+            
+            const sections: ExploreSectionData[] = otherCategories.map((category, index) => ({
+              category,
+              products: exploreProductsResults[index].filter((p: Product) => p.user),
+            })).filter(section => section.products.length > 0);
+
+            setExploreSections(sections);
+          }
+
         } catch (err: any) {
           setError(err.message || "Deu um 'Zacabum' ao carregar a página!");
-          console.error("Erro ao buscar produto e relacionados:", err);
+          console.error("Erro ao buscar dados da página do produto:", err);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       };
-      fetchProductAndRelated();
+      fetchAllData();
     } else {
       setError("ID do achadinho não especificado.");
       setLoading(false);
@@ -469,13 +507,18 @@ export default function ProductDetailPage() {
           </div>
         </div>
         
-        {relatedProducts.length > 0 && (
-            <RelatedProducts 
-                title="Quem viu este, curtiu estes também, cumpadi!"
-                products={relatedProducts} 
-                currentProductId={productId}
-            />
-        )}
+        <div className="overflow-x-clip">
+            {relatedProducts.length > 0 && (
+                <RelatedProducts 
+                    title="Quem viu este, curtiu estes também, cumpadi!"
+                    products={relatedProducts} 
+                    currentProductId={productId}
+                />
+            )}
+        </div>
+        
+        {/* <<< NOVA SEÇÃO ADICIONADA AQUI >>> */}
+        <ExploreByCategorySection sections={exploreSections} />
       </motion.main>
       <Footer />
     </div>
@@ -489,3 +532,51 @@ const ProductPageSkeleton = () => (
 const ProductPageError = ({ error }: { error: string }) => (
     <div className="flex flex-col min-h-screen"><Navbar /><main className="flex-grow flex items-center justify-center p-4"><div className="text-center bg-white dark:bg-slate-800 p-8 rounded-lg shadow-xl max-w-md"><AlertTriangle className="mx-auto h-16 w-16 text-zaca-vermelho mb-4" /><h1 className="text-2xl font-bangers text-zaca-vermelho mb-2">Xiii, Deu Ruim!</h1><p className="text-slate-700 dark:text-slate-300 mb-6">{error}</p><Button asChild className="bg-zaca-azul hover:bg-zaca-azul/90 text-white"><Link href="/products"><ArrowLeft className="mr-2 h-4 w-4"/>Ver outros Achadinhos</Link></Button></div></main><Footer /></div>
 );
+
+// <<< NOVO COMPONENTE DEFINIDO AQUI >>>
+const ExploreByCategorySection = ({ sections }: { sections: ExploreSectionData[] }) => {
+  if (!sections || sections.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="py-16 bg-slate-100 dark:bg-slate-900">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+        {sections.map((section) => (
+          <motion.section 
+            key={section.category.id}
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bangers text-zaca-roxo dark:text-zaca-lilas tracking-wide">
+                Mais de {section.category.name}
+              </h2>
+              <Button asChild variant="ghost">
+                <Link href={`/products`} className="text-zaca-azul dark:text-zaca-lilas">
+                  Ver Tudo <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+            <motion.div 
+              className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ staggerChildren: 0.1 }}
+            >
+              {section.products.map(product => (
+                <motion.div key={product.id} variants={itemVariants}>
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.section>
+        ))}
+      </div>
+    </div>
+  );
+};
+
