@@ -57,7 +57,7 @@ export default function Footer() {
           </div>
 
           <p className="mx-auto mt-6 max-w-md text-center leading-relaxed text-slate-600 dark:text-slate-400">
-            O seu marketplace de achadinhos incríveis! Encontre as melhores ofertas e venda seus produtos de forma fácil e segura em Sete Lagoas.
+            O seu marketplace de achadinhos incríveis! Encontre as melhores ofertas, e venda seus produtos de forma fácil e segura em Sete Lagoas.
           </p>
         </div>
 
