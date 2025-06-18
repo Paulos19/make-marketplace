@@ -65,7 +65,12 @@ export function DynamicHeroBanner() {
 
   return (
     <section className="h-screen w-full relative">
-      <Carousel setApi={setApi} opts={{ loop: true }} plugins={[Autoplay({ delay: 8000, stopOnInteraction: true })]} className="w-full h-full">
+      <Carousel 
+        setApi={setApi} 
+        opts={{ loop: true }} 
+        plugins={[Autoplay({ delay: 8000, stopOnInteraction: true })]} 
+        className="w-full h-full"
+      >
         <CarouselContent>
           {banners.map((banner, index) => (
             <CarouselItem key={banner.id}>
@@ -76,8 +81,15 @@ export function DynamicHeroBanner() {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="absolute left-6 top-1/2 -translate-y-1/2 z-10 hidden sm:inline-flex" />
-        <CarouselNext className="absolute right-6 top-1/2 -translate-y-1/2 z-10 hidden sm:inline-flex" />
+        {/* <<< INÍCIO DA CORREÇÃO >>> */}
+        {/* As setas agora são maiores, sempre visíveis e têm um fundo semi-transparente para melhor contraste */}
+        <CarouselPrevious 
+            className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 bg-white/60 hover:bg-white/90 text-slate-800 dark:bg-black/50 dark:hover:bg-black/80 dark:text-slate-200"
+        />
+        <CarouselNext 
+            className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 bg-white/60 hover:bg-white/90 text-slate-800 dark:bg-black/50 dark:hover:bg-black/80 dark:text-slate-200"
+        />
+        {/* <<< FIM DA CORREÇÃO >>> */}
       </Carousel>
       <div className="absolute inset-0 flex items-center justify-center z-10 text-white text-center p-4">
         <AnimatePresence mode="wait">

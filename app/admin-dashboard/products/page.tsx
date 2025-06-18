@@ -7,29 +7,34 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ProductActions } from "./components/ProductActions"; // Componente cliente para as ações
+import { ProductActions } from "./components/ProductActions";
 
-// Função de busca de dados no servidor
-async function getAllProducts() {
+// Busca os produtos e as categorias em paralelo
+async function getDataForPage() {
   try {
-    const products = await prisma.product.findMany({
-      include: {
-        user: { select: { name: true, email: true } },
-        category: { select: { name: true } },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-    return products;
+    const [products, categories] = await Promise.all([
+      prisma.product.findMany({
+        include: {
+          user: { select: { name: true, email: true } },
+          category: { select: { name: true } },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      prisma.category.findMany({
+        orderBy: { name: 'asc' }
+      })
+    ]);
+    return { products, categories };
   } catch (error) {
-    console.error("Falha ao buscar todos os produtos para o admin:", error);
-    return [];
+    console.error("Falha ao buscar dados para a página de produtos do admin:", error);
+    return { products: [], categories: [] };
   }
 }
 
 export default async function AdminProductsPage() {
-  const products = await getAllProducts();
+  const { products, categories } = await getDataForPage();
 
   return (
     <>
@@ -41,7 +46,7 @@ export default async function AdminProductsPage() {
         <CardHeader>
           <CardTitle>Todos os Produtos da Plataforma</CardTitle>
           <CardDescription>
-            Visualize e gerencie todos os produtos cadastrados pelos vendedores.
+            Visualize, edite e gerencie todos os produtos cadastrados pelos vendedores.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -50,9 +55,9 @@ export default async function AdminProductsPage() {
               <TableRow>
                 <TableHead className="hidden w-[80px] sm:table-cell">Imagem</TableHead>
                 <TableHead>Produto</TableHead>
+                <TableHead>Categoria</TableHead>
                 <TableHead>Vendedor</TableHead>
                 <TableHead className="hidden md:table-cell">Preço</TableHead>
-                <TableHead className="hidden md:table-cell">Estoque</TableHead>
                 <TableHead><span className="sr-only">Ações</span></TableHead>
               </TableRow>
             </TableHeader>
@@ -69,13 +74,15 @@ export default async function AdminProductsPage() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{product.category?.name || 'Sem Categoria'}</Badge>
+                  </TableCell>
                   <TableCell>{product.user?.name ?? 'N/A'}</TableCell>
                   <TableCell className="hidden md:table-cell">
                     R$ {product.price.toFixed(2)}
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{product.quantity}</TableCell>
                   <TableCell className="text-right">
-                    <ProductActions productId={product.id} productName={product.name} />
+                    <ProductActions product={product} categories={categories} />
                   </TableCell>
                 </TableRow>
               ))}

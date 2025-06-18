@@ -18,11 +18,11 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/components/ui/avatar"; // Importar todos os componentes do Avatar
+} from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import prisma from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
-import { UserActions } from "./components/UserActions";
+import { UserActions } from "./components/UserActions"; // <<< IMPORTADO
 
 // Função de busca de dados no servidor
 async function getUsers() {
@@ -75,8 +75,6 @@ export default async function AdminUsersPage() {
               {users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="hidden sm:table-cell">
-                    {/* <<< CORREÇÃO APLICADA AQUI >>> */}
-                    {/* AvatarImage e AvatarFallback estão agora dentro de Avatar */}
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={user.image ?? undefined} alt={user.name ?? 'Avatar do Usuário'} />
                       <AvatarFallback>{user.name?.charAt(0).toUpperCase() ?? 'U'}</AvatarFallback>
@@ -100,6 +98,7 @@ export default async function AdminUsersPage() {
                     {new Date(user.createdAt).toLocaleDateString('pt-BR')}
                   </TableCell>
                   <TableCell className="text-right">
+                    {/* <<< COMPONENTE DE AÇÕES ADICIONADO AQUI >>> */}
                     <UserActions userId={user.id} userEmail={user.email} />
                   </TableCell>
                 </TableRow>

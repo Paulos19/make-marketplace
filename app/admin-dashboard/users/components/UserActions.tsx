@@ -20,11 +20,10 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MoreHorizontal, Trash2, KeyRound, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { PasswordInput } from "@/components/ui/PasswordInput"; // <<< INÍCIO DA CORREÇÃO 1
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 interface UserActionsProps {
   userId: string;
@@ -91,12 +90,32 @@ export function UserActions({ userId, userEmail }: UserActionsProps) {
   return (
     <>
       <DropdownMenu>
-        {/* ... (código do DropdownMenu inalterado) ... */}
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Abrir menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={() => setIsPasswordModalOpen(true)}>
+            <KeyRound className="mr-2 h-4 w-4" />
+            Alterar Senha
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="text-red-600 focus:bg-red-50 focus:text-red-600"
+            onSelect={() => setIsDeleteAlertOpen(true)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Excluir Usuário
+          </DropdownMenuItem>
+        </DropdownMenuContent>
       </DropdownMenu>
 
       {/* Modal para Alterar Senha */}
       <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-white dark:bg-slate-800">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Alterar Senha</DialogTitle>
             <DialogDescription>
@@ -106,7 +125,6 @@ export function UserActions({ userId, userEmail }: UserActionsProps) {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="new-password" className="text-right">Nova Senha</Label>
-              {/* <<< INÍCIO DA CORREÇÃO 2: Usar PasswordInput >>> */}
               <PasswordInput
                 id="new-password"
                 value={newPassword}
@@ -114,7 +132,6 @@ export function UserActions({ userId, userEmail }: UserActionsProps) {
                 className="col-span-3"
                 placeholder="Mínimo 6 caracteres"
               />
-              {/* <<< FIM DA CORREÇÃO 2 >>> */}
             </div>
           </div>
           <DialogFooter>
@@ -128,7 +145,7 @@ export function UserActions({ userId, userEmail }: UserActionsProps) {
       
       {/* Alerta de Confirmação para Exclusão */}
       <Dialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-800">
+        <DialogContent className="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-red-500"/>Tem Certeza Absoluta?</DialogTitle>
                 <DialogDescription>
@@ -136,9 +153,7 @@ export function UserActions({ userId, userEmail }: UserActionsProps) {
                 </DialogDescription>
             </DialogHeader>
             <DialogFooter className="sm:justify-end gap-2">
-                <DialogClose asChild>
-                    <Button type="button" variant="secondary">Cancelar</Button>
-                </DialogClose>
+                <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
                 <Button type="button" variant="destructive" onClick={handleDeleteUser} disabled={isDeleting}>
                     {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Sim, excluir usuário
