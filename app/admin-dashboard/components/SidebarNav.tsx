@@ -12,6 +12,7 @@ import {
   Send,
   DropletsIcon,
   LayoutTemplate,
+  Bell,
 } from 'lucide-react';
 
 export function SidebarNav({ isMobile = false }: { isMobile?: boolean }) {
@@ -22,6 +23,7 @@ export function SidebarNav({ isMobile = false }: { isMobile?: boolean }) {
     { href: "/admin-dashboard/users", label: "Usuários", icon: Users },
     { href: "/admin-dashboard/categories", label: "Categorias", icon: Shapes },
     { href: "/admin-dashboard/products", label: "Produtos", icon: Package },
+    { href: "/admin-dashboard/notifications", label: "Notificações", icon: Bell },
     { href: "/admin-dashboard/marketing", label: "Email Marketing", icon: Send },
     { href: "/admin-dashboard/homepage-sections", label: "Seções da Home", icon: LayoutTemplate },
     { href: "/admin-dashboard/banners", label: "Criar Banner", icon: DropletsIcon },

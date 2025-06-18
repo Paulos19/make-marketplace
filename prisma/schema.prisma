@@ -3,41 +3,31 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // Ou "mysql", "sqlite", etc.
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  USER
-  SELLER
-  ADMIN
-}
-
-// Modelo User agora contém todos os campos e a role para diferenciar
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  role          UserRole  @default(USER)
-
-  // Campos de Vendedor (opcionais, preenchidos apenas se role for SELLER)
+  id                   String              @id @default(cuid())
+  name                 String?
+  email                String?             @unique
+  emailVerified        DateTime?
+  image                String?
+  passwordHash         String?
+  role                 UserRole            @default(USER)
   storeName            String?
-  showInSellersPage    Boolean  @default(false)
   whatsappLink         String?
   profileDescription   String?
   sellerBannerImageUrl String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  // Relações
-  accounts     Account[]
-  sessions     Session[]
-  products     Product[] // Um usuário (vendedor) pode ter muitos produtos
-  reservations Reservation[] // Um usuário (comprador) pode ter muitas reservas
-  ShortLink    ShortLink[]
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  showInSellersPage    Boolean             @default(false)
+  accounts             Account[]
+  adminNotifications   AdminNotification[] @relation("SellerNotifications")
+  products             Product[]
+  reservations         Reservation[]
+  sessions             Session[]
+  ShortLink            ShortLink[]
 }
 
 model Account {
@@ -46,15 +36,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -75,9 +64,8 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Produto agora se relaciona diretamente com User
 model Product {
-  id            String   @id @default(uuid())
+  id            String        @id @default(uuid())
   name          String
   description   String
   price         Float
@@ -85,17 +73,15 @@ model Product {
   images        String[]
   categoryId    String
   userId        String
-  isFeatured    Boolean  @default(false)
-  isReserved    Boolean  @default(false) // <-- Adicione esta linha
-  quantity      Int      @default(1)
-  onPromotion   Boolean  @default(false) //
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  category     Category      @relation(fields: [categoryId], references: [id])
-  user         User          @relation(fields: [userId], references: [id])
-  reservations Reservation[]
+  isFeatured    Boolean       @default(false)
+  isReserved    Boolean       @default(false)
+  quantity      Int           @default(1)
+  onPromotion   Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  category      Category      @relation(fields: [categoryId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+  reservations  Reservation[]
 }
 
 model Category {
@@ -104,48 +90,33 @@ model Category {
   products Product[]
 }
 
-enum ReservationStatus {
-  PENDING
-  CONFIRMED
-  SOLD
-  CANCELED
-}
-
 model Reservation {
-  id        String            @id @default(uuid())
-  userId    String
-  productId String
-  status    ReservationStatus @default(PENDING)
-  quantity  Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id                String             @id @default(uuid())
+  userId            String
+  productId         String
+  status            ReservationStatus  @default(PENDING)
+  quantity          Int
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  adminNotification AdminNotification?
+  product           Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ThemeSettings {
-  id String @id @default(cuid()) // Apenas um registro existirá nesta tabela
-
-  // Exemplo de cores da marca que serão customizáveis
-  // Armazenaremos como string no formato HSL: "262 64% 49%"
+  id            String   @id @default(cuid())
   zaca_roxo     String?
   zaca_azul     String?
   zaca_magenta  String?
   zaca_vermelho String?
-
-  // Exemplo de fontes que serão customizáveis
-  // Armazenaremos o nome da fonte, ex: 'Roboto', 'Montserrat'
-  font_sans    String?
-  font_display String?
-
-  updatedAt DateTime @updatedAt
+  font_sans     String?
+  font_display  String?
+  updatedAt     DateTime @updatedAt
 }
 
 model NewsletterSubscription {
   id        String   @id @default(cuid())
-  email     String   @unique // Garante que um email só possa ser cadastrado uma vez
+  email     String   @unique
   createdAt DateTime @default(now())
 }
 
@@ -153,7 +124,7 @@ model HomePageBanner {
   id        String   @id @default(uuid())
   title     String
   imageUrl  String
-  linkUrl   String? // O link pode ser opcional
+  linkUrl   String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -161,31 +132,29 @@ model HomePageBanner {
 
 model HomepageSection {
   id              String   @id @default(cuid())
-  title           String // Título interno para identificar a seção no painel admin
+  title           String
   bannerImageUrl  String
-  bannerFontColor String   @default("#FFFFFF") // Cor do texto do banner, padrão branco
-  productIds      String[] // Array de IDs dos produtos a serem exibidos
-  order           Int      @default(0) // Para definir a ordem de exibição na homepage
-  isActive        Boolean  @default(true) // Para ativar ou desativar a seção
+  bannerFontColor String   @default("#FFFFFF")
+  productIds      String[]
+  order           Int      @default(0)
+  isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
 
 model MarketingCampaign {
-  id       String @id @default(cuid())
-  status   String @default("DRAFT")
-  subject  String
-  headline String
-  body     String
-  ctaText  String
-  ctaLink  String
-  imageUrl String
-
+  id                 String    @id @default(cuid())
+  status             String    @default("DRAFT")
+  subject            String
+  headline           String
+  body               String
+  ctaText            String
+  ctaLink            String
+  imageUrl           String
   targetAudienceJson String
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  sentAt    DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  sentAt             DateTime?
 }
 
 model ShortLink {
@@ -193,16 +162,37 @@ model ShortLink {
   shortCode   String   @unique
   originalUrl String
   createdAt   DateTime @default(now())
-  
-  // <<< INÍCIO DA ALTERAÇÃO >>>
-  clicks      Int      @default(0)
-  title       String?  // Título para pré-visualização (og:title)
-  description String?  // Descrição para pré-visualização (og:description)
-  imageUrl    String?  // Imagem para pré-visualização (og:image)
-  // <<< FIM DA ALTERAÇÃO >>>
-  
   userId      String
+  clicks      Int      @default(0)
+  description String?
+  imageUrl    String?
+  title       String?
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model AdminNotification {
+  id                 String      @id @default(cuid())
+  message            String
+  isRead             Boolean     @default(false)
+  reservationId      String      @unique
+  sellerId           String
+  sellerWhatsappLink String?
+  createdAt          DateTime    @default(now())
+  reservation        Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  seller             User        @relation("SellerNotifications", fields: [sellerId], references: [id], onDelete: Cascade)
+}
+
+enum UserRole {
+  USER
+  SELLER
+  ADMIN
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  SOLD
+  CANCELED
 }
