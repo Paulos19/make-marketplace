@@ -12,6 +12,8 @@ import Link from 'next/link'
 import AchadinhosDoZacaBanner from '../components/AchadinhosDoZacaBanner'
 import { ProductCard, ProductCardSkeleton } from './components/ProductCard'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import Navbar from '../components/layout/Navbar'
+import Footer from '../components/layout/Footer'
 
 // Tipagens para garantir que os dados incluam as relações necessárias
 type ProductWithDetails = Prisma.ProductGetPayload<{
@@ -234,6 +236,8 @@ export default function ProductsPage() {
   }, [categories, sellers])
 
   return (
+    <>
+    <Navbar/>
     <main>
       <AchadinhosDoZacaBanner products={bannerProducts.map(transformProductForClient)} isLoading={isLoading} />
       {isLoading && (
@@ -281,5 +285,7 @@ export default function ProductsPage() {
         </div>
       )}
     </main>
+    <Footer/>
+    </>
   )
 }
