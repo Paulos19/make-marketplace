@@ -110,8 +110,8 @@ export default function ContactPage() {
                   <p className="text-slate-600 dark:text-slate-300">
                     Para questões gerais, parcerias ou suporte técnico, envie um e-mail para:
                   </p>
-                  <a href="mailto:paulohenrique.012araujo@gmail.com" className="font-semibold text-zaca-azul hover:underline break-words">
-                    paulohenrique.012araujo@gmail.com
+                  <a href="mailto:zacaplaceoficial@gmail.com" className="font-semibold text-zaca-azul hover:underline break-words">
+                    zacaplaceoficial@gmail.com
                   </a>
                 </CardContent>
               </Card>
