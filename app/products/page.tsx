@@ -1,263 +1,263 @@
-"use client";
+"use client"
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { useEffect, useState, useMemo } from 'react';
-import { motion, Variants } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
+import { Prisma } from '@prisma/client'
+import { ChevronRight, ChevronLeft, PackageOpen } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import AchadinhosDoZacaBanner from '../components/AchadinhosDoZacaBanner'
+import { ProductCard, ProductCardSkeleton } from './components/ProductCard'
+import Navbar from '../components/layout/Navbar'
+import Footer from '../components/layout/Footer'
 
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
-import { ProductCard, ProductCardSkeleton } from './components/ProductCard';
-import ProductFilters from './components/ProductFilters';
+// Tipagens para garantir que os dados incluam as relações necessárias
+type ProductWithDetails = Prisma.ProductGetPayload<{
+  include: { user: true; category: true }
+}>
+type CategoryWithProducts = Prisma.CategoryGetPayload<{
+  include: { products: { include: { user: true; category: true } } }
+}>
+type SellerWithProducts = Prisma.UserGetPayload<{
+  include: { products: { include: { user: true; category: true } } }
+}>
 
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetClose,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-
-import { AlertCircle, PackageOpen, SlidersHorizontal, Filter as FilterIconLucide, ArrowRight } from 'lucide-react';
-import AchadinhosDoZacaBanner from '../components/AchadinhosDoZacaBanner';
-
-// Interfaces
-interface UserInfo { id: string; name?: string | null; whatsappLink?: string | null; }
-interface Category { id: string; name: string; }
-interface Product {
-  id: string;
-  name: string;
-  description?: string | null;
-  price: number;
-  originalPrice?: number | null;
-  onPromotion?: boolean | null | undefined;
-  images: string[];
-  user: UserInfo;
-  createdAt: string;
-  categories: Category[];
+// --- Função Auxiliar para transformar dados do produto para o cliente ---
+const transformProductForClient = (product: ProductWithDetails) => {
+  return {
+    ...product,
+    categories: product.category ? [product.category] : [],
+    createdAt: new Date(product.createdAt).toISOString(),
+    updatedAt: new Date(product.updatedAt).toISOString(),
+  }
 }
 
-// Variantes de animação
-const pageVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.3, ease: "easeOut" } },
-};
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
-const cardListVariants: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
-};
+// --- Componente de Scroll de Produtos (Lógica de navegação aprimorada) ---
+const ProductScrollArea = ({ products }: { products: ProductWithDetails[] }) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
 
-const PRODUCTS_FOR_BANNER_COUNT = 5;
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current
+    if (el) {
+      const hasOverflow = el.scrollWidth > el.clientWidth
+      setCanScrollLeft(el.scrollLeft > 0)
+      setCanScrollRight(hasOverflow && el.scrollLeft < el.scrollWidth - el.clientWidth)
+    }
+  }, [])
 
-export default function AllProductsPage() {
-  const router = useRouter();
-  const [baseProductsData, setBaseProductsData] = useState<Product[]>([]);
-  const [bannerProductsData, setBannerProductsData] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  useEffect(() => {
+    const el = scrollContainerRef.current
+    if (el) {
+      handleScroll() // Checa o estado inicial
+      el.addEventListener('scroll', handleScroll, { passive: true })
+      window.addEventListener('resize', handleScroll)
+      return () => {
+        el.removeEventListener('scroll', handleScroll)
+        window.removeEventListener('resize', handleScroll)
+      }
+    }
+  }, [products, handleScroll])
+
+  const scroll = (direction: 'left' | 'right') => {
+    const el = scrollContainerRef.current
+    if (el) {
+      const scrollAmount = el.clientWidth * 0.8
+      el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' })
+    }
+  }
+
+  return (
+    <div>
+      <div
+        ref={scrollContainerRef}
+        className="flex gap-4 overflow-x-auto pb-4 no-scrollbar"
+      >
+        {products.map((product) => (
+          <div key={product.id} className="w-48 flex-shrink-0 md:w-56">
+            <ProductCard product={transformProductForClient(product)} />
+          </div>
+        ))}
+      </div>
+      {/* Barra de navegação visível apenas no desktop e quando há scroll */}
+      {canScrollLeft || canScrollRight ? (
+        <div className="mt-4 hidden items-center justify-center md:flex">
+          <Button variant="ghost" size="icon" onClick={() => scroll('left')} disabled={!canScrollLeft}>
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div className="w-24 h-1 mx-4 bg-slate-200 dark:bg-slate-700 rounded-full" />
+          <Button variant="ghost" size="icon" onClick={() => scroll('right')} disabled={!canScrollRight}>
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+// --- Componentes de Seção ---
+const CategorySection = ({ category }: { category: CategoryWithProducts }) => (
+  <section className="container mx-auto">
+    <div className="mb-6 flex items-center justify-between">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
+        <p className="text-md text-muted-foreground">Os produtos mais recentes desta coleção.</p>
+      </div>
+      <Link href={`/products?category=${category.id}`} className="hidden items-center text-sm font-semibold text-primary hover:underline sm:flex">
+        Ver todos
+        <ChevronRight className="ml-1 h-4 w-4" />
+      </Link>
+    </div>
+    <ProductScrollArea products={category.products} />
+  </section>
+)
+
+const SellerSection = ({ seller }: { seller: SellerWithProducts }) => (
+  <section className="container mx-auto">
+    <div className="mb-6 flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <Avatar className="h-14 w-14 border-2 border-primary/50">
+          <AvatarImage src={seller.image || undefined} alt={seller.name || 'Vendedor'} />
+          <AvatarFallback>{seller.storeName?.charAt(0) || seller.name?.charAt(0) || 'V'}</AvatarFallback>
+        </Avatar>
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">{seller.storeName || seller.name}</h2>
+          <p className="text-md text-muted-foreground">Confira as novidades deste vendedor.</p>
+        </div>
+      </div>
+      <Link href={`/seller/${seller.id}`} className="hidden items-center text-sm font-semibold text-primary hover:underline sm:flex">
+        Ver loja
+        <ChevronRight className="ml-1 h-4 w-4" />
+      </Link>
+    </div>
+    <ProductScrollArea products={seller.products} />
+  </section>
+)
+
+const FeaturedCategorySection = ({ category, orientation = 'left' }: { category: CategoryWithProducts; orientation?: 'left' | 'right' }) => {
+  const [featuredProduct, ...otherProducts] = category.products
+  const bannerImage = featuredProduct?.images[0] || '/img-placeholder.png'
+
+  return (
+    <div className="container mx-auto grid min-h-screen grid-cols-1 items-center gap-6 md:grid-cols-10">
+      <div className={cn('relative col-span-10 h-96 rounded-xl bg-cover bg-center shadow-lg md:col-span-6 md:h-[80vh]', orientation === 'right' && 'md:order-last')}>
+        <Image src={bannerImage} alt={`Banner para a categoria ${category.name}`} fill className="rounded-xl object-cover" />
+      </div>
+      <div className="col-span-10 flex flex-col justify-center gap-6 md:col-span-4">
+        <div className="mb-2 text-center md:text-left">
+          <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">{category.name}</h2>
+          <p className="mt-2 text-lg text-muted-foreground">Descubra os melhores achados nesta coleção.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {otherProducts.slice(0, 2).map((product) => (
+            <ProductCard key={product.id} product={transformProductForClient(product)} />
+          ))}
+        </div>
+        <div className="mt-4 text-center md:text-left">
+          <Button asChild><Link href={`/products?category=${category.id}`}>Ver Coleção Completa</Link></Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// --- Componente Principal da Página ---
+export default function ProductsPage() {
+  const [bannerProducts, setBannerProducts] = useState<ProductWithDetails[]>([]);
+  const [categories, setCategories] = useState<CategoryWithProducts[]>([]);
+  const [sellers, setSellers] = useState<SellerWithProducts[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingBannerContent, setIsLoadingBannerContent] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [minPrice, setMinPrice] = useState<string>('');
-  const [maxPrice, setMaxPrice] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('createdAt:desc');
-  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
-      setIsLoadingBannerContent(true);
-      setError(null);
       try {
-        const bannerProductsResponse = await fetch(`/api/products?limit=${PRODUCTS_FOR_BANNER_COUNT}&sort=createdAt:desc`);
-        if (bannerProductsResponse.ok) {
-            const bannerData = await bannerProductsResponse.json();
-            setBannerProductsData(Array.isArray(bannerData) ? bannerData.filter(p => p.user) : []);
-        }
-        setIsLoadingBannerContent(false);
-
-        const [mainGridProductsResponse, categoriesResponse] = await Promise.all([
-          fetch(`/api/products`),
-          fetch('/api/categories')
-        ]);
-
-        if (!mainGridProductsResponse.ok) throw new Error('Falha ao buscar os achadinhos do Zaca');
-        const productsData = await mainGridProductsResponse.json();
-        setBaseProductsData(Array.isArray(productsData) ? productsData : []);
-
-        if (!categoriesResponse.ok) throw new Error('Falha ao buscar as categorias do Zaca');
-        const categoriesData = await categoriesResponse.json();
-        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Um erro inesperado aconteceu!');
+        setIsLoading(true)
+        const [bannerRes, categoriesRes, sellersRes] = await Promise.all([
+          fetch(`/api/products?limit=5&sort=createdAt:desc`),
+          fetch(`/api/products/by-category`),
+          fetch(`/api/sellers/featured`),
+        ])
+        if (!bannerRes.ok || !categoriesRes.ok || !sellersRes.ok) throw new Error('Falha ao buscar os dados da página.')
+        const bannerData = await bannerRes.json()
+        const categoriesData = await categoriesRes.json()
+        const sellersData = await sellersRes.json()
+        setBannerProducts(bannerData)
+        setCategories(categoriesData)
+        setSellers(sellersData)
+      } catch (error) {
+        console.error("Erro ao carregar dados da página de produtos:", error)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
-    fetchData();
-  }, []);
-
-  const processedProducts = useMemo(() => {
-    let products = [...baseProductsData];
-
-    if (searchTerm) products = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    if (selectedCategoryId) products = products.filter(p => p.categories.some(c => c.id === selectedCategoryId));
-    const numMin = parseFloat(minPrice);
-    if (!isNaN(numMin)) products = products.filter(p => p.price >= numMin);
-    const numMax = parseFloat(maxPrice);
-    if (!isNaN(numMax)) products = products.filter(p => p.price <= numMax);
-    
-    const [field, order] = sortBy.split(':');
-    products.sort((a, b) => {
-        const valA = field === 'price' ? a.price : new Date(a.createdAt).getTime();
-        const valB = field === 'price' ? b.price : new Date(b.createdAt).getTime();
-        return order === 'asc' ? valA - valB : valB - valA;
-    });
-
-    return products;
-  }, [baseProductsData, searchTerm, selectedCategoryId, minPrice, maxPrice, sortBy]);
-
-  const groupedProducts = useMemo(() => {
-    if (selectedCategoryId) {
-        const cat = categories.find(c => c.id === selectedCategoryId);
-        return cat && processedProducts.length > 0 ? { [cat.name]: processedProducts } : {};
     }
-    return processedProducts.reduce((acc, p) => {
-      const catName = p.categories?.[0]?.name || 'Outros Achadinhos';
-      if (!acc[catName]) acc[catName] = [];
-      acc[catName].push(p);
-      return acc;
-    }, {} as Record<string, Product[]>);
-  }, [processedProducts, selectedCategoryId, categories]);
-  
-  const resetFilters = () => {
-    setSearchTerm(''); setSelectedCategoryId(''); setMinPrice(''); setMaxPrice(''); setSortBy('createdAt:desc'); setIsFilterSheetOpen(false);
-  };
+    fetchData()
+  }, [])
 
-  // <<< CORREÇÃO APLICADA AQUI >>>
-  // A verificação agora usa `Boolean()` para garantir que o resultado seja sempre `true` ou `false`.
-  const areFiltersActive = 
-    Boolean(searchTerm) || 
-    Boolean(selectedCategoryId) || 
-    Boolean(minPrice) || 
-    Boolean(maxPrice) || 
-    (sortBy !== 'createdAt:desc');
+  const sections = useMemo(() => {
+    const interleaved: ({ type: 'category'; data: CategoryWithProducts } | { type: 'seller'; data: SellerWithProducts })[] = []
+    const maxLength = Math.max(categories.length, sellers.length)
+    for (let i = 0; i < maxLength; i++) {
+      if (categories[i]) interleaved.push({ type: 'category', data: categories[i] })
+      if (sellers[i]) interleaved.push({ type: 'seller', data: sellers[i] })
+    }
+    return interleaved
+  }, [categories, sellers])
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-100 dark:bg-slate-950">
-      <Navbar />
-      <motion.main className="flex-grow" variants={pageVariants} initial="hidden" animate="visible">
-        
-        <AchadinhosDoZacaBanner 
-          products={bannerProductsData} 
-          isLoading={isLoadingBannerContent} 
-        />
-        
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
-          <motion.div variants={itemVariants} className="mb-6 md:mb-8 flex justify-between items-center">
-            <h2 className="text-2xl sm:text-3xl font-bangers text-zaca-roxo dark:text-zaca-lilas tracking-wide">
-              Todos os Achadinhos
-            </h2>
-            <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="border-zaca-azul text-zaca-azul hover:bg-zaca-azul/10 dark:border-zaca-lilas dark:text-zaca-lilas dark:hover:bg-zaca-lilas/10">
-                  <SlidersHorizontal className="mr-2 h-4 w-4" /> Filtrar / Ordenar
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="w-full max-w-sm sm:max-w-md p-0 flex flex-col dark:bg-slate-900 border-l dark:border-slate-700">
-                <SheetHeader className="px-4 sm:px-6 py-4 border-b dark:border-slate-700">
-                  <SheetTitle className="text-xl font-bangers text-zaca-azul dark:text-zaca-lilas flex items-center">
-                    <FilterIconLucide className="mr-2 h-5 w-5" /> Opções do Zaca Filtro
-                  </SheetTitle>
-                </SheetHeader>
-                <ProductFilters
-                  className="flex-grow overflow-y-auto"
-                  categories={categories}
-                  searchTerm={searchTerm}
-                  onSearchTermChange={setSearchTerm}
-                  selectedCategoryId={selectedCategoryId}
-                  onSelectedCategoryIdChange={setSelectedCategoryId}
-                  sortBy={sortBy}
-                  onSortByChange={setSortBy}
-                  minPrice={minPrice}
-                  onMinPriceChange={setMinPrice}
-                  maxPrice={maxPrice}
-                  onMaxPriceChange={setMaxPrice}
-                  onResetFilters={resetFilters}
-                  areFiltersActive={areFiltersActive}
-                />
-                <div className="p-4 border-t dark:border-slate-700 mt-auto">
-                    <SheetClose asChild>
-                        <Button className="w-full bg-zaca-azul hover:bg-zaca-azul/90 text-white">
-                            Ver Resultados
-                        </Button>
-                    </SheetClose>
+    <>
+    <Navbar/>
+    <main>
+      <AchadinhosDoZacaBanner products={bannerProducts.map(transformProductForClient)} isLoading={isLoading} />
+      {isLoading && (
+        <div className="container mx-auto py-12">
+          <div className="space-y-12">
+            {[...Array(3)].map((_, i) => (
+              <div key={i}>
+                <Skeleton className="h-12 w-1/3 mb-6" />
+                <div className="flex gap-4">
+                  {[...Array(5)].map((_, j) => <ProductCardSkeleton key={j} />)}
                 </div>
-              </SheetContent>
-            </Sheet>
-          </motion.div>
-
-          <motion.div variants={itemVariants} className="mt-6">
-            {isLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                {[...Array(10)].map((_, i) => <ProductCardSkeleton key={`skel-grid-${i}`} />)}
               </div>
-            ) : error ? (
-              <div className="text-center py-10 bg-white dark:bg-slate-800 rounded-lg shadow-md">
-                <AlertCircle className="mx-auto h-12 w-12 text-zaca-vermelho mb-3"/>
-                <p className="text-xl font-semibold text-zaca-vermelho">{error}</p>
-                <Button onClick={() => window.location.reload()} className="mt-4 bg-zaca-azul hover:bg-zaca-azul/90 text-white">Recarregar</Button>
-              </div>
-            ) : Object.keys(groupedProducts).length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg shadow-md">
-                <PackageOpen className="mx-auto h-16 w-16 text-slate-400 dark:text-slate-500 mb-4"/>
-                <p className="text-xl font-semibold text-slate-700 dark:text-slate-300">Nenhum produto encontrado</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Tente ajustar os filtros para ver mais achadinhos.</p>
-              </div>
-            ) : (
-              <div className="space-y-12">
-                {Object.entries(groupedProducts).map(([categoryName, productsInCategory]) => (
-                <motion.section key={categoryName} variants={itemVariants}>
-                    <div className="flex justify-between items-baseline mb-6 border-b-2 border-zaca-lilas/30 pb-2">
-                        <h2 className="text-2xl font-bangers text-slate-800 dark:text-slate-200 tracking-wide">{categoryName}</h2>
-                        <Button asChild variant="link" className="pr-0 text-zaca-azul dark:text-zaca-lilas text-sm">
-                            <Link href={`/products?category=${categories.find(c => c.name === categoryName)?.id || ''}`}>
-                                Ver tudo <ArrowRight className="ml-1.5 h-4 w-4" />
-                            </Link>
-                        </Button>
-                    </div>
-                    <motion.div 
-                      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"
-                      variants={cardListVariants}
-                      initial="hidden"
-                      whileInView="visible"
-                      viewport={{ once: true, amount: 0.1 }}
-                    >
-                    {productsInCategory.map((product) => (
-                        <motion.div key={product.id} variants={itemVariants}>
-                            <ProductCard product={product} />
-                        </motion.div>
-                    ))}
-                    </motion.div>
-                </motion.section>
-                ))}
-              </div>
-            )}
-          </motion.div>
+            ))}
+          </div>
         </div>
-      </motion.main>
-      <Footer />
-    </div>
-  );
+      )}
+      {!isLoading && sections.length > 0 && (
+        <div className="flex flex-col gap-20 py-12 md:gap-28 lg:gap-32">
+          {sections.map((section, index) => {
+            if (section.type === 'seller') {
+              return <SellerSection key={`seller-${section.data.id}`} seller={section.data} />
+            }
+            if (section.type === 'category') {
+              if ((index + 1) % 4 === 0 && section.data.products.length >= 3) {
+                return (
+                  <FeaturedCategorySection
+                    key={`featured-${section.data.id}`}
+                    category={section.data}
+                    orientation={(index + 1) % 8 === 0 ? 'right' : 'left'}
+                  />
+                )
+              }
+              return <CategorySection key={`category-${section.data.id}`} category={section.data} />
+            }
+            return null
+          })}
+        </div>
+      )}
+      {!isLoading && sections.length === 0 && (
+        <div className="container mx-auto flex min-h-[50vh] flex-col items-center justify-center text-center">
+          <PackageOpen className="h-16 w-16 text-muted-foreground" />
+          <h2 className="mt-6 text-3xl font-bold">Nenhum Produto Encontrado</h2>
+          <p className="mt-2 text-muted-foreground">Nossas prateleiras estão vazias por enquanto. Volte em breve!</p>
+          <Button asChild className="mt-6"><Link href="/">Voltar para a Home</Link></Button>
+        </div>
+      )}
+    </main>
+    <Footer/>
+    </>
+  )
 }

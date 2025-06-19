@@ -1,53 +1,57 @@
-import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
-import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
-import AuthProvider from "./components/AuthProvider";
-import prisma from "@/lib/prisma";
-import { cn } from "@/lib/utils";
-import Navbar from "./components/layout/Navbar";
-import Footer from "./components/layout/Footer";
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google' // Importar a fonte Inter
+import AuthProvider from './components/AuthProvider'
+import { Toaster } from '@/components/ui/sonner'
+import './globals.css'
+import { cn } from '@/lib/utils'
 
-// Configuração da nova fonte 'Sora'
-const sora = Roboto({
+// Configurar a fonte Inter com pesos diferentes e uma variável CSS
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400', '500', '700'],
-  variable: '--font-roboto',
-  display: 'swap',
-});
+  variable: '--font-sans',
+})
 
 export const metadata: Metadata = {
-  title: "Zacaplace",
-  description: "O seu marketplace de achadinhos!",
-};
+  title: 'Zacaplace',
+  description: 'Seu marketplace de achadinhos',
+}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
-  // Busca o tema do banco de dados para aplicar as cores globalmente
-  const theme = await prisma.themeSettings.findFirst();
+  // Simula a busca de dados do tema
+  const themeSettings = {
+    primaryColor: '#5D3A9E',
+    secondaryColor: '#FFFFFF',
+    accentColor: '#F2B705',
+    backgroundColor: '#F2F2F2',
+    textColor: '#0D0D0D',
+  }
+
+  const customStyles = `
+    :root {
+      --primary-color: ${themeSettings.primaryColor};
+      --secondary-color: ${themeSettings.secondaryColor};
+      --accent-color: ${themeSettings.accentColor};
+      --background-color: ${themeSettings.backgroundColor};
+      --text-color: ${themeSettings.textColor};
+    }
+  `
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        {/* Adiciona as variáveis de cor do tema no <head> */}
-        <style>
-          {`
-            :root {
-              --primary: ${theme?.zaca_azul || '#000000'};
-              --secondary: ${theme?.zaca_magenta || '#ffffff'};
-              --accent: ${theme?.zaca_roxo || '#333333'};
-            }
-          `}
-        </style>
+        <style>{customStyles}</style>
       </head>
-      {/* Aplica a nova fonte na classe do body */}
+      {/* Aplicar a classe da fonte no body usando a variável CSS.
+        A função `cn` ajuda a mesclar as classes do Tailwind de forma limpa.
+      */}
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          sora.variable
+          'min-h-screen bg-background font-sans antialiased',
+          inter.variable,
         )}
       >
         <AuthProvider>
@@ -58,5 +62,5 @@ export default async function RootLayout({
         </AuthProvider>
       </body>
     </html>
-  );
+  )
 }

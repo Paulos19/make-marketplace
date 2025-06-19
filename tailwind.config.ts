@@ -1,5 +1,6 @@
 // tailwind.config.ts
 import type { Config } from "tailwindcss";
+import { fontFamily } from 'tailwindcss/defaultTheme'
 
 const config = {
   darkMode: ["class"],
@@ -65,8 +66,7 @@ const config = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		fontFamily: {
-  			sans: ['var(--font-sans)', 'sans-serif'],
-  			bangers: ['var(--font-display)', 'cursive']
+  			 sans: ['var(--font-sans)', ...fontFamily.sans],
   		},
       // <<< INÍCIO DA CORREÇÃO >>>
       // Adicione todas as animações que faltavam para os componentes shadcn/ui
