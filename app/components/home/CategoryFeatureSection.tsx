@@ -54,7 +54,7 @@ export function CategoryFeatureSection({ category, products, reverseLayout = fal
       <div className="container mx-auto px-4">
         {/* Cabeçalho da Secção */}
         <div className="flex justify-between items-baseline mb-8">
-            <h2 className="text-3xl md:text-4xl font-bangers text-zaca-roxo dark:text-zaca-lilas tracking-wide">
+            <h2 className="text-xl md:text-2xl font-bangers text-zaca-roxo dark:text-zaca-lilas tracking-wide">
                 {category.name}
             </h2>
             <Button asChild variant="ghost">

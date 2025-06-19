@@ -1,61 +1,60 @@
-import type { Metadata } from 'next';
-import { Inter, Montserrat } from 'next/font/google';
-import './globals.css';
-import { cn } from '@/lib/utils';
-import { Toaster } from '@/components/ui/sonner';
-import AuthProvider from '@/app/components/AuthProvider';
-import prisma from '@/lib/prisma';
+import type { Metadata } from "next";
+import { Roboto } from "next/font/google";
+import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
+import AuthProvider from "./components/AuthProvider";
+import prisma from "@/lib/prisma";
+import { cn } from "@/lib/utils";
+import Navbar from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
 
-const fontSans = Inter({ subsets: ['latin'], variable: '--font-sans' });
-const fontBangers = Montserrat({ subsets: ['latin'], weight: '700', variable: '--font-display' });
+// Configuração da nova fonte 'Sora'
+const sora = Roboto({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-roboto',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: 'Zacaplace - O Marketplace dos Achadinhos',
-  description: 'Compre e venda produtos com os melhores preços em Sete Lagoas, MG!',
+  title: "Zacaplace",
+  description: "O seu marketplace de achadinhos!",
 };
-
-// Função para buscar o tema do banco de dados
-async function getThemeSettings() {
-  try {
-    const settings = await prisma.themeSettings.findUnique({
-      where: { id: "global_theme_settings" },
-    });
-    return settings;
-  } catch (error) {
-    console.error("Não foi possível buscar as configurações de tema:", error);
-    return null; // Retorna nulo em caso de erro
-  }
-}
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const theme = await getThemeSettings();
-
-  // Gera a string de estilos CSS para injetar no <head>
-  // Apenas sobrescreve as variáveis que foram salvas no banco.
-  // Se um valor for nulo ou uma string vazia, a variável não será gerada,
-  // e o CSS usará o valor padrão definido em globals.css.
-  const dynamicThemeStyle = `
-    :root {
-      ${theme?.zaca_roxo ? `--zaca-roxo: ${theme.zaca_roxo};` : ''}
-      ${theme?.zaca_azul ? `--zaca-azul: ${theme.zaca_azul};` : ''}
-      /* Adicione outras variáveis aqui no futuro */
-    }
-  `;
+  // Busca o tema do banco de dados para aplicar as cores globalmente
+  const theme = await prisma.themeSettings.findFirst();
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        {/* Injeta os estilos do tema dinamicamente */}
-        <style dangerouslySetInnerHTML={{ __html: dynamicThemeStyle }} />
+        {/* Adiciona as variáveis de cor do tema no <head> */}
+        <style>
+          {`
+            :root {
+              --primary: ${theme?.zaca_azul || '#000000'};
+              --secondary: ${theme?.zaca_magenta || '#ffffff'};
+              --accent: ${theme?.zaca_roxo || '#333333'};
+            }
+          `}
+        </style>
       </head>
-      <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable, fontBangers.variable)}>
+      {/* Aplica a nova fonte na classe do body */}
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          sora.variable
+        )}
+      >
         <AuthProvider>
-          {children}
-          <Toaster richColors position="top-right" />
+          <div className="flex min-h-screen flex-col">
+            <main className="flex-grow">{children}</main>
+          </div>
+          <Toaster />
         </AuthProvider>
       </body>
     </html>
