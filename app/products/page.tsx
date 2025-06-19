@@ -11,8 +11,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import AchadinhosDoZacaBanner from '../components/AchadinhosDoZacaBanner'
 import { ProductCard, ProductCardSkeleton } from './components/ProductCard'
-import Navbar from '../components/layout/Navbar'
-import Footer from '../components/layout/Footer'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 // Tipagens para garantir que os dados incluam as relações necessárias
 type ProductWithDetails = Prisma.ProductGetPayload<{
@@ -35,68 +34,67 @@ const transformProductForClient = (product: ProductWithDetails) => {
   }
 }
 
-// --- Componente de Scroll de Produtos (Lógica de navegação aprimorada) ---
+// --- Componente de Scroll de Produtos (com navegação por setas no desktop) ---
 const ProductScrollArea = ({ products }: { products: ProductWithDetails[] }) => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
-
-  const handleScroll = useCallback(() => {
-    const el = scrollContainerRef.current
-    if (el) {
-      const hasOverflow = el.scrollWidth > el.clientWidth
-      setCanScrollLeft(el.scrollLeft > 0)
-      setCanScrollRight(hasOverflow && el.scrollLeft < el.scrollWidth - el.clientWidth)
-    }
-  }, [])
-
-  useEffect(() => {
-    const el = scrollContainerRef.current
-    if (el) {
-      handleScroll() // Checa o estado inicial
-      el.addEventListener('scroll', handleScroll, { passive: true })
-      window.addEventListener('resize', handleScroll)
-      return () => {
-        el.removeEventListener('scroll', handleScroll)
-        window.removeEventListener('resize', handleScroll)
+    const scrollContainerRef = useRef<HTMLDivElement>(null)
+    const [canScrollLeft, setCanScrollLeft] = useState(false)
+    const [canScrollRight, setCanScrollRight] = useState(false)
+  
+    const handleScroll = useCallback(() => {
+      const el = scrollContainerRef.current
+      if (el) {
+        const hasOverflow = el.scrollWidth > el.clientWidth
+        setCanScrollLeft(el.scrollLeft > 0)
+        setCanScrollRight(hasOverflow && el.scrollLeft < el.scrollWidth - el.clientWidth)
+      }
+    }, [])
+  
+    useEffect(() => {
+      const el = scrollContainerRef.current
+      if (el) {
+        handleScroll()
+        el.addEventListener('scroll', handleScroll, { passive: true })
+        window.addEventListener('resize', handleScroll)
+        return () => {
+          el.removeEventListener('scroll', handleScroll)
+          window.removeEventListener('resize', handleScroll)
+        }
+      }
+    }, [products, handleScroll])
+  
+    const scroll = (direction: 'left' | 'right') => {
+      const el = scrollContainerRef.current
+      if (el) {
+        const scrollAmount = el.clientWidth * 0.8
+        el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' })
       }
     }
-  }, [products, handleScroll])
-
-  const scroll = (direction: 'left' | 'right') => {
-    const el = scrollContainerRef.current
-    if (el) {
-      const scrollAmount = el.clientWidth * 0.8
-      el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' })
-    }
-  }
-
-  return (
-    <div>
-      <div
-        ref={scrollContainerRef}
-        className="flex gap-4 overflow-x-auto pb-4 no-scrollbar"
-      >
-        {products.map((product) => (
-          <div key={product.id} className="w-48 flex-shrink-0 md:w-56">
-            <ProductCard product={transformProductForClient(product)} />
-          </div>
-        ))}
-      </div>
-      {/* Barra de navegação visível apenas no desktop e quando há scroll */}
-      {canScrollLeft || canScrollRight ? (
-        <div className="mt-4 hidden items-center justify-center md:flex">
-          <Button variant="ghost" size="icon" onClick={() => scroll('left')} disabled={!canScrollLeft}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <div className="w-24 h-1 mx-4 bg-slate-200 dark:bg-slate-700 rounded-full" />
-          <Button variant="ghost" size="icon" onClick={() => scroll('right')} disabled={!canScrollRight}>
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+  
+    return (
+      <div className="relative">
+        <div
+          ref={scrollContainerRef}
+          className="flex gap-4 overflow-x-auto pb-4 no-scrollbar"
+        >
+          {products.map((product) => (
+            <div key={product.id} className="w-48 flex-shrink-0 md:w-56">
+              <ProductCard product={transformProductForClient(product)} />
+            </div>
+          ))}
         </div>
-      ) : null}
-    </div>
-  )
+        {canScrollLeft || canScrollRight ? (
+          <div className="mt-4 hidden items-center justify-center md:flex">
+            <Button variant="ghost" size="icon" onClick={() => scroll('left')} disabled={!canScrollLeft}>
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div className="w-24 h-1 mx-4 bg-slate-200 dark:bg-slate-700 rounded-full" />
+            <Button variant="ghost" size="icon" onClick={() => scroll('right')} disabled={!canScrollRight}>
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
+        ) : null}
+      </div>
+    )
 }
 
 // --- Componentes de Seção ---
@@ -116,27 +114,55 @@ const CategorySection = ({ category }: { category: CategoryWithProducts }) => (
   </section>
 )
 
-const SellerSection = ({ seller }: { seller: SellerWithProducts }) => (
-  <section className="container mx-auto">
-    <div className="mb-6 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <Avatar className="h-14 w-14 border-2 border-primary/50">
-          <AvatarImage src={seller.image || undefined} alt={seller.name || 'Vendedor'} />
-          <AvatarFallback>{seller.storeName?.charAt(0) || seller.name?.charAt(0) || 'V'}</AvatarFallback>
-        </Avatar>
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">{seller.storeName || seller.name}</h2>
-          <p className="text-md text-muted-foreground">Confira as novidades deste vendedor.</p>
+const SellerSection = ({ seller }: { seller: SellerWithProducts }) => {
+  const isStoreAvailable = seller.showInSellersPage;
+
+  const SellerAvatar = () => (
+    <Avatar className={cn(
+        "h-14 w-14 border-2", 
+        isStoreAvailable ? "border-primary/50 transition-transform duration-300 group-hover:scale-110" : "border-gray-300 dark:border-gray-700"
+    )}>
+        <AvatarImage src={seller.image || undefined} alt={seller.name || 'Vendedor'} />
+        <AvatarFallback>{seller.storeName?.charAt(0) || seller.name?.charAt(0) || 'V'}</AvatarFallback>
+    </Avatar>
+  )
+
+  return (
+    <section className="container mx-auto">
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-4 group">
+            {isStoreAvailable ? (
+                <Link href={`/seller/${seller.id}`} aria-label={`Visitar loja de ${seller.storeName || seller.name}`}>
+                    <SellerAvatar />
+                </Link>
+            ) : (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="cursor-not-allowed"><SellerAvatar /></div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Loja não disponível</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            )}
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">{seller.storeName || seller.name}</h2>
+            <p className="text-md text-muted-foreground">Confira as novidades deste vendedor.</p>
+          </div>
         </div>
+        {isStoreAvailable && (
+            <Link href={`/seller/${seller.id}`} className="hidden items-center text-sm font-semibold text-primary hover:underline sm:flex">
+                Ver loja
+                <ChevronRight className="ml-1 h-4 w-4" />
+            </Link>
+        )}
       </div>
-      <Link href={`/seller/${seller.id}`} className="hidden items-center text-sm font-semibold text-primary hover:underline sm:flex">
-        Ver loja
-        <ChevronRight className="ml-1 h-4 w-4" />
-      </Link>
-    </div>
-    <ProductScrollArea products={seller.products} />
-  </section>
-)
+      <ProductScrollArea products={seller.products} />
+    </section>
+  )
+}
 
 const FeaturedCategorySection = ({ category, orientation = 'left' }: { category: CategoryWithProducts; orientation?: 'left' | 'right' }) => {
   const [featuredProduct, ...otherProducts] = category.products
@@ -208,8 +234,6 @@ export default function ProductsPage() {
   }, [categories, sellers])
 
   return (
-    <>
-    <Navbar/>
     <main>
       <AchadinhosDoZacaBanner products={bannerProducts.map(transformProductForClient)} isLoading={isLoading} />
       {isLoading && (
@@ -257,7 +281,5 @@ export default function ProductsPage() {
         </div>
       )}
     </main>
-    <Footer/>
-    </>
   )
 }

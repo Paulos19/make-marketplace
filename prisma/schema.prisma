@@ -7,27 +7,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Modelos de Usuário e Autenticação
 model User {
-  id                   String              @id @default(cuid())
-  name                 String?
-  email                String?             @unique
-  emailVerified        DateTime?
-  image                String?
-  passwordHash         String?
-  role                 UserRole            @default(USER)
-  storeName            String?
-  whatsappLink         String?
-  profileDescription   String?
-  sellerBannerImageUrl String?
-  createdAt            DateTime            @default(now())
-  updatedAt            DateTime            @updatedAt
-  showInSellersPage    Boolean             @default(false)
-  accounts             Account[]
-  adminNotifications   AdminNotification[] @relation("SellerNotifications")
-  products             Product[]
-  reservations         Reservation[]
-  sessions             Session[]
-  ShortLink            ShortLink[]
+  id                     String              @id @default(cuid())
+  name                   String?
+  email                  String?             @unique
+  emailVerified          DateTime?
+  image                  String?
+  passwordHash           String?
+  role                   UserRole            @default(USER)
+  storeName              String?
+  whatsappLink           String?
+  profileDescription     String?
+  sellerBannerImageUrl   String?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  showInSellersPage      Boolean             @default(false)
+  
+  accounts               Account[]
+  adminNotifications     AdminNotification[] @relation("SellerNotifications")
+  products               Product[]
+  reservations           Reservation[]
+  sessions               Session[]
+  ShortLink              ShortLink[]
+  
+  reviewsGiven           Review[]            @relation("reviewsGiven")
+  reviewsReceived        Review[]            @relation("reviewsReceived")
 }
 
 model Account {
@@ -64,24 +69,27 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// Modelos do Marketplace
 model Product {
-  id            String        @id @default(uuid())
-  name          String
-  description   String
-  price         Float
-  originalPrice Float?
-  images        String[]
-  categoryId    String
-  userId        String
-  isFeatured    Boolean       @default(false)
-  isReserved    Boolean       @default(false)
-  quantity      Int           @default(1)
-  onPromotion   Boolean       @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  category      Category      @relation(fields: [categoryId], references: [id])
-  user          User          @relation(fields: [userId], references: [id])
-  reservations  Reservation[]
+  id              String        @id @default(uuid())
+  name            String
+  description     String
+  price           Float
+  originalPrice   Float?
+  images          String[]
+  categoryId      String
+  userId          String
+  isFeatured      Boolean       @default(false)
+  isReserved      Boolean       @default(false)
+  isSold          Boolean       @default(false) // <-- CAMPO ADICIONADO AQUI
+  quantity        Int           @default(1)
+  onPromotion     Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  category        Category      @relation(fields: [categoryId], references: [id])
+  user            User          @relation(fields: [userId], references: [id])
+  reservations    Reservation[]
 }
 
 model Category {
@@ -91,18 +99,42 @@ model Category {
 }
 
 model Reservation {
-  id                String             @id @default(uuid())
-  userId            String
-  productId         String
-  status            ReservationStatus  @default(PENDING)
-  quantity          Int
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  adminNotification AdminNotification?
-  product           Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
-  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String             @id @default(uuid())
+  userId              String
+  productId           String
+  status              ReservationStatus  @default(PENDING)
+  quantity            Int
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  
+  adminNotification   AdminNotification?
+  product             Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  review              Review?
+  reviewToken         String?            @unique
 }
 
+model Review {
+  id            String      @id @default(cuid())
+  rating        Int
+  comment       String?     @db.Text
+  createdAt     DateTime    @default(now())
+
+  reservationId String      @unique
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  sellerId      String
+  seller        User        @relation("reviewsReceived", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  buyerId       String
+  buyer         User        @relation("reviewsGiven", fields: [buyerId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId])
+}
+
+
+// Modelos do Painel Admin
 model ThemeSettings {
   id            String   @id @default(cuid())
   zaca_roxo     String?
@@ -143,18 +175,18 @@ model HomepageSection {
 }
 
 model MarketingCampaign {
-  id                 String    @id @default(cuid())
-  status             String    @default("DRAFT")
-  subject            String
-  headline           String
-  body               String
-  ctaText            String
-  ctaLink            String
-  imageUrl           String
-  targetAudienceJson String
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  sentAt             DateTime?
+  id                   String    @id @default(cuid())
+  status               String    @default("DRAFT")
+  subject              String
+  headline             String
+  body                 String
+  ctaText              String
+  ctaLink              String
+  imageUrl             String
+  targetAudienceJson   String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  sentAt               DateTime?
 }
 
 model ShortLink {
@@ -184,6 +216,7 @@ model AdminNotification {
   seller             User        @relation("SellerNotifications", fields: [sellerId], references: [id], onDelete: Cascade)
 }
 
+// ENUMs
 enum UserRole {
   USER
   SELLER

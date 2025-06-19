@@ -2,21 +2,22 @@
 import { Resend } from 'resend';
 import * as React from 'react';
 
-// Importa os novos componentes de e-mail
+// Importa os componentes de e-mail
 import { VerificationEmail } from '@/app/components/emails/VerificationEmail';
 import { PasswordResetEmail } from '@/app/components/emails/PasswordResetEmail';
 import { ReservationNotificationEmail } from '@/app/components/emails/ReservationNotificationEmail';
 import { OrderCompletionEmail } from '@/app/components/emails/OrderCompletionEmail';
 import { ContactFormEmail } from '@/app/components/emails/ContactFormEmail';
+import ReviewRequestEmail from '@/app/components/emails/ReviewRequestEmail'; // Importa o novo template
 
 // Inicializa a instância do Resend
 export const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Define o remetente padrão a partir das variáveis de ambiente
+// Define o remetente padrão
 const fromEmail = process.env.EMAIL_SENDER || 'Zacaplace <onboarding@resend.dev>';
 
 /**
- * Envia um e-mail genérico. Todas as outras funções usarão esta.
+ * Envia um e-mail genérico.
  */
 async function sendEmail({ to, subject, react, replyTo }: { to: string | string[], subject: string, react: React.ReactElement, replyTo?: string }) {
   try {
@@ -29,22 +30,48 @@ async function sendEmail({ to, subject, react, replyTo }: { to: string | string[
     });
 
     if (error) {
-      // Lança o erro para ser tratado pela função que chamou
       throw new Error("Falha ao enviar e-mail via Resend.", { cause: error });
     }
-
-    console.log(`E-mail (Resend) enviado para ${to}. ID: ${data?.id}`);
     return data;
   } catch (error) {
     console.error(`Falha ao enviar e-mail para ${to}:`, error);
-    // Re-lança o erro para a função chamadora saber que falhou
     throw error;
   }
 }
 
-// ----------------------------------------------------
-// Funções de envio refatoradas para usar Resend
-// ----------------------------------------------------
+// Funções de envio de e-mail existentes...
+// (sendVerificationEmail, sendPasswordResetEmail, etc.)
+
+// --- NOVA FUNÇÃO PARA SOLICITAR AVALIAÇÃO ---
+interface ReviewRequestParams {
+  to: string;
+  buyerName: string;
+  productName: string;
+  sellerName: string;
+  reviewToken: string;
+}
+
+/**
+ * Envia um e-mail solicitando que o comprador avalie a compra.
+ * @param params - Parâmetros para o e-mail de avaliação.
+ */
+export const sendReviewRequestEmail = async (params: ReviewRequestParams) => {
+  const { to, buyerName, productName, sellerName, reviewToken } = params;
+  const reviewLink = `${process.env.NEXT_PUBLIC_APP_URL}/review/${reviewToken}`;
+
+  await sendEmail({
+    to: to,
+    subject: `Avalie sua compra de ${productName}`,
+    react: <ReviewRequestEmail
+      buyerName={buyerName}
+      productName={productName}
+      sellerName={sellerName}
+      reviewLink={reviewLink}
+    />,
+  });
+};
+
+// ...outras funções de envio de e-mail...
 
 interface VerificationEmailParams {
   email: string;
@@ -113,7 +140,7 @@ interface ContactFormEmailParams {
   message: string;
 }
 export const sendContactFormEmail = async ({ fromName, fromEmail, message }: ContactFormEmailParams) => {
-  const adminEmail = process.env.EMAIL_FROM; // Usa a variável de ambiente para o destinatário
+  const adminEmail = process.env.EMAIL_FROM;
   if (!adminEmail) {
     throw new Error("O servidor não está configurado para receber mensagens de contato (EMAIL_FROM não definido).");
   }
@@ -121,6 +148,6 @@ export const sendContactFormEmail = async ({ fromName, fromEmail, message }: Con
     to: adminEmail,
     subject: `Nova Mensagem de Contato de ${fromName} - Zacaplace`,
     react: <ContactFormEmail fromName={fromName} fromEmail={fromEmail} message={message} />,
-    replyTo: fromEmail, // Permite responder diretamente ao usuário
+    replyTo: fromEmail,
   });
 };

@@ -1,81 +1,61 @@
-import { SellerCard } from './components/SellerCard';
-import prisma from '@/lib/prisma';
-import { UserRole } from '@prisma/client';
-import { Store } from 'lucide-react';
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
-
-// Tipagem para os dados que a página espera (inalterada)
-interface Seller {
-  id: string;
-  name: string | null;
-  image: string | null;
-  storeName: string | null;
-  whatsappLink: string | null;
-  sellerBannerImageUrl: string | null;
-  profileDescription: string | null;
-}
-
-// Busca os dados no servidor, agora com o filtro de exibição
-async function getSellers(): Promise<Seller[]> {
-    try {
-        const sellers = await prisma.user.findMany({
-            // <<< INÍCIO DA CORREÇÃO: Adicionado filtro para exibir apenas vendedores que optaram por aparecer >>>
-            where: { 
-                role: UserRole.SELLER,
-                showInSellersPage: true,
-            },
-            // <<< FIM DA CORREÇÃO >>>
-            select: {
-                id: true,
-                name: true,
-                image: true,
-                storeName: true,
-                whatsappLink: true,
-                sellerBannerImageUrl: true,
-                profileDescription: true,
-            },
-            orderBy: { createdAt: 'desc' }
-        });
-        return sellers;
-    } catch (error) {
-        console.error("Erro ao buscar vendedores na página:", error);
-        return [];
-    }
-}
-
+import prisma from '@/lib/prisma'
+import { SellerCard } from './components/SellerCard'
+import { PackageOpen } from 'lucide-react'
 
 export default async function SellersPage() {
-  const sellers = await getSellers();
+  const sellers = await prisma.user.findMany({
+    where: {
+      role: 'SELLER',
+      showInSellersPage: true,
+    },
+    include: {
+      // Inclui as avaliações recebidas para calcular a média
+      reviewsReceived: {
+        select: {
+          rating: true,
+        },
+      },
+    },
+  })
+  
+  // Calcula a média e adiciona ao objeto de cada vendedor
+  const sellersWithRating = sellers.map(seller => {
+    const totalReviews = seller.reviewsReceived.length;
+    const totalRating = seller.reviewsReceived.reduce((acc, review) => acc + review.rating, 0);
+    const averageRating = totalReviews > 0 ? totalRating / totalReviews : 0;
+    return {
+      ...seller,
+      averageRating,
+      totalReviews
+    }
+  })
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950">
-      <Navbar />
-      <main className="flex-grow container mx-auto px-4 py-12 md:py-20">
-        <header className="text-center mb-12 md:mb-16">
-          <h1 className="text-4xl sm:text-5xl font-bangers tracking-wider text-zaca-roxo dark:text-zaca-lilas">
-            Os Parceiros do Zaca
-          </h1>
-          <p className="mt-4 text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            Descubra quem são os empreendedores que fazem do Zacaplace um estouro, psit!
-          </p>
-        </header>
+    <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
+          Nossos Vendedores
+        </h1>
+        <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
+          Conheça os vendedores incríveis que fazem parte da nossa comunidade.
+        </p>
+      </div>
 
-        {sellers.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-            {sellers.map((seller) => (
-              <SellerCard key={seller.id} seller={seller} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16 text-slate-500 dark:text-slate-400 border-2 border-dashed dark:border-slate-700 rounded-xl">
-            <Store className="mx-auto h-16 w-16 text-slate-400 dark:text-slate-500 mb-4" />
-            <p className="text-xl font-semibold">Nenhum vendedor encontrado!</p>
-            <p className="mt-1 text-sm">Ainda estamos a montar a nossa feira. Volte em breve!</p>
-          </div>
-        )}
-      </main>
-      <Footer />
+      {sellersWithRating.length > 0 ? (
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {sellersWithRating.map(seller => (
+            <SellerCard key={seller.id} seller={seller} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16">
+            <PackageOpen className="mx-auto h-16 w-16 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-medium">Nenhum vendedor encontrado</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+                Volte em breve para conhecer nossos vendedores.
+            </p>
+        </div>
+      )}
     </div>
-  );
+  )
 }
