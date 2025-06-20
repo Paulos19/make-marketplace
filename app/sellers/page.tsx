@@ -1,6 +1,8 @@
 import prisma from '@/lib/prisma'
 import { SellerCard } from './components/SellerCard'
 import { PackageOpen } from 'lucide-react'
+import Navbar from '../components/layout/Navbar'
+import Footer from '../components/layout/Footer'
 
 export default async function SellersPage() {
   const sellers = await prisma.user.findMany({
@@ -31,6 +33,8 @@ export default async function SellersPage() {
   })
 
   return (
+    <>
+    <Navbar/>
     <div className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
@@ -57,5 +61,7 @@ export default async function SellersPage() {
         </div>
       )}
     </div>
+    <Footer/>
+    </>
   )
 }
