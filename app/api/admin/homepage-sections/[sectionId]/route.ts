@@ -1,11 +1,11 @@
-
+// app/api/admin/homepage-sections/[sectionId]/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
-
+import { revalidatePath } from 'next/cache'; // <<< 1. IMPORTADO
 
 const updateSectionSchema = z.object({
   title: z.string().min(3, "O título é obrigatório.").optional(),
@@ -38,6 +38,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
       where: { id: params.sectionId },
       data: validation.data,
     });
+    
+    revalidatePath('/'); // <<< 2. ADICIONADO: Revalida a homepage
 
     return NextResponse.json(updatedSection);
   } catch (error) {
@@ -57,6 +59,9 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     await prisma.homepageSection.delete({
       where: { id: params.sectionId },
     });
+    
+    revalidatePath('/'); // <<< 3. ADICIONADO: Revalida a homepage
+
     return new NextResponse(null, { status: 204 }); 
   } catch (error) {
     console.error("Erro ao deletar seção:", error);

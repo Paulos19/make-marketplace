@@ -1,8 +1,10 @@
+// app/api/admin/banners/[bannerId]/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
+import { revalidatePath } from 'next/cache'; // <<< 1. IMPORTADO
 
 export async function DELETE(
   req: Request,
@@ -23,6 +25,8 @@ export async function DELETE(
         id: params.bannerId,
       },
     });
+    
+    revalidatePath('/'); // <<< 2. ADICIONADO: Revalida a homepage
 
     return new NextResponse(null, { status: 204 }); 
   } catch (error) {

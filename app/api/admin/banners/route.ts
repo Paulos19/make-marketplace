@@ -1,9 +1,10 @@
+// app/api/admin/banners/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
-
+import { revalidatePath } from 'next/cache'; // <<< 1. IMPORTADO
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -26,6 +27,8 @@ export async function POST(req: Request) {
         linkUrl,
       },
     });
+
+    revalidatePath('/'); // <<< 2. ADICIONADO: Revalida a homepage
 
     return NextResponse.json(banner);
   } catch (error) {
