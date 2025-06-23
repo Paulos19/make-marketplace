@@ -3,8 +3,6 @@ import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
 import { authOptions } from '../../auth/[...nextauth]/route'
 
-// Lista de modelos alinhada com o seu schema.
-// Nomes em camelCase, como o Prisma Client espera.
 const modelNames = [
   'user',
   'account',
@@ -22,7 +20,6 @@ const modelNames = [
   'adminNotification',
 ]
 
-// GET para exportar dados (sem alterações necessárias, mas incluso para completude)
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (session?.user?.role !== 'ADMIN') {
@@ -58,9 +55,7 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json()
-
-    // ORDEM DE DELEÇÃO CORRIGIDA: Do mais dependente para o menos dependente.
-    // Isso evita erros de violação de chave estrangeira.
+    
     const deletionOrder = [
       'adminNotification',
       'reservation',
@@ -77,8 +72,6 @@ export async function POST(request: Request) {
       'newsletterSubscription',
       'themeSettings',
     ]
-
-    // ORDEM DE CRIAÇÃO CORRIGIDA: Do menos dependente para o mais dependente.
     const creationOrder = [
       'user',
       'category',
@@ -96,9 +89,7 @@ export async function POST(request: Request) {
       'adminNotification',
     ]
 
-    // Usando uma transação para garantir que tudo ocorra com sucesso, ou nada.
     await prisma.$transaction(async (tx) => {
-      // 1. Deletar todos os dados existentes na ordem correta
       for (const modelName of deletionOrder) {
         // @ts-ignore
         if (tx[modelName]) {
@@ -106,8 +97,6 @@ export async function POST(request: Request) {
           await tx[modelName].deleteMany({})
         }
       }
-
-      // 2. Inserir os novos dados na ordem correta
       for (const modelName of creationOrder) {
         // @ts-ignore
         if (data[modelName] && Array.isArray(data[modelName]) && data[modelName].length > 0) {
@@ -128,7 +117,7 @@ export async function POST(request: Request) {
           // @ts-ignore
           await tx[modelName].createMany({
             data: modelData,
-            skipDuplicates: true, // Adicionado por segurança
+            skipDuplicates: true,
           })
         }
       }

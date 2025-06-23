@@ -1,4 +1,4 @@
-// app/api/admin/homepage-sections/[sectionId]/route.ts
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 
-// Schema para validar os dados de atualização (similar ao de criação)
+
 const updateSectionSchema = z.object({
   title: z.string().min(3, "O título é obrigatório.").optional(),
   bannerImageUrl: z.string().url("A URL da imagem do banner é inválida.").optional(),
@@ -20,7 +20,7 @@ interface RouteParams {
   params: { sectionId: string };
 }
 
-// PUT: Atualiza uma seção existente
+
 export async function PUT(request: Request, { params }: RouteParams) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== UserRole.ADMIN) {
@@ -46,7 +46,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 }
 
-// DELETE: Exclui uma seção
+
 export async function DELETE(request: Request, { params }: RouteParams) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== UserRole.ADMIN) {
@@ -57,7 +57,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     await prisma.homepageSection.delete({
       where: { id: params.sectionId },
     });
-    return new NextResponse(null, { status: 204 }); // 204 No Content
+    return new NextResponse(null, { status: 204 }); 
   } catch (error) {
     console.error("Erro ao deletar seção:", error);
     return NextResponse.json({ message: 'Erro interno do servidor' }, { status: 500 });

@@ -1,4 +1,4 @@
-// app/api/admin/categories/route.ts
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -10,7 +10,7 @@ const categorySchema = z.object({
   name: z.string().min(2, "O nome da categoria deve ter no mínimo 2 caracteres."),
 });
 
-// POST: Cria uma nova categoria
+
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);

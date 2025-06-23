@@ -4,7 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 
-// POST para criar um novo banner
+
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== UserRole.ADMIN) {
@@ -34,22 +34,22 @@ export async function POST(req: Request) {
   }
 }
 
-// GET para buscar todos os banners
-export async function GET() {
-    const session = await getServerSession(authOptions);
-    if (session?.user?.role !== UserRole.ADMIN) {
-      return new NextResponse('Não autorizado', { status: 401 });
-    }
 
-    try {
-        const banners = await prisma.homePageBanner.findMany({
-            orderBy: {
-                createdAt: 'desc'
-            }
-        });
-        return NextResponse.json(banners);
-    } catch (error) {
-        console.error('[BANNERS_GET]', error);
-        return new NextResponse('Internal error', { status: 500 });
-    }
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== UserRole.ADMIN) {
+    return new NextResponse('Não autorizado', { status: 401 });
+  }
+
+  try {
+    const banners = await prisma.homePageBanner.findMany({
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+    return NextResponse.json(banners);
+  } catch (error) {
+    console.error('[BANNERS_GET]', error);
+    return new NextResponse('Internal error', { status: 500 });
+  }
 }

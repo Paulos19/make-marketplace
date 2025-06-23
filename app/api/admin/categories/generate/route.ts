@@ -1,4 +1,4 @@
-// app/api/admin/categories/generate/route.ts
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     const existingCategoryNames = existingCategories.map(cat => cat.name);
     const existingCategoriesString = existingCategoryNames.length > 0 ? existingCategoryNames.join(', ') : "Nenhuma categoria existente ainda";
 
-    // <<< INÍCIO DA ATUALIZAÇÃO DO PROMPT >>>
+    
     const prompt = `
       Você é um especialista em branding e marketing para o e-commerce brasileiro "Zacaplace", inspirado no humor dos Trapalhões.
       O tom da marca é divertido, popular e com um "sotaque" do interior de Minas Gerais.
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
       **FORMATO DE SAÍDA OBRIGATÓRIO:** Retorne **APENAS e ESTRITAMENTE** um array JSON de strings.
       Exemplo de formato: ["Parafernália do Dedé", "Barato do Didi"]
     `;
-    // <<< FIM DA ATUALIZAÇÃO DO PROMPT >>>
+    
 
     const result = await model.generateContent({
       contents: [{ role: "user", parts: [{text: prompt}]}],

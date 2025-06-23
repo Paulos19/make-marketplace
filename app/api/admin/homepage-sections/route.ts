@@ -1,4 +1,4 @@
-// app/api/admin/homepage-sections/route.ts
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 
-// Schema para validar os dados de criação
+
 const sectionSchema = z.object({
   title: z.string().min(3, "O título é obrigatório."),
   bannerImageUrl: z.string().url("A URL da imagem do banner é inválida."),
@@ -16,7 +16,7 @@ const sectionSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-// GET: Busca todas as seções para o painel de admin
+
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== UserRole.ADMIN) {
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Cria uma nova seção
+
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== UserRole.ADMIN) {

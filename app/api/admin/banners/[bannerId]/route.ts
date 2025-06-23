@@ -24,7 +24,7 @@ export async function DELETE(
       },
     });
 
-    return new NextResponse(null, { status: 204 }); // 204 No Content
+    return new NextResponse(null, { status: 204 }); 
   } catch (error) {
     console.error('[BANNER_DELETE]', error);
     return new NextResponse('Internal error', { status: 500 });

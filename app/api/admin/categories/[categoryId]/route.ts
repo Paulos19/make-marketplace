@@ -1,4 +1,3 @@
-// app/api/admin/categories/[categoryId]/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -14,7 +13,7 @@ const categorySchema = z.object({
   name: z.string().min(2, "O nome da categoria deve ter no mínimo 2 caracteres."),
 });
 
-// PATCH: Atualiza uma categoria existente
+
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
@@ -42,7 +41,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 }
 
-// DELETE: Exclui uma categoria existente
+
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
@@ -52,8 +51,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     const { categoryId } = params;
 
-    // O Prisma irá falhar se a categoria estiver em uso por algum produto,
-    // o que é um bom comportamento padrão para evitar exclusões acidentais de dados relacionados.
+    
+    
     await prisma.category.delete({
       where: { id: categoryId },
     });
@@ -61,7 +60,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     return NextResponse.json({ message: 'Categoria excluída com sucesso' }, { status: 200 });
   } catch (error: any) {
     console.error("Erro ao excluir categoria:", error);
-    // Se a categoria está em uso, o Prisma retornará um erro de violação de chave estrangeira (P2003)
+    
     if (error.code === 'P2003') {
         return NextResponse.json({ message: 'Não é possível excluir esta categoria pois ela está associada a um ou mais produtos.'}, { status: 409 });
     }
