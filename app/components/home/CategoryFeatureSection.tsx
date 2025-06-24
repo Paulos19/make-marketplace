@@ -1,107 +1,118 @@
-'use client';
+import { Prisma } from '@prisma/client'
+import Image from 'next/image'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { ProductCard } from '@/app/products/components/ProductCard'
+import { cn } from '@/lib/utils'
+import { ArrowRight } from 'lucide-react'
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { motion, useInView } from 'framer-motion';
-import { useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { ProductCard } from '@/app/products/components/ProductCard'; // Reutilizamos o ProductCard
-import { ArrowRight, ShoppingCart } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { Product, Category, User } from '@prisma/client';
-
-// Tipo enriquecido para incluir as relações que precisamos
-type ProductWithDetails = Product & {
-  user: { name: string | null };
-  categories: Category[];
-};
+type ProductWithDetails = Prisma.ProductGetPayload<{
+  include: { user: true; category: true }
+}>
 
 interface CategoryFeatureSectionProps {
-  category: Category;
-  products: ProductWithDetails[];
-  reverseLayout?: boolean; // Para alternar o layout (imagem à direita/esquerda)
+  category: {
+    name: string
+    id: string
+  }
+  products: ProductWithDetails[]
+  reverseLayout?: boolean
 }
 
-const sectionVariants = {
-  initial: { opacity: 0, y: 50 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] } },
-};
+// Função auxiliar para transformar os dados do produto para o formato que o ProductCard espera
+const transformProductForClient = (product: ProductWithDetails) => {
+    return {
+      ...product,
+      categories: product.category ? [product.category] : [],
+      createdAt: new Date(product.createdAt).toISOString(),
+      updatedAt: new Date(product.updatedAt).toISOString(),
+    }
+}
 
-const cardContainerVariants = {
-  initial: {},
-  animate: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } },
-};
-
-export function CategoryFeatureSection({ category, products, reverseLayout = false }: CategoryFeatureSectionProps) {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
-
-  if (products.length === 0) {
-    return null; // Não renderiza nada se não houver produtos
+export function CategoryFeatureSection({
+  category,
+  products,
+  reverseLayout = false,
+}: CategoryFeatureSectionProps) {
+  if (!products || products.length === 0) {
+    return null
   }
 
-  const featuredProduct = products[0]; // O primeiro produto será o destaque
-  const otherProducts = products.slice(1, 5); // Os próximos 4 para a grelha
+  const mainProduct = products[0]
+  const otherProducts = products.slice(1)
 
   return (
-    <motion.section
-      ref={ref}
-      initial="initial"
-      animate={isInView ? "animate" : "initial"}
-      variants={sectionVariants}
-      className="w-full py-16 md:py-24 overflow-hidden"
-    >
-      <div className="container mx-auto px-4">
-        {/* Cabeçalho da Secção */}
-        <div className="flex justify-between items-baseline mb-8">
-            <h2 className="text-xl md:text-2xl font-bangers text-zaca-roxo dark:text-zaca-lilas tracking-wide">
-                {category.name}
-            </h2>
-            <Button asChild variant="ghost">
-                <Link href={`/products?category=${category.id}`} className="text-zaca-azul dark:text-zaca-lilas">
-                Ver Tudo <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-            </Button>
-        </div>
-
-        {/* Layout Principal da Secção */}
-        <div className={cn(
-            "grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center",
-            reverseLayout && "lg:grid-flow-col-dense"
-        )}>
-          {/* Imagem de Destaque */}
-          <motion.div
-            variants={{ initial: { opacity: 0, x: reverseLayout ? 50 : -50 }, animate: { opacity: 1, x: 0, transition: { duration: 0.8, ease: 'easeOut' } }}}
-            className={cn("w-full h-[60vh] lg:h-[75vh] relative rounded-2xl overflow-hidden shadow-2xl", reverseLayout && "lg:col-start-2")}
-          >
+    <section className="overflow-hidden rounded-xl border bg-card shadow-lg dark:border-slate-800">
+      <div className="p-6">
+        <h2 className="text-2xl font-bold tracking-tight text-gray-800 dark:text-gray-100">
+          Destaques em {category.name}
+        </h2>
+      </div>
+      <div
+        className={cn(
+          'grid grid-cols-1 gap-px bg-slate-200 dark:bg-slate-800 md:grid-cols-2',
+          reverseLayout && 'md:[direction:rtl]',
+        )}
+      >
+        <div className="group relative bg-card p-6 [direction:ltr]">
+          <div className="aspect-square w-full overflow-hidden rounded-lg">
             <Image
-              src={featuredProduct.images[0] || '/img-placeholder.png'}
-              alt={featuredProduct.name}
-              fill
-              className="object-cover transition-transform duration-500 hover:scale-105"
+              src={mainProduct.images[0]}
+              alt={mainProduct.name}
+              width={500}
+              height={500}
+              className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-            <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white">
-              <h3 className="text-2xl md:text-4xl font-bold drop-shadow-lg">{featuredProduct.name}</h3>
-              <p className="mt-2 text-lg font-bold drop-shadow-lg">R$ {featuredProduct.price.toFixed(2)}</p>
-              <Button asChild className="mt-4 bg-white text-black hover:bg-slate-200">
-                <Link href={`/products/${featuredProduct.id}`}>
-                    <ShoppingCart className="mr-2 h-4 w-4"/> Ver Achadinho
-                </Link>
-              </Button>
+          </div>
+          <div className="pb-4 pt-6 text-center">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+              <Link href={`/products/${mainProduct.id}`}>
+                <span className="absolute inset-0" />
+                {mainProduct.name}
+              </Link>
+            </h3>
+            <p className="mt-2 text-base text-primary">
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              }).format(mainProduct.price)}
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 grid-rows-2 gap-px bg-slate-200 dark:bg-slate-800 [direction:ltr]">
+          {otherProducts.map((product) => (
+            <div
+              key={product.id}
+              className="group relative bg-card p-4 text-center"
+            >
+              <div className="aspect-square w-full overflow-hidden rounded-lg">
+                <Image
+                  src={product.images[0]}
+                  alt={product.name}
+                  width={300}
+                  height={300}
+                  className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                />
+              </div>
+              <div className="pb-2 pt-4">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  <Link href={`/products/${product.id}`}>
+                    <span className="absolute inset-0" />
+                    {product.name}
+                  </Link>
+                </h3>
+              </div>
             </div>
-          </motion.div>
-
-          {/* Grelha de Outros Produtos */}
-          <motion.div variants={cardContainerVariants} className="grid grid-cols-2 gap-4 md:gap-6">
-            {otherProducts.map((product) => (
-              <motion.div key={product.id} variants={sectionVariants}>
-                 <ProductCard product={product as any} />
-              </motion.div>
-            ))}
-          </motion.div>
+          ))}
+          {/* Card para "Ver todos" */}
+           <Link href={`/products?category=${category.id}`} className="group relative flex flex-col items-center justify-center bg-card p-4 text-center transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Ver todos</h3>
+                <p className="text-sm text-muted-foreground">em {category.name}</p>
+                <ArrowRight className="mt-4 h-6 w-6 text-primary transition-transform group-hover:translate-x-1" />
+            </Link>
         </div>
       </div>
-    </motion.section>
-  );
+    </section>
+  )
 }
+

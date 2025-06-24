@@ -1,33 +1,20 @@
-"use client"
-
 import {
-  Laptop,
-  Moon,
-  Smartphone,
-  SunMedium,
-  ToyBrick,
-  Watch,
-  BookOpen,
-  Home,
-  Sparkles, // Adicionado
-  Shirt, // Adicionado
-  Gift, // Adicionado
-  Cpu, // Adicionado
-  Baby, // Adicionado
-  HeartPulse, // Adicionado
-  BadgePercent, // Adicionado
-  type LucideProps,
-} from 'lucide-react'
+  Sun, Moon, Laptop, Smartphone, Watch, ToyBrick, Book, Home, Sparkles, Shirt, Gift, Cpu, Baby, HeartPulse, BadgePercent,
+  Dumbbell, // Adicionado
+  Shapes,   // Adicionado
+  LucideProps
+} from 'lucide-react';
 
-// Objeto de ícones atualizado para incluir os novos.
+// Mapeamento de todos os ícones disponíveis na sua aplicação.
+// Adicionar um novo ícone aqui o torna disponível em todo o site.
 export const Icons = {
-  sun: SunMedium,
+  sun: Sun,
   moon: Moon,
   laptop: Laptop,
   smartphone: Smartphone,
   watch: Watch,
   toy: ToyBrick,
-  book: BookOpen,
+  book: Book,
   home: Home,
   sparkles: Sparkles,
   shirt: Shirt,
@@ -36,21 +23,22 @@ export const Icons = {
   baby: Baby,
   heartPulse: HeartPulse,
   badgePercent: BadgePercent,
-}
+  dumbbell: Dumbbell, // Adicionado
+  shapes: Shapes,     // Adicionado
+};
 
-// O tipo IconName agora será gerado automaticamente com os novos ícones.
-export type IconName = keyof typeof Icons
+// O tipo 'IconName' é gerado automaticamente a partir das chaves do objeto 'Icons'.
+export type IconName = keyof typeof Icons;
 
-interface IconProps extends LucideProps {
-  name: IconName
-}
+// Componente reutilizável para renderizar qualquer ícone da sua biblioteca.
+export const Icon = ({ name, ...props }: { name: IconName } & LucideProps) => {
+  const IconComponent = Icons[name];
 
-export const Icon = ({ name, ...props }: IconProps) => {
-  const LucideIcon = Icons[name]
-  if (!LucideIcon) {
-    // Fallback para um ícone padrão caso o nome seja inválido.
-    const DefaultIcon = Icons['laptop']
-    return <DefaultIcon {...props} />
+  // Fallback para o caso de um nome de ícone inválido ser passado (embora o TypeScript deva prevenir isso).
+  if (!IconComponent) {
+    const FallbackIcon = Icons['shapes'];
+    return <FallbackIcon {...props} />;
   }
-  return <LucideIcon {...props} />
-}
+
+  return <IconComponent {...props} />;
+};

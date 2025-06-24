@@ -10,6 +10,7 @@ import { OrderCompletionEmail } from '@/app/components/emails/OrderCompletionEma
 import { ContactFormEmail } from '@/app/components/emails/ContactFormEmail';
 import ReviewRequestEmail from '@/app/components/emails/ReviewRequestEmail';
 import { StripePurchaseConfirmationEmail } from '@/app/components/emails/StripePurchaseConfirmationEmail'; // <<< 1. NOVO IMPORT
+import CarouselPostConfirmationEmail from '@/app/components/emails/CarouselPostConfirmationEmail';
 
 // Inicializa a instância do Resend
 export const resend = new Resend(process.env.RESEND_API_KEY);
@@ -151,4 +152,26 @@ export const sendContactFormEmail = async ({ fromName, fromEmail, message }: Con
     react: <ContactFormEmail fromName={fromName} fromEmail={fromEmail} message={message} />,
     replyTo: fromEmail,
   });
+};
+
+interface CarouselConfirmationParams {
+    to: string;
+    userName: string | null;
+    productName: string;
+    productImageUrl: string | null;
+}
+/**
+ * Envia um e-mail de confirmação de que o post no carrossel foi realizado.
+ */
+export const sendCarouselPostConfirmationEmail = async (params: CarouselConfirmationParams) => {
+    const { to, userName, productName, productImageUrl } = params;
+    await sendEmail({
+        to,
+        subject: `🚀 Seu produto "${productName}" está no Carrossel do Zaca!`,
+        react: <CarouselPostConfirmationEmail
+            userName={userName}
+            productName={productName}
+            productImageUrl={productImageUrl}
+        />
+    });
 };

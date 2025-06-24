@@ -1,66 +1,81 @@
-import Link from 'next/link';
-// CORREÇÃO: Importa o tipo 'Product' personalizado que inclui as relações
-import { Product } from '@/lib/types';
-import { Category } from '@prisma/client';
-import { ProductCard } from '@/app/products/components/ProductCard';
-import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { Prisma } from '@prisma/client'
+import Image from 'next/image'
+import Link from 'next/link'
+import { ProductCard } from '@/app/products/components/ProductCard'
+import { Button } from '@/components/ui/button'
+import { ArrowRight } from 'lucide-react'
+
+type ProductWithDetails = Prisma.ProductGetPayload<{
+  include: { user: true; category: true }
+}>
 
 interface ModernProductSectionProps {
-  category: Category;
-  // CORREÇÃO: Usa o tipo 'Product' correto
-  products: Product[];
+  id: string;
+  title: string
+  bannerImageUrl: string
+  bannerFontColor: string
+  productIds: string[]
+  order: number
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+  products: ProductWithDetails[]
 }
 
-/**
- * A modern section to display products with a hero product and a grid of others.
- * Features a clean title and a "See All" link.
- */
-export function ModernProductSection({ category, products }: ModernProductSectionProps) {
-  // Se não houver produtos, a seção não é renderizada.
-  if (products.length === 0) {
-    return null;
-  }
+const transformProductForClient = (product: ProductWithDetails) => {
+    return {
+      ...product,
+      categories: product.category ? [product.category] : [],
+      createdAt: new Date(product.createdAt).toISOString(),
+      updatedAt: new Date(product.updatedAt).toISOString(),
+    }
+}
 
-  // O primeiro produto é destacado.
-  const heroProduct = products[0];
-  // Os próximos 4 produtos são exibidos em um grid.
-  const otherProducts = products.slice(1, 5);
+export function ModernProductSection({
+  title,
+  bannerImageUrl,
+  bannerFontColor,
+  products,
+}: ModernProductSectionProps) {
+  if (!products || products.length === 0) return null
 
   return (
-    <section className="py-12 sm:py-16 bg-gray-50 dark:bg-gray-900/50">
-      <div className="container mx-auto px-4">
-        {/* Cabeçalho da Seção */}
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-gray-800 dark:text-gray-100">
-            {category.name}
+    <section className="group relative overflow-hidden rounded-xl border bg-card shadow-lg dark:border-slate-800">
+      <div className="relative h-64 w-full">
+        <Image
+          src={bannerImageUrl}
+          alt={`Banner para ${title}`}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-black/50 p-6 text-center"
+          style={{ color: bannerFontColor || '#FFFFFF' }}
+        >
+          <h2 className="text-4xl font-extrabold tracking-tight drop-shadow-lg md:text-5xl">
+            {title}
           </h2>
-          <Button variant="ghost" asChild>
-            <Link href={`/products?category=${category.id}`} className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors">
-              Ver todos
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-
-        {/* Layout Principal (Grid Assimétrico) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-12 items-start">
-          
-          {/* Produto de Destaque (Lado Esquerdo) */}
-          <div className="mb-8 lg:mb-0 transform hover:scale-105 transition-transform duration-300 ease-in-out">
-            <ProductCard product={heroProduct} />
-          </div>
-
-          {/* Grid de Outros Produtos (Lado Direito) */}
-          <div className="grid grid-cols-2 gap-4 md:gap-6">
-            {otherProducts.map((product) => (
-              <div key={product.id} className="transform hover:scale-105 transition-transform duration-300 ease-in-out">
-                 <ProductCard product={product} />
-              </div>
-            ))}
-          </div>
         </div>
       </div>
+      <div className="p-6">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {products.slice(0, 4).map((product) => (
+            <ProductCard
+              key={product.id}
+              product={transformProductForClient(product) as any}
+            />
+          ))}
+        </div>
+        {products.length > 4 && (
+          <div className="mt-6 text-center">
+            <Button asChild variant="outline">
+              <Link href={`/products?section=${title.toLowerCase().replace(/ /g, '-')}`}>
+                Ver mais <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        )}
+      </div>
     </section>
-  );
+  )
 }

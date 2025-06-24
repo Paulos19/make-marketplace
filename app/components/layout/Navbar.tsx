@@ -34,19 +34,49 @@ import {
   Package2,
   Store,
   ShoppingBag,
-  LucidePlusCircle, // Ícone para as vendas
+  LucidePlusCircle,
+  Crown,
+  BadgeCent,
 } from 'lucide-react';
 import { UserRole } from '@prisma/client';
 import { Separator } from '@/components/ui/separator';
 import { GlobalSearchCommand } from '../search/GlobalSearchCommand';
 
+// HOOK PARA BUSCAR STATUS DO USUÁRIO
+function useUserStatus() {
+    const { data: session, status } = useSession();
+    const [userStatus, setUserStatus] = useState({
+        hasActiveSubscription: false,
+        hasActiveTurboBoost: false,
+        hasActiveCarousel: false,
+    });
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (status === 'authenticated') {
+            fetch('/api/user/status')
+                .then(res => res.json())
+                .then(data => {
+                    setUserStatus(data);
+                })
+                .catch(err => console.error("Falha ao buscar status do usuário:", err))
+                .finally(() => setIsLoading(false));
+        } else if (status === 'unauthenticated') {
+            setIsLoading(false);
+        }
+    }, [status]);
+
+    return { ...userStatus, isLoading };
+}
+
 export default function Navbar() {
   const { data: session, status } = useSession();
   const user = session?.user;
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [pendingSalesCount, setPendingSalesCount] = useState(0);
+  const { hasActiveSubscription, hasActiveTurboBoost, hasActiveCarousel } = useUserStatus();
 
-  // Busca a contagem de reservas pendentes quando o usuário é um vendedor
   useEffect(() => {
     if (status === 'authenticated' && user?.role === UserRole.SELLER) {
       const fetchPendingCount = async () => {
@@ -58,12 +88,11 @@ export default function Navbar() {
           }
         } catch (error) {
           console.error("Falha ao buscar contagem de vendas pendentes:", error);
-          setPendingSalesCount(0);
         }
       };
       fetchPendingCount();
     } else {
-      setPendingSalesCount(0); // Reseta a contagem se não for vendedor
+      setPendingSalesCount(0);
     }
   }, [status, user]);
 
@@ -71,7 +100,7 @@ export default function Navbar() {
     { href: '/', label: 'Início', icon: Home },
     { href: '/products', label: 'Achadinhos', icon: Package2 },
     { href: '/sellers', label: 'Vendedores', icon: Store },
-    { href: '/dashboard/add-product', label: 'Adicionar Produto', icon: LucidePlusCircle },
+    { href: '/planos', label: 'Planos', icon: BadgeCent },
   ];
 
   const userNavLinks = [
@@ -83,6 +112,13 @@ export default function Navbar() {
     if (!name) return <UserCircle2 />;
     return name.trim().split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
+  
+  const avatarRingClass = cn({
+      "ring-2 ring-offset-2 dark:ring-offset-slate-900": hasActiveSubscription || hasActiveTurboBoost || hasActiveCarousel,
+      "ring-yellow-400": hasActiveSubscription,
+      "ring-blue-500": !hasActiveSubscription && hasActiveTurboBoost,
+      "ring-red-500": !hasActiveSubscription && !hasActiveTurboBoost && hasActiveCarousel
+  });
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200/60 dark:border-slate-800/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -122,7 +158,6 @@ export default function Navbar() {
             </Button>
           </Link>
 
-          {/* <<< ÍCONE DE NOTIFICAÇÃO DE VENDAS PARA VENDEDORES (DESKTOP) >>> */}
           {user?.role === UserRole.SELLER && (
             <Link href='/dashboard/sales' className="relative">
               <Button variant="ghost" size="icon" aria-label="Minhas Vendas" className="hidden sm:inline-flex">
@@ -144,15 +179,18 @@ export default function Navbar() {
             ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10">
+                  <Button variant="ghost" className="relative h-11 w-11 rounded-full p-0">
+                    <Avatar className={cn("h-10 w-10", avatarRingClass)}>
                       <AvatarImage src={user.image ?? undefined} alt={user.name ?? 'Avatar'} />
                       <AvatarFallback className="bg-zaca-roxo text-white font-bold">{getAvatarFallback(user.name)}</AvatarFallback>
                     </Avatar>
+                    {hasActiveSubscription && (
+                        <Crown className="absolute -top-1 -right-1 h-5 w-5 text-yellow-400 fill-yellow-400 rotate-12 drop-shadow-lg" />
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
+                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{user.name}</p>
                       <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
@@ -183,14 +221,42 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center lg:hidden">
-            <Sheet>
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Abrir menu">
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-full max-w-xs sm:max-w-sm">
-                <nav className="flex flex-col space-y-2 mt-8">
+              <SheetContent side="left" className="w-full max-w-xs sm:max-w-sm p-0 flex flex-col">
+                {/* --- INÍCIO DA ATUALIZAÇÃO DO MENU MOBILE --- */}
+                {user ? (
+                  <div className="p-4 border-b dark:border-slate-800">
+                    <Link href="/dashboard" className="flex items-center gap-4" onClick={() => setIsMobileMenuOpen(false)}>
+                       <div className="relative">
+                          <Avatar className={cn("h-12 w-12", avatarRingClass)}>
+                              <AvatarImage src={user.image ?? undefined} alt={user.name ?? 'Avatar'} />
+                              <AvatarFallback className="bg-zaca-roxo text-white font-bold">{getAvatarFallback(user.name)}</AvatarFallback>
+                          </Avatar>
+                          {hasActiveSubscription && (
+                              <Crown className="absolute -top-1 -right-1 h-5 w-5 text-yellow-400 fill-yellow-400 rotate-12 drop-shadow-lg" />
+                          )}
+                       </div>
+                       <div className="flex-1 truncate">
+                          <p className="text-sm font-semibold leading-none truncate">{user.name}</p>
+                          <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
+                       </div>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="p-4 border-b dark:border-slate-800">
+                    <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Image src="/zacalogo2.svg" alt="Zacaplace Logo" width={150} height={40} />
+                    </Link>
+                  </div>
+                )}
+                {/* --- FIM DA ATUALIZAÇÃO --- */}
+                
+                <nav className="flex flex-col space-y-1 p-4 flex-1">
                   {mainNavLinks.map((link) => (
                     <SheetClose key={link.href} asChild>
                        <Link
@@ -211,7 +277,6 @@ export default function Navbar() {
                       <SheetClose asChild><Link href="/my-reservations" className="flex items-center gap-3 text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas"><Heart className="mr- h-5 w-5"/>Minhas Compras</Link></SheetClose>
                       <SheetClose asChild><Link href="/dashboard" className="flex items-center gap-3 text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas"><LayoutDashboard className="mr- h-5 w-5"/>Minha Loja</Link></SheetClose>
 
-                      {/* <<< ÍCONE DE NOTIFICAÇÃO DE VENDAS PARA VENDEDORES (MOBILE) >>> */}
                       {user.role === UserRole.SELLER && (
                           <SheetClose asChild>
                               <Link href="/dashboard/sales" className="flex items-center justify-between text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas">
@@ -235,8 +300,6 @@ export default function Navbar() {
                           </Link>
                         </SheetClose>
                       )}
-                      <Separator className="my-4" />
-                      <Button variant="outline" onClick={() => signOut({ callbackUrl: '/' })}><LogOut className="mr-2 h-5 w-5"/>Sair</Button>
                     </>
                   ) : (
                     <>
@@ -245,6 +308,11 @@ export default function Navbar() {
                     </>
                   )}
                 </nav>
+                {user && (
+                    <div className="p-4 mt-auto border-t dark:border-slate-800">
+                        <Button variant="outline" onClick={() => {signOut({ callbackUrl: '/' }); setIsMobileMenuOpen(false);}} className="w-full"><LogOut className="mr-2 h-5 w-5"/>Sair</Button>
+                    </div>
+                )}
               </SheetContent>
             </Sheet>
           </div>

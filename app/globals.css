@@ -1,36 +1,27 @@
-/* app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definimos as variáveis de cor e fonte no @layer base.
-  :root contém as variáveis para o tema claro (padrão).
-  .dark contém as variáveis para o tema escuro.
-  Usamos o formato HSL (Hue, Saturation, Lightness) sem "hsl()" ou vírgulas, 
-  pois o Tailwind adiciona isso automaticamente. Isso nos permite usar opacidade (ex: bg-primary/50).
-*/
 @layer base {
   :root {
-    /* Cores de Fundo e Texto */
     --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    --foreground: 222.2 84% 4.9%;
 
-    /* Cores da Marca (Zaca) */
-    --zaca-roxo: 262 64% 49%;
-    --zaca-lilas: 263 76% 75%;
-    --zaca-magenta: 326 84% 49%;
-    --zaca-azul: 217 91% 60%;
-    --zaca-vermelho: 0 84% 60%;
+    /* Cores personalizadas do Zacaplace */
+    --zaca-roxo: 262 80% 50%;
+    --zaca-azul: 210 90% 50%;
+    --zaca-magenta: 310 80% 55%;
+    --zaca-vermelho: 0 85% 60%;
+    --zaca-lilas: 262 90% 75%;
 
-    /* Cores de Componentes UI (shadcn/ui) */
     --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+    --card-foreground: 222.2 84% 4.9%;
  
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
+    --popover-foreground: 222.2 84% 4.9%;
  
-    --primary: 222.2 47.4% 11.2%; /* Cor primária para botões e elementos principais */
-    --primary-foreground: 210 40% 98%;
+    --primary: 262 80% 50%; /* Roxo como primário */
+    --primary-foreground: 0 0% 100%;
  
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -46,64 +37,65 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 262 80% 50%;
  
     --radius: 0.5rem;
-
-    /* Fontes */
-    --font-sans: 'Inter', sans-serif;
-    --font-display: 'Bangers', cursive;
   }
  
   .dark {
-    /* Valores das mesmas variáveis, mas para o tema escuro */
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
-    --zaca-roxo: 262 74% 69%;
-    --zaca-lilas: 263 66% 65%;
-    --zaca-magenta: 326 74% 59%;
-    --zaca-azul: 217 81% 70%;
-    --zaca-vermelho: 0 74% 70%;
+ 
+     /* Cores personalizadas do Zacaplace para o modo escuro */
+    --zaca-roxo: 262 80% 60%;
+    --zaca-azul: 210 90% 60%;
+    --zaca-magenta: 310 80% 65%;
+    --zaca-vermelho: 0 85% 65%;
+    --zaca-lilas: 262 90% 75%;
 
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
+ 
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
+ 
+    --primary: 262 80% 60%;
+    --primary-foreground: 0 0% 100%;
+ 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
+ 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
+ 
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
+ 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
+ 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 262 80% 60%;
   }
 }
-
-/* Estilos de base que usam as variáveis */
+ 
 @layer base {
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-sans);
   }
-  h1, h2, h3, h4, h5, h6 {
-    /* Exemplo de como aplicar uma fonte de display por padrão */
-    /* font-family: var(--font-display); */
+}
+
+/* <<< CLASSE PARA ESCONDER A BARRA DE ROLAGEM >>> */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 }

@@ -1,22 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Check, Info, MessageSquare, Loader2, Trash2, AlertTriangle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Check, Info, Loader2, Trash2, AlertTriangle, Send, Package, Copy, ExternalLink, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import type { AdminNotification, Reservation, Product, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
+
+type NotificationMetadata = Prisma.JsonValue & {
+  productName?: string;
+  productImage?: string;
+  purchaseId?: string;
+  productId?: string;
+  productPrice?: number;
+};
 
 type NotificationWithDetails = AdminNotification & {
-  reservation: Reservation & {
-    product: Pick<Product, 'name' | 'images'>;
-    user: Pick<User, 'name'>;
-  };
-  seller: Pick<User, 'name'>;
+  metadata: NotificationMetadata | null;
+  seller: Pick<User, 'name' | 'email' | 'storeName' | 'id'> | null;
 };
 
 interface NotificationClientProps {
@@ -25,35 +32,34 @@ interface NotificationClientProps {
 
 export function NotificationClient({ initialNotifications }: NotificationClientProps) {
   const [notifications, setNotifications] = useState(initialNotifications);
-  const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
   const [notificationToDelete, setNotificationToDelete] = useState<NotificationWithDetails | null>(null);
-  const router = useRouter();
 
-  const handleNotifySeller = (notification: NotificationWithDetails) => {
-    if (!notification.sellerWhatsappLink) {
-      toast.error("Este vendedor não possui um número de WhatsApp cadastrado.");
-      return;
-    }
-    const whatsappUrl = `https://wa.me/${notification.sellerWhatsappLink.replace(/\D/g, '')}?text=${encodeURIComponent(notification.message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
-  
-  const handleMarkAsRead = async (notificationId: string) => {
-    setIsLoading(notificationId);
+  const setActionLoading = (id: string, state: boolean) => {
+    setIsLoading(prev => ({ ...prev, [id]: state }));
+  }
+
+  const handleConfirmCarousel = async (notification: NotificationWithDetails) => {
+    setActionLoading(notification.id, true);
     try {
-      await fetch(`/api/admin/notifications/${notificationId}`, { method: 'PATCH' });
-      toast.success("Notificação marcada como lida.");
-      setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
+      const response = await fetch(`/api/admin/notifications/${notification.id}/confirm-carousel`, { method: 'PATCH' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+
+      toast.success(data.message);
+      setNotifications(prev => prev.map(n => 
+        n.id === notification.id ? { ...n, isRead: true } : n
+      ));
     } catch (error) {
-      toast.error("Falha ao marcar como lida.");
+      toast.error(error instanceof Error ? error.message : "Falha ao confirmar a divulgação.");
     } finally {
-      setIsLoading(null);
+      setActionLoading(notification.id, false);
     }
   };
 
   const handleConfirmDelete = async () => {
     if (!notificationToDelete) return;
-    setIsLoading(notificationToDelete.id);
+    setActionLoading(notificationToDelete.id, true);
     try {
         await fetch(`/api/admin/notifications/${notificationToDelete.id}`, { method: 'DELETE' });
         toast.success("Notificação excluída com sucesso.");
@@ -62,8 +68,56 @@ export function NotificationClient({ initialNotifications }: NotificationClientP
     } catch (error) {
         toast.error("Falha ao excluir a notificação.");
     } finally {
-        setIsLoading(null);
+        setActionLoading(notificationToDelete.id, false);
     }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("URL da imagem copiada!");
+  }
+
+  const renderCarouselRequestCard = (notification: NotificationWithDetails) => {
+    const metadata = notification.metadata;
+    if (!metadata) return null;
+
+    return (
+      <div className="flex flex-col sm:flex-row items-start gap-4 mt-2">
+        <div className="w-full sm:w-32 h-32 flex-shrink-0 relative">
+          <Image 
+            src={metadata.productImage || '/img-placeholder.png'} 
+            alt={metadata.productName || 'Produto'} 
+            fill 
+            className="rounded-md object-cover border"
+          />
+        </div>
+        <div className="text-sm space-y-2">
+          <p>
+            <span className="font-semibold">Produto:</span>{' '}
+            <Link href={`/products/${metadata.productId}`} target="_blank" className="text-blue-600 hover:underline">{metadata.productName}</Link>
+          </p>
+          <p>
+            <span className="font-semibold">Vendedor:</span>{' '}
+            <Link href={`/seller/${notification.seller?.id}`} target="_blank" className="text-blue-600 hover:underline">{notification.seller?.storeName || notification.seller?.name}</Link>
+          </p>
+          <p>
+            <span className="font-semibold">Preço:</span>{' '}
+            {metadata.productPrice?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">URL da Imagem:</span>
+            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(metadata.productImage || '')}>
+              <Copy className="h-4 w-4" />
+            </Button>
+            <a href={metadata.productImage || ''} target="_blank" rel="noopener noreferrer">
+              <Button size="icon" variant="ghost" className="h-6 w-6">
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+            </a>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -73,29 +127,38 @@ export function NotificationClient({ initialNotifications }: NotificationClientP
           <Card className="text-center p-8"><Info className="mx-auto h-10 w-10 text-slate-400 mb-4"/><CardTitle>Tudo em ordem!</CardTitle><CardDescription>Nenhuma notificação pendente.</CardDescription></Card>
         ) : (
           notifications.map(notification => (
-            <Card key={notification.id} className={notification.isRead ? "opacity-60 bg-slate-50 dark:bg-slate-800/30" : "bg-white dark:bg-slate-800/80"}>
-              <CardHeader className="flex flex-row items-center justify-between">
+            <Card key={notification.id} className={cn(
+                "transition-opacity",
+                notification.isRead ? "opacity-60 bg-slate-50 dark:bg-slate-800/30" : "bg-white dark:bg-slate-800/80",
+                notification.type === 'CAROUSEL_REQUEST' && !notification.isRead && "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800/50"
+            )}>
+              <CardHeader className="flex flex-row items-start justify-between">
                   <div>
-                      <CardTitle className="text-base font-semibold">Nova Reserva para {notification.seller.name}</CardTitle>
-                      <CardDescription className="text-xs">{new Date(notification.createdAt).toLocaleString('pt-BR')}</CardDescription>
+                      <CardTitle className="text-base font-semibold">
+                        {notification.type === 'CAROUSEL_REQUEST' ? `Solicitação de Carrossel` : `Nova Reserva`}
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        {new Date(notification.createdAt).toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short'})}
+                      </CardDescription>
                   </div>
-                  {notification.isRead && <Badge variant="secondary">Lida</Badge>}
+                  {notification.isRead && <Badge variant="secondary">Concluída</Badge>}
               </CardHeader>
               <CardContent>
-                <p className="border-l-4 border-zaca-azul pl-4 text-sm">{notification.message}</p>
+                {notification.type === 'CAROUSEL_REQUEST' 
+                    ? renderCarouselRequestCard(notification) 
+                    : <p className="text-sm">{notification.message}</p>
+                }
               </CardContent>
               <CardFooter className="flex justify-end gap-2">
                   <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setNotificationToDelete(notification)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleNotifySeller(notification)} disabled={!notification.sellerWhatsappLink}>
-                      <MessageSquare className="mr-2 h-4 w-4" /> Notificar
-                  </Button>
-                  {!notification.isRead && (
-                      <Button variant="secondary" size="sm" onClick={() => handleMarkAsRead(notification.id)} disabled={!!isLoading}>
-                          {isLoading === notification.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Check className="mr-2 h-4 w-4" />}
-                          Marcar como Lida
-                      </Button>
+                  
+                  {notification.type === 'CAROUSEL_REQUEST' && !notification.isRead && (
+                     <Button size="sm" onClick={() => handleConfirmCarousel(notification)} disabled={isLoading[notification.id]}>
+                        {isLoading[notification.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Check className="mr-2 h-4 w-4" />}
+                        Confirmar Postagem
+                    </Button>
                   )}
               </CardFooter>
             </Card>
@@ -103,22 +166,27 @@ export function NotificationClient({ initialNotifications }: NotificationClientP
         )}
       </div>
       
-      {/* Diálogo de Confirmação para Exclusão */}
+      {/* Diálogo de Confirmação de Exclusão */}
       <Dialog open={!!notificationToDelete} onOpenChange={(isOpen) => !isOpen && setNotificationToDelete(null)}>
-        <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>Confirmar Exclusão</DialogTitle>
-                <DialogDescription>
-                    Tem certeza que deseja excluir esta notificação? A reserva associada não será afetada.
-                </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="sm:justify-end gap-2">
-                <DialogClose asChild><Button type="button" variant="secondary" disabled={isLoading === notificationToDelete?.id}>Cancelar</Button></DialogClose>
-                <Button type="button" variant="destructive" onClick={handleConfirmDelete} disabled={isLoading === notificationToDelete?.id}>
-                    {isLoading === notificationToDelete?.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sim, excluir
-                </Button>
-            </DialogFooter>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="text-destructive" />
+              Confirmar Exclusão
+            </DialogTitle>
+            <DialogDescription>
+                Tem certeza que deseja excluir esta notificação? A ação é irreversível.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 mt-4">
+            <Button variant="outline" onClick={() => setNotificationToDelete(null)} disabled={isLoading[notificationToDelete?.id || '']}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isLoading[notificationToDelete?.id || '']}>
+                {isLoading[notificationToDelete?.id || ''] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                Confirmar Exclusão
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

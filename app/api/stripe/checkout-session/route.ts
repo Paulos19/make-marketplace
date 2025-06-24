@@ -1,96 +1,119 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import prisma from '@/lib/prisma';
 import { stripe } from '@/lib/stripe';
-import { z } from 'zod';
+import prisma from '@/lib/prisma';
+import { PurchaseType } from '@prisma/client';
+import Stripe from 'stripe';
 
-// Schema para validar os dados recebidos no corpo da requisição
-const checkoutSchema = z.object({
-  priceId: z.string(),
-  productId: z.string().optional(), // Opcional, para planos avulsos
-  type: z.enum(['subscription', 'payment']), // CORREÇÃO: 'one_time' alterado para 'payment'
-});
+async function createStripeCustomer(user: { id: string; email: string | null; name?: string | null; }) {
+    if (!user.email) {
+        throw new Error("User email is required to create a Stripe customer.");
+    }
+    const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.name || undefined,
+        metadata: { userId: user.id }
+    });
+    await prisma.user.update({
+        where: { id: user.id },
+        data: { stripeCustomerId: customer.id }
+    });
+    return customer.id;
+}
 
-export async function POST(request: Request) {
+
+export async function POST(req: Request) {
   try {
-    // 1. Validar a requisição e o corpo
-    const body = await request.json();
-
-    // Uma verificação manual do tipo antes do Zod para garantir que o mapeamento ocorra
-    if (body.type === 'one_time') {
-        body.type = 'payment';
+    const { priceId, productId, type: mode } = await req.json();
+    
+    if (!priceId || !mode) {
+      return new NextResponse('Price ID e mode (type) são obrigatórios.', { status: 400 });
+    }
+    if (mode !== 'subscription' && mode !== 'payment') {
+        return new NextResponse("O 'mode' (type) deve ser 'subscription' ou 'payment'.", { status: 400 });
     }
 
-    const validation = checkoutSchema.safeParse(body);
-    if (!validation.success) {
-      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
-    }
-    const { priceId, productId, type } = validation.data;
-
-    // 2. Autenticar o usuário
     const session = await getServerSession(authOptions);
     if (!session?.user?.id || !session.user.email) {
       return new NextResponse('Não autorizado', { status: 401 });
     }
-    const userId = session.user.id;
-    const userEmail = session.user.email;
-
-    // 3. Buscar o usuário no banco de dados para obter o stripeCustomerId
+    
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: session.user.id }
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'Usuário não encontrado.' }, { status: 404 });
+      return new NextResponse('Usuário não encontrado', { status: 404 });
     }
 
-    // 4. Criar um cliente no Stripe se ainda não existir
     let stripeCustomerId = user.stripeCustomerId;
     if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: userEmail,
-        name: session.user.name || undefined,
-        metadata: {
-          userId: userId,
-        },
-      });
-      stripeCustomerId = customer.id;
-
-      // Atualiza o nosso banco de dados com o ID do cliente Stripe
-      await prisma.user.update({
-        where: { id: userId },
-        data: { stripeCustomerId: stripeCustomerId },
-      });
+        stripeCustomerId = await createStripeCustomer(user);
     }
+
+    const metadata: { [key: string]: string } = {
+        userId: user.id,
+    };
     
-    // 5. Obter a URL base da aplicação para os redirecionamentos
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    if (mode === 'payment') {
+        if (productId) {
+            metadata.productId = productId;
+        }
 
-    // 6. Criar a sessão de checkout no Stripe
-    const checkoutSession = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId,
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: type, // O 'type' agora será 'subscription' ou 'payment'
-      success_url: `${appUrl}/dashboard?payment=success`,
-      cancel_url: `${appUrl}/planos?payment=cancelled`,
-      metadata: {
-        userId,
-        // Adiciona o ID do produto se for uma compra avulsa (modo 'payment')
-        ...(type === 'payment' && productId && { productId }),
-      },
-    });
+        let purchaseType: PurchaseType | null = null;
+        if (priceId === process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID) {
+            purchaseType = PurchaseType.ACHADINHO_TURBO;
+        } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_CAROUSEL_PRICE_ID) {
+            purchaseType = PurchaseType.CARROSSEL_PRACA;
+        }
 
-    if (!checkoutSession.url) {
-      return NextResponse.json({ error: 'Não foi possível criar a sessão de checkout.' }, { status: 500 });
+        if (!purchaseType) {
+            console.error(`ERRO DE CONFIGURAÇÃO: purchaseType não pôde ser determinado para o priceId: ${priceId}. Verifique as variáveis de ambiente.`);
+            return new NextResponse('Erro de configuração do produto.', { status: 500 });
+        }
+        metadata.purchaseType = purchaseType;
     }
 
-    // 7. Retornar a URL da sessão para o frontend
-    return NextResponse.json({ url: checkoutSession.url });
+    const createCheckoutSession = async (customerId: string) => {
+        return stripe.checkout.sessions.create({
+          customer: customerId,
+          payment_method_types: ['card'],
+          billing_address_collection: 'required',
+          line_items: [{ price: priceId, quantity: 1 }],
+          mode: mode,
+          success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?payment_success=true`,
+          cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/planos?payment_canceled=true`,
+          metadata: metadata,
+        });
+    }
 
-  } catch (error) {
-    console.error('[STRIPE_CHECKOUT_ERROR]', error);
-    return new NextResponse('Erro interno do servidor', { status: 500 });
+    let stripeSession;
+    try {
+        stripeSession = await createCheckoutSession(stripeCustomerId);
+    } catch (error: any) {
+        // <<< LÓGICA DE CORREÇÃO AUTOMÁTICA >>>
+        // Se o erro for "No such customer", cria um novo e tenta novamente.
+        if (error instanceof Stripe.errors.StripeInvalidRequestError && error.code === 'resource_missing') {
+            console.warn(`Cliente Stripe não encontrado ('${stripeCustomerId}'). A criar um novo cliente.`);
+            stripeCustomerId = await createStripeCustomer(user);
+            stripeSession = await createCheckoutSession(stripeCustomerId);
+        } else {
+            // Se for outro erro, lança-o para ser apanhado pelo bloco catch principal.
+            throw error;
+        }
+    }
+
+    if (!stripeSession.url) {
+        console.error("FALHA INESPERADA: A sessão do Stripe foi criada mas não retornou uma URL.", stripeSession);
+        return new NextResponse('Falha ao obter URL da sessão do Stripe.', { status: 500 });
+    }
+
+    return NextResponse.json({ url: stripeSession.url });
+
+  } catch (error: any) {
+    console.error("Erro ao criar sessão de checkout do Stripe:", error.raw?.message || error.message);
+    const errorMessage = error.raw?.message || 'Erro interno ao criar sessão';
+    return new NextResponse(errorMessage, { status: 500 });
   }
 }

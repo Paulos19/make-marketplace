@@ -3,7 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Star, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Star, MessageCircle, ChevronLeft, ChevronRight, Ban } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ProductCard, ProductCardSkeleton } from '@/app/products/components/ProductCard'
@@ -13,8 +13,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import Navbar from '@/app/components/layout/Navbar'
 import Footer from '@/app/components/layout/Footer'
+import { toast } from 'sonner'
 
-// Definindo os tipos de dados que esperamos da API
+// Tipos Review, Product, Seller
 type Review = {
     id: string;
     rating: number;
@@ -32,6 +33,7 @@ type Seller = {
     reviewsReceived: Review[];
     averageRating: number;
     totalReviews: number;
+    showInSellersPage: boolean;
 };
 
 // Componente para um único card de avaliação
@@ -100,17 +102,19 @@ export default function SellerPage() {
             try {
                 setIsLoading(true);
                 const response = await fetch(`/api/seller/${userId}`);
-                if (!response.ok) {
-                    throw new Error('Vendedor não encontrado.');
-                }
-                const dataFromApi = await response.json();
                 
-                // CORRIGIDO: Calcula os campos de avaliação no cliente
+                // <<< LÓGICA DE REDIRECIONAMENTO >>>
+                if (!response.ok) {
+                    toast.error("Este vendedor não está visível publicamente.");
+                    router.push('/sellers'); // Redireciona para a lista geral
+                    return; // Interrompe a execução
+                }
+                const dataFromApi: Seller = await response.json();
+                
                 const totalReviews = dataFromApi.reviewsReceived.length;
                 const totalRating = dataFromApi.reviewsReceived.reduce((acc: number, review: Review) => acc + review.rating, 0);
                 const averageRating = totalReviews > 0 ? totalRating / totalReviews : 0;
 
-                // Cria o objeto Seller completo antes de definir o estado
                 const completeSellerData: Seller = {
                     ...dataFromApi,
                     averageRating,
@@ -119,27 +123,26 @@ export default function SellerPage() {
                 
                 setSeller(completeSellerData);
             } catch (err: any) {
-                setError(err.message);
+                setError("Ocorreu um erro ao carregar os dados do vendedor.");
             } finally {
                 setIsLoading(false);
             }
         };
         fetchSellerData();
-    }, [userId]);
+    }, [userId, router]);
 
     const { paginatedProducts, totalPages } = useMemo(() => {
         if (!seller) return { paginatedProducts: [], totalPages: 0 };
-
         const totalPages = Math.ceil(seller.products.length / PRODUCTS_PER_PAGE);
         const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
         const endIndex = startIndex + PRODUCTS_PER_PAGE;
         const paginatedProducts = seller.products.slice(startIndex, endIndex);
-
         return { paginatedProducts, totalPages };
     }, [seller, currentPage]);
 
     if (isLoading) {
         return (
+            // ... Skeleton de carregamento ...
             <div className="container mx-auto px-4 py-12">
                 <Skeleton className="h-64 w-full" />
                 <div className="flex justify-center -mt-16">
@@ -153,15 +156,28 @@ export default function SellerPage() {
         )
     }
 
-    if (error) {
-        return <div className="text-center py-20 text-destructive">{error}</div>;
+    if (error || !seller) {
+        // O redirecionamento no useEffect já deve ter ocorrido,
+        // mas mantemos um fallback caso algo dê errado.
+        return (
+            <div className="flex flex-col min-h-screen">
+                <Navbar />
+                <main className="flex-grow flex items-center justify-center text-center p-4">
+                    <div>
+                        <Ban className="mx-auto h-16 w-16 text-destructive mb-4" />
+                        <h2 className="text-2xl font-bold text-destructive">{error || 'Página não encontrada'}</h2>
+                        <p className="text-muted-foreground mt-2">O perfil deste vendedor não pode ser exibido.</p>
+                        <Button onClick={() => router.push('/sellers')} className="mt-6">Ver outros vendedores</Button>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
     }
     
-    if (!seller) return null;
-
     return (
       <>
-      <Navbar/>
+        <Navbar/>
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             {/* Seção do Banner e Avatar */}
             <div className="relative h-48 md:h-64">
@@ -209,7 +225,7 @@ export default function SellerPage() {
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                                 {paginatedProducts.map(product => (
-                                    <ProductCard key={product.id} product={product} />
+                                    <ProductCard key={product.id} product={product as any} />
                                 ))}
                             </div>
                             <PaginationControls currentPage={currentPage} totalPages={totalPages} basePath={`/seller/${userId}`} />
@@ -219,7 +235,7 @@ export default function SellerPage() {
                     )}
                 </div>
 
-                {/* Coluna de Avaliações (agora abaixo da vitrine) */}
+                {/* Coluna de Avaliações */}
                 <div className="mt-16">
                      <h2 className="text-2xl font-bold mb-6">Avaliações de Clientes</h2>
                      {seller.reviewsReceived.length > 0 ? (
@@ -240,6 +256,7 @@ export default function SellerPage() {
             </div>
         </div>
         <Footer/>
-        </>
+      </>
     )
 }
+

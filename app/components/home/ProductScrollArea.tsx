@@ -2,21 +2,23 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { ProductCard } from '@/app/products/components/ProductCard'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
 import { Prisma } from '@prisma/client'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
-// Tipo para os produtos, incluindo relações com usuário e categoria
 type ProductWithDetails = Prisma.ProductGetPayload<{
   include: { user: true; category: true }
 }>
 
 interface ProductScrollAreaProps {
-  products: ProductWithDetails[]
+  products: ProductWithDetails[];
+  title: string;
+  href?: string;
+  icon?: React.ReactNode; // <<< PROPRIEDADE DO ÍCONE ADICIONADA
 }
 
-// Função auxiliar para transformar os dados do produto para o formato que o ProductCard espera
 const transformProductForClient = (product: ProductWithDetails) => {
   return {
     ...product,
@@ -26,37 +28,28 @@ const transformProductForClient = (product: ProductWithDetails) => {
   }
 }
 
-export function ProductScrollArea({ products }: ProductScrollAreaProps) {
+export function ProductScrollArea({ products, title, href, icon }: ProductScrollAreaProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const [scrollProgress, setScrollProgress] = useState(0)
 
-  // Função para verificar se a rolagem é possível e atualizar a barra de progresso
   const handleScroll = useCallback(() => {
     const el = scrollContainerRef.current
     if (el) {
       const hasOverflow = el.scrollWidth > el.clientWidth
       const currentScroll = el.scrollLeft
       const maxScroll = el.scrollWidth - el.clientWidth
-
       setCanScrollLeft(currentScroll > 5)
       setCanScrollRight(hasOverflow && currentScroll < maxScroll - 5)
-      
-      const progress = maxScroll > 0 ? (currentScroll / maxScroll) * 100 : 0
-      setScrollProgress(progress)
     }
   }, [])
 
-  // Efeito para adicionar e remover listeners de scroll e resize
   useEffect(() => {
     const el = scrollContainerRef.current
     if (el) {
       const timer = setTimeout(handleScroll, 100)
-      
       window.addEventListener('resize', handleScroll)
       el.addEventListener('scroll', handleScroll, { passive: true })
-      
       return () => {
         clearTimeout(timer)
         window.removeEventListener('resize', handleScroll)
@@ -65,15 +58,11 @@ export function ProductScrollArea({ products }: ProductScrollAreaProps) {
     }
   }, [products, handleScroll])
 
-  // Função para rolar o container ao clicar nas setas
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollContainerRef.current
     if (el) {
       const scrollAmount = el.clientWidth * 0.8
-      el.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth',
-      })
+      el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' })
     }
   }
 
@@ -82,60 +71,58 @@ export function ProductScrollArea({ products }: ProductScrollAreaProps) {
   }
 
   return (
-    // CORRIGIDO: O padding inferior foi movido para este contêiner pai no modo desktop.
-    <div className="relative md:pb-12">
-      {/* Container de Rolagem */}
-      <div
-        ref={scrollContainerRef}
-        // O padding extra no desktop foi removido daqui
-        className="flex gap-4 overflow-x-auto pb-4 no-scrollbar"
-      >
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="w-48 flex-shrink-0 md:w-56"
-          >
-            <ProductCard product={transformProductForClient(product)} />
-          </div>
-        ))}
-      </div>
-
-      {/* Barra de Navegação Customizada para Desktop */}
-      <div className="absolute bottom-0 left-0 right-0 hidden h-5 items-center justify-center md:flex">
-         <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => scroll('left')}
-            disabled={!canScrollLeft}
-            className={cn(
-                "h-7 w-7 rounded-full shrink-0 transition-opacity",
-                !canScrollLeft && "opacity-30 cursor-not-allowed"
+    <section>
+        <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+                {icon} {/* <<< ÍCONE RENDERIZADO AQUI */}
+                <h2 className="text-2xl font-bold tracking-tight text-gray-800 dark:text-gray-100">
+                    {title}
+                </h2>
+            </div>
+            {href && (
+                <Button variant="ghost" asChild>
+                    <Link href={href} className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors">
+                        Ver todos
+                        <ArrowRight className="h-4 w-4" />
+                    </Link>
+                </Button>
             )}
-         >
-            <ChevronLeft className="h-5 w-5" />
-         </Button>
+        </div>
 
-         <div className="mx-4 h-1 flex-grow max-w-xs rounded-full bg-slate-200 dark:bg-slate-700">
-            <div 
-                className="h-1 rounded-full bg-slate-500 dark:bg-slate-400 transition-all duration-200"
-                // A barra de progresso agora se move dentro da barra de fundo
-                style={{ transform: `translateX(${scrollProgress}%)`, width: '20%' }}
-            />
-         </div>
-        
-        <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => scroll('right')}
-            disabled={!canScrollRight}
-            className={cn(
-                "h-7 w-7 rounded-full shrink-0 transition-opacity",
-                !canScrollRight && "opacity-30 cursor-not-allowed"
-            )}
-         >
-            <ChevronRight className="h-5 w-5" />
-         </Button>
-      </div>
-    </div>
+        <div className="relative">
+            <div
+                ref={scrollContainerRef}
+                className="flex gap-4 overflow-x-auto pb-4 no-scrollbar"
+            >
+                {products.map((product) => (
+                    <div key={product.id} className="w-48 flex-shrink-0 md:w-56">
+                        <ProductCard product={transformProductForClient(product) as any} />
+                    </div>
+                ))}
+            </div>
+
+            {/* Setas de navegação para Desktop */}
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 hidden md:flex items-center">
+                 <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => scroll('left')}
+                    disabled={!canScrollLeft}
+                    className={cn("h-8 w-8 rounded-full transition-opacity", !canScrollLeft && "opacity-30 cursor-not-allowed")}
+                >
+                    <ChevronLeft className="h-5 w-5" />
+                </Button>
+                 <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => scroll('right')}
+                    disabled={!canScrollRight}
+                    className={cn("h-8 w-8 rounded-full transition-opacity", !canScrollRight && "opacity-30 cursor-not-allowed")}
+                >
+                    <ChevronRight className="h-5 w-5" />
+                </Button>
+            </div>
+        </div>
+    </section>
   )
 }
