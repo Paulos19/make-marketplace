@@ -28,23 +28,6 @@ const stripePromise = loadStripe(stripePublishableKey);
 
 const plans = [
     {
-        name: 'Meu Catálogo no Zaca',
-        priceId: process.env.NEXT_PUBLIC_STRIPE_SUBSCRIPTION_PRICE_ID,
-        price: 'R$ 19,90',
-        frequency: '/mês',
-        description: 'Tenha sua própria página de vendedor e apareça na lista de lojas.',
-        features: [
-            'Página de vendedor personalizada',
-            'Exibição na lista de vendedores',
-            'Link compartilhável da sua loja',
-            'Painel de gerenciamento completo',
-        ],
-        icon: Crown,
-        buttonText: 'Assinar Agora',
-        type: 'subscription',
-        className: 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20'
-    },
-    {
         name: 'Achadinho Turbo',
         priceId: process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID,
         price: 'R$ 9,90',
@@ -66,7 +49,7 @@ const plans = [
         priceId: process.env.NEXT_PUBLIC_STRIPE_CAROUSEL_PRICE_ID,
         price: 'R$ 14,90',
         frequency: '/postagem',
-        description: 'Seu produto divulgado em um post no Instagram do Zacaplace.',
+        description: 'Seu produto divulgado em um post com Tráfego Pago no Instagram do Zacaplace.',
         features: [
             'Divulgação para uma audiência engajada',
             'Post dedicado no feed do Instagram',
@@ -77,7 +60,24 @@ const plans = [
         buttonText: 'Divulgar no Instagram',
         type: 'payment',
         className: 'border-red-400 bg-red-50 dark:bg-red-900/20'
-    }
+    },
+    {
+        name: 'Meu Catálogo no Zaca',
+        priceId: process.env.NEXT_PUBLIC_STRIPE_SUBSCRIPTION_PRICE_ID,
+        price: 'R$ 19,90',
+        frequency: '/mês',
+        description: 'Tenha sua própria página de vendedor e apareça na lista de lojas.',
+        features: [
+            'Página de vendedor personalizada',
+            'Exibição na lista de vendedores',
+            'Link compartilhável da sua loja',
+            'Painel de gerenciamento completo',
+        ],
+        icon: Crown,
+        buttonText: 'Assinar Agora',
+        type: 'subscription',
+        className: 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20'
+    },
 ];
 
 export default function PlanosPage() {

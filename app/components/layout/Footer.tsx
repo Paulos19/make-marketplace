@@ -52,7 +52,7 @@ export default function Footer() {
         <div className="mx-auto max-w-md">
           <div className="flex justify-center">
             <Link href="/" className="inline-block" aria-label="Página Inicial do Zacaplace">
-              <Image src="/zacalogo2.svg" alt="Zacaplace Logo" width={200} height={50} priority={false} />
+              <Image src="/zacalogo.png" alt="Zacaplace Logo" width={200} height={50} priority={false} />
             </Link>
           </div>
 

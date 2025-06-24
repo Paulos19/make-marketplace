@@ -104,7 +104,7 @@ export default function Navbar() {
   ];
 
   const userNavLinks = [
-    { href: '/my-reservations', label: 'Minhas Compras', icon: Heart },
+    { href: '/my-reservations', label: 'Favoritos', icon: Heart },
     { href: '/dashboard', label: 'Minha Loja', icon: LayoutDashboard },
   ];
 
@@ -126,7 +126,7 @@ export default function Navbar() {
         
         <div className="flex items-center gap-6">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Image src="/zacalogo2.svg" alt="Zacaplace Logo" width={200} height={60} priority />
+            <Image src="/zacalogo.png" alt="Zacaplace Logo" width={200} height={60} priority />
           </Link>
           <nav className="hidden lg:flex">
             <ul className="flex items-center space-x-6 text-sm font-medium">
@@ -153,7 +153,7 @@ export default function Navbar() {
           </div>
 
           <Link href='/my-reservations'>
-            <Button variant="ghost" size="icon" aria-label="Minhas Compras" className="hidden sm:inline-flex">
+            <Button variant="ghost" size="icon" aria-label="Favoritos" className="hidden sm:inline-flex">
               <Heart className="h-5 w-5" />
             </Button>
           </Link>
@@ -250,7 +250,7 @@ export default function Navbar() {
                 ) : (
                   <div className="p-4 border-b dark:border-slate-800">
                     <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Image src="/zacalogo2.svg" alt="Zacaplace Logo" width={150} height={40} />
+                        <Image src="/zacalogo.png" alt="Zacaplace Logo" width={150} height={40} />
                     </Link>
                   </div>
                 )}
@@ -274,7 +274,7 @@ export default function Navbar() {
                   <Separator className="my-4" />
                   {user ? (
                     <>
-                      <SheetClose asChild><Link href="/my-reservations" className="flex items-center gap-3 text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas"><Heart className="mr- h-5 w-5"/>Minhas Compras</Link></SheetClose>
+                      <SheetClose asChild><Link href="/my-reservations" className="flex items-center gap-3 text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas"><Heart className="mr- h-5 w-5"/>Favoritos</Link></SheetClose>
                       <SheetClose asChild><Link href="/dashboard" className="flex items-center gap-3 text-lg font-medium p-2 rounded-md text-slate-700 dark:text-slate-200 hover:text-zaca-azul dark:hover:text-zaca-lilas"><LayoutDashboard className="mr- h-5 w-5"/>Minha Loja</Link></SheetClose>
 
                       {user.role === UserRole.SELLER && (
