@@ -8,7 +8,8 @@ import { PasswordResetEmail } from '@/app/components/emails/PasswordResetEmail';
 import { ReservationNotificationEmail } from '@/app/components/emails/ReservationNotificationEmail';
 import { OrderCompletionEmail } from '@/app/components/emails/OrderCompletionEmail';
 import { ContactFormEmail } from '@/app/components/emails/ContactFormEmail';
-import ReviewRequestEmail from '@/app/components/emails/ReviewRequestEmail'; // Importa o novo template
+import ReviewRequestEmail from '@/app/components/emails/ReviewRequestEmail';
+import { StripePurchaseConfirmationEmail } from '@/app/components/emails/StripePurchaseConfirmationEmail'; // <<< 1. NOVO IMPORT
 
 // Inicializa a instância do Resend
 export const resend = new Resend(process.env.RESEND_API_KEY);
@@ -39,39 +40,39 @@ async function sendEmail({ to, subject, react, replyTo }: { to: string | string[
   }
 }
 
-// Funções de envio de e-mail existentes...
-// (sendVerificationEmail, sendPasswordResetEmail, etc.)
+// ... (Funções existentes como sendVerificationEmail, etc.) ...
 
-// --- NOVA FUNÇÃO PARA SOLICITAR AVALIAÇÃO ---
-interface ReviewRequestParams {
-  to: string;
-  buyerName: string;
-  productName: string;
-  sellerName: string;
-  reviewToken: string;
+// --- INÍCIO DA NOVA FUNÇÃO ---
+interface StripePurchaseConfirmationParams {
+    to: string;
+    userName: string | null;
+    planName: string;
+    price: string;
+    isSubscription: boolean;
 }
 
 /**
- * Envia um e-mail solicitando que o comprador avalie a compra.
- * @param params - Parâmetros para o e-mail de avaliação.
+ * Envia um e-mail de confirmação de compra ou assinatura via Stripe.
+ * @param params - Parâmetros para o e-mail de confirmação.
  */
-export const sendReviewRequestEmail = async (params: ReviewRequestParams) => {
-  const { to, buyerName, productName, sellerName, reviewToken } = params;
-  const reviewLink = `${process.env.NEXT_PUBLIC_APP_URL}/review/${reviewToken}`;
+export const sendStripePurchaseConfirmationEmail = async (params: StripePurchaseConfirmationParams) => {
+    const { to, userName, planName, price, isSubscription } = params;
 
-  await sendEmail({
-    to: to,
-    subject: `Avalie sua compra de ${productName}`,
-    react: <ReviewRequestEmail
-      buyerName={buyerName}
-      productName={productName}
-      sellerName={sellerName}
-      reviewLink={reviewLink}
-    />,
-  });
+    await sendEmail({
+        to,
+        subject: `✅ Compra Confirmada: ${planName}`,
+        react: <StripePurchaseConfirmationEmail
+            userName={userName}
+            planName={planName}
+            price={price}
+            isSubscription={isSubscription}
+        />
+    });
 };
+// --- FIM DA NOVA FUNÇÃO ---
 
-// ...outras funções de envio de e-mail...
+// Funções de envio de e-mail existentes...
+// (sendVerificationEmail, sendPasswordResetEmail, etc.)
 
 interface VerificationEmailParams {
   email: string;

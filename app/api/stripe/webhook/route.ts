@@ -3,7 +3,8 @@ import Stripe from 'stripe';
 import { headers } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { stripe } from '@/lib/stripe';
-import { SubscriptionStatus } from '@prisma/client';
+import { SubscriptionStatus, PurchaseType, User } from '@prisma/client';
+import { sendStripePurchaseConfirmationEmail } from '@/lib/resend';
 
 /**
  * Mapeia o status da assinatura do Stripe para o enum correspondente do Prisma.
@@ -11,42 +12,28 @@ import { SubscriptionStatus } from '@prisma/client';
  * @returns O status do enum do Prisma.
  */
 function toPrismaSubscriptionStatus(stripeStatus: Stripe.Subscription.Status): SubscriptionStatus {
-  switch (stripeStatus) {
-    case 'active':
-      return SubscriptionStatus.ACTIVE;
-    case 'canceled':
-      return SubscriptionStatus.CANCELED;
-    case 'incomplete':
-      return SubscriptionStatus.INCOMPLETE;
-    case 'incomplete_expired':
-      return SubscriptionStatus.INCOMPLETE_EXPIRED;
-    case 'past_due':
-      return SubscriptionStatus.PAST_DUE;
-    case 'trialing':
-      return SubscriptionStatus.TRIALING;
-    case 'unpaid':
-      return SubscriptionStatus.UNPAID;
-    // O status 'paused' não está no seu enum, mas pode ser um caso a tratar no futuro.
-    default:
-      // Se um novo status for introduzido pelo Stripe, isso lançará um erro,
-      // o que é bom para nos alertar a atualizar nosso enum.
-      throw new Error(`Unhandled Stripe subscription status: ${stripeStatus}`);
-  }
+  const statusMap: Record<Stripe.Subscription.Status, SubscriptionStatus> = {
+    active: SubscriptionStatus.ACTIVE,
+    canceled: SubscriptionStatus.CANCELED,
+    incomplete: SubscriptionStatus.INCOMPLETE,
+    incomplete_expired: SubscriptionStatus.INCOMPLETE_EXPIRED,
+    past_due: SubscriptionStatus.PAST_DUE,
+    trialing: SubscriptionStatus.TRIALING,
+    unpaid: SubscriptionStatus.UNPAID,
+    paused: SubscriptionStatus.CANCELED,
+  };
+  return statusMap[stripeStatus] || SubscriptionStatus.CANCELED;
 }
-
 
 /**
  * Manipulador de Webhooks do Stripe.
- * Esta rota recebe eventos do Stripe e atualiza o banco de dados da aplicação.
  */
 export async function POST(req: Request) {
-  // O corpo precisa ser lido como texto bruto para a verificação da assinatura
   const body = await req.text();
   const signature = (await headers()).get('Stripe-Signature') as string;
 
   let event: Stripe.Event;
 
-  // 1. Verificar a assinatura do webhook para garantir que a requisição veio do Stripe
   try {
     event = stripe.webhooks.constructEvent(
       body,
@@ -59,66 +46,152 @@ export async function POST(req: Request) {
   }
 
   const session = event.data.object as Stripe.Checkout.Session;
-  
-  // 2. Lidar com o evento 'checkout.session.completed'
-  if (event.type === 'checkout.session.completed') {
-    const subscription = await stripe.subscriptions.retrieve(
-      session.subscription as string
-    );
 
-    // Verifica se os metadados necessários estão presentes
-    if (!session?.metadata?.userId) {
-      return new NextResponse('ID do usuário nos metadados do Webhook não encontrado', { status: 400 });
+  // --- Lidar com a finalização de um checkout ---
+  if (event.type === 'checkout.session.completed') {
+    const userId = session?.metadata?.userId;
+
+    if (!userId) {
+      return new NextResponse('Webhook Error: ID do usuário não encontrado.', { status: 400 });
+    }
+    
+    // --- Busca os dados do usuário para o email ---
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+    });
+    if (!user || !user.email) {
+        return new NextResponse('Webhook Error: Usuário ou email não encontrado no DB.', { status: 404 });
     }
 
-    // Atualiza o registro do usuário com os detalhes da assinatura
-    await prisma.user.update({
-      where: {
-        id: session.metadata.userId,
-      },
-      data: {
-        stripeSubscriptionId: subscription.id,
-        stripeCustomerId: subscription.customer as string,
+    const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+    const firstItem = lineItems.data[0];
+    const planName = firstItem.description || 'Plano Personalizado';
+    const price = firstItem.price?.unit_amount ? (firstItem.price.unit_amount / 100).toFixed(2) : '0.00';
+
+    // --- LÓGICA PARA ASSINATURAS ---
+    if (session.mode === 'subscription') {
+      if (!session.subscription) {
+        return new NextResponse('Webhook Error: ID da assinatura não encontrado para o modo de assinatura.', { status: 400 });
+      }
+      const subscription = await stripe.subscriptions.retrieve(
+        session.subscription as string
+      );
+
+      const periodEndTimestamp = (subscription as any).current_period_end;
+      const dataToUpdate: any = {
+          stripeSubscriptionId: subscription.id,
+          stripeCustomerId: subscription.customer as string,
+          stripePriceId: subscription.items.data[0]?.price.id,
+          stripeSubscriptionStatus: toPrismaSubscriptionStatus(subscription.status),
+      };
+
+      if (periodEndTimestamp) {
+        dataToUpdate.stripeCurrentPeriodEnd = new Date(periodEndTimestamp * 1000);
+      }
+      
+      await prisma.user.update({
+        where: { id: userId },
+        data: dataToUpdate,
+      });
+      
+      await sendStripePurchaseConfirmationEmail({
+          to: user.email,
+          userName: user.name,
+          planName,
+          price: `R$ ${price} /mês`,
+          isSubscription: true
+      });
+    }
+    // --- LÓGICA PARA PAGAMENTOS ÚNICOS ---
+    else if (session.mode === 'payment') {
+      const productId = session?.metadata?.productId;
+      const purchaseType = (session?.metadata?.purchaseType as PurchaseType) || PurchaseType.ACHADINHO_TURBO;
+      
+      if (!session.payment_intent) {
+        return new NextResponse('Webhook Error: ID da intenção de pagamento não encontrado.', { status: 400 });
+      }
+
+      if (productId) {
+        const boostDurationDays = 7;
+        const boostedUntil = new Date();
+        boostedUntil.setDate(boostedUntil.getDate() + boostDurationDays);
+
+        await prisma.product.update({
+          where: { id: productId },
+          data: {
+            boostedUntil: boostedUntil,
+          },
+        });
+      }
+
+      await prisma.purchase.create({
+        data: {
+          userId,
+          productId,
+          type: purchaseType,
+          status: 'PAID',
+          stripePaymentIntentId: session.payment_intent as string,
+        },
+      });
+      
+      await sendStripePurchaseConfirmationEmail({
+        to: user.email,
+        userName: user.name,
+        planName,
+        price: `R$ ${price}`,
+        isSubscription: false
+      });
+    }
+  }
+
+  // --- Lidar com renovações de assinatura pagas com sucesso ---
+  if (event.type === 'invoice.payment_succeeded') {
+    const invoice = event.data.object as Stripe.Invoice;
+    const subscriptionId = (invoice as any).subscription;
+    
+    if (subscriptionId && typeof invoice.customer === 'string') {
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      
+      const periodEndTimestamp = (subscription as any).current_period_end;
+      const dataToUpdate: any = {
         stripePriceId: subscription.items.data[0]?.price.id,
         stripeSubscriptionStatus: toPrismaSubscriptionStatus(subscription.status),
-      },
-    });
+      };
+
+      if (periodEndTimestamp) {
+        dataToUpdate.stripeCurrentPeriodEnd = new Date(periodEndTimestamp * 1000);
+      }
+
+      await prisma.user.update({
+        where: {
+          stripeCustomerId: invoice.customer,
+        },
+        data: dataToUpdate,
+      });
+    }
   }
 
-  // 3. Lidar com o evento 'invoice.payment_succeeded'
-  // Este evento ocorre quando uma renovação de assinatura é paga com sucesso
-  if (event.type === 'invoice.payment_succeeded') {
-    const subscription = await stripe.subscriptions.retrieve(
-      session.subscription as string
-    );
-
-    // Atualiza a data de término do período da assinatura do usuário
-    await prisma.user.update({
-      where: {
-        stripeSubscriptionId: subscription.id,
-      },
-      data: {
-        stripePriceId: subscription.items.data[0]?.price.id,
-      },
-    });
-  }
-
-  // 4. Lidar com outros eventos de assinatura (atualização, cancelamento, etc.)
+  // --- Lidar com atualizações ou exclusões de assinaturas ---
   if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription;
+
+      const periodEndTimestamp = (subscription as any).current_period_end;
+      const dataToUpdate: any = {
+        stripeSubscriptionStatus: toPrismaSubscriptionStatus(subscription.status),
+        stripePriceId: subscription.items.data[0]?.price.id,
+      };
+
+      if (periodEndTimestamp) {
+        dataToUpdate.stripeCurrentPeriodEnd = new Date(periodEndTimestamp * 1000);
+      }
+
       await prisma.user.update({
           where: {
               stripeSubscriptionId: subscription.id,
           },
-          data: {
-              // CORREÇÃO: Usa a função auxiliar para mapear o status
-              stripeSubscriptionStatus: toPrismaSubscriptionStatus(subscription.status),
-              // Se a assinatura for cancelada, podemos limpar a data de término
-              ...(subscription.status === 'canceled' && { stripeCurrentPeriodEnd: null }),
-          },
+          data: dataToUpdate,
       });
   }
 
-  // Retorna uma resposta 200 para confirmar o recebimento do evento
   return new NextResponse(null, { status: 200 });
 }
