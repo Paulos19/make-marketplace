@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { Prisma } from '@prisma/client'
-import { ChevronRight, ChevronLeft, PackageOpen } from 'lucide-react'
+import { ChevronRight, ChevronLeft, PackageOpen, Rocket, Eye, Heart } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import AchadinhosDoZacaBanner from '../components/AchadinhosDoZacaBanner'
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
+import Autoplay from 'embla-carousel-autoplay'
+import { Badge } from '@/components/ui/badge'
 import { ProductCard, ProductCardSkeleton } from './components/ProductCard'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import Navbar from '../components/layout/Navbar'
@@ -25,23 +27,27 @@ type CategoryWithProducts = Prisma.CategoryGetPayload<{
 type SellerWithProducts = Prisma.UserGetPayload<{
   include: { products: { include: { user: true; category: true } } }
 }>
+// Tipo que o ProductCard espera, incluindo a propriedade `categories`
+type ProductCardPropsType = ProductWithDetails & { categories: {id: string; name: string}[] };
 
-// --- Função Auxiliar para transformar dados do produto para o cliente ---
-const transformProductForClient = (product: ProductWithDetails) => {
-  return {
-    ...product,
-    categories: product.category ? [product.category] : [],
-    createdAt: new Date(product.createdAt).toISOString(),
-    updatedAt: new Date(product.updatedAt).toISOString(),
-  }
-}
+// --- Função Auxiliar para transformar o produto para o formato do card ---
+const transformForCard = (product: ProductWithDetails): ProductCardPropsType => {
+    return {
+        ...product,
+        // Cria o array 'categories' que o ProductCard espera
+        categories: product.category ? [product.category] : [],
+    };
+};
 
 // --- Componente de Scroll de Produtos (com navegação por setas no desktop) ---
 const ProductScrollArea = ({ products }: { products: ProductWithDetails[] }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
-  
+ 
+    // Filtra produtos para garantir que tenham imagens antes de renderizar
+    const productsWithImages = useMemo(() => products.filter(p => p.images && p.images.length > 0), [products]);
+
     const handleScroll = useCallback(() => {
       const el = scrollContainerRef.current
       if (el) {
@@ -50,7 +56,7 @@ const ProductScrollArea = ({ products }: { products: ProductWithDetails[] }) => 
         setCanScrollRight(hasOverflow && el.scrollLeft < el.scrollWidth - el.clientWidth)
       }
     }, [])
-  
+ 
     useEffect(() => {
       const el = scrollContainerRef.current
       if (el) {
@@ -62,8 +68,8 @@ const ProductScrollArea = ({ products }: { products: ProductWithDetails[] }) => 
           window.removeEventListener('resize', handleScroll)
         }
       }
-    }, [products, handleScroll])
-  
+    }, [productsWithImages, handleScroll])
+ 
     const scroll = (direction: 'left' | 'right') => {
       const el = scrollContainerRef.current
       if (el) {
@@ -71,16 +77,21 @@ const ProductScrollArea = ({ products }: { products: ProductWithDetails[] }) => 
         el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' })
       }
     }
-  
+ 
+    if (productsWithImages.length === 0) {
+        return <div className="text-center text-sm text-muted-foreground py-4">Nenhum item com imagem para exibir.</div>;
+    }
+
     return (
       <div className="relative">
         <div
           ref={scrollContainerRef}
           className="flex gap-4 overflow-x-auto pb-4 no-scrollbar"
         >
-          {products.map((product) => (
+          {productsWithImages.map((product) => (
             <div key={product.id} className="w-48 flex-shrink-0 md:w-56">
-              <ProductCard product={transformProductForClient(product)} />
+              {/* Aplica a transformação aqui */}
+              <ProductCard product={transformForCard(product)} />
             </div>
           ))}
         </div>
@@ -96,6 +107,73 @@ const ProductScrollArea = ({ products }: { products: ProductWithDetails[] }) => 
           </div>
         ) : null}
       </div>
+    )
+}
+
+// --- Componente do Novo Banner de Produtos Turbinados ---
+const BoostedProductsBanner = ({ products, isLoading }: { products: ProductWithDetails[], isLoading: boolean }) => {
+    const formatCurrency = (value: number) => {
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    };
+    
+    // Garante que apenas produtos com imagens apareçam no banner
+    const productsWithImages = useMemo(() => products.filter(p => p.images && p.images.length > 0), [products]);
+
+    if (isLoading) {
+        return (
+            <section className="relative h-[60vh] w-full bg-slate-200 dark:bg-slate-800 md:h-[75vh]">
+                <div className="flex h-full w-full items-center justify-center">
+                    <Skeleton className="h-full w-full" />
+                </div>
+            </section>
+        )
+    }
+
+    if (productsWithImages.length === 0) {
+        return null; // Não renderiza nada se não houver produtos turbinados com imagem
+    }
+
+    return (
+        <section className="w-full">
+            <Carousel plugins={[Autoplay({ delay: 7000, stopOnInteraction: true })]} opts={{ loop: true }} className="w-full">
+                <CarouselContent>
+                    {productsWithImages.map((product) => (
+                        <CarouselItem key={product.id}>
+                            <div className="group relative h-[60vh] w-full overflow-hidden md:h-[100vh]">
+                                <Image
+                                    src={product.images[0]}
+                                    alt={product.name}
+                                    fill
+                                    className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                                    priority
+                                />
+                                <div className="absolute inset-0 bg-black/60 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white">
+                                    <div className="container mx-auto flex flex-col items-center gap-4 p-4">
+                                        <Badge variant="secondary" className="border-blue-400 bg-blue-900/50 py-2 px-4 text-sm font-semibold text-blue-300 backdrop-blur-sm">
+                                            <Rocket className="mr-2 h-5 w-5" />
+                                            Achadinho Turbinado
+                                        </Badge>
+                                        <h1 className="text-4xl font-extrabold tracking-tight drop-shadow-lg md:text-6xl">{product.name}</h1>
+                                        <p className="text-2xl font-bold text-primary drop-shadow-md">{formatCurrency(product.price)}</p>
+                                        <div className="mt-4 flex flex-wrap justify-center gap-3">
+                                            <Button asChild size="lg">
+                                                <Link href={`/products/${product.id}`}><Eye className="mr-2 h-5 w-5" />Ver Detalhes</Link>
+                                            </Button>
+                                            <Button asChild size="lg" variant="outline" className="border-white/50 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20">
+                                                <Link href={`/products/${product.id}?action=reserve`}><Heart className="mr-2 h-5 w-5" />Reservar Agora</Link>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </CarouselItem>
+                    ))}
+                </CarouselContent>
+                <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 hidden text-white md:inline-flex" />
+                <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 hidden text-white md:inline-flex" />
+            </Carousel>
+        </section>
     )
 }
 
@@ -121,8 +199,8 @@ const SellerSection = ({ seller }: { seller: SellerWithProducts }) => {
 
   const SellerAvatar = () => (
     <Avatar className={cn(
-        "h-14 w-14 border-2", 
-        isStoreAvailable ? "border-primary/50 transition-transform duration-300 group-hover:scale-110" : "border-gray-300 dark:border-gray-700"
+      "h-14 w-14 border-2", 
+      isStoreAvailable ? "border-primary/50 transition-transform duration-300 group-hover:scale-110" : "border-gray-300 dark:border-gray-700"
     )}>
         <AvatarImage src={seller.image || undefined} alt={seller.name || 'Vendedor'} />
         <AvatarFallback>{seller.storeName?.charAt(0) || seller.name?.charAt(0) || 'V'}</AvatarFallback>
@@ -167,8 +245,17 @@ const SellerSection = ({ seller }: { seller: SellerWithProducts }) => {
 }
 
 const FeaturedCategorySection = ({ category, orientation = 'left' }: { category: CategoryWithProducts; orientation?: 'left' | 'right' }) => {
-  const [featuredProduct, ...otherProducts] = category.products
-  const bannerImage = featuredProduct?.images[0] || '/img-placeholder.png'
+  // Lógica mais robusta: encontra o primeiro produto com imagem para o banner
+  const featuredProduct = category.products.find(p => p.images && p.images.length > 0);
+  
+  // Se nenhum produto na categoria tiver imagem, não renderiza a seção
+  if (!featuredProduct) {
+    return null;
+  }
+  
+  // Filtra os outros produtos (que não são o do banner) e que também tenham imagem
+  const otherProducts = category.products.filter(p => p.id !== featuredProduct.id && p.images && p.images.length > 0);
+  const bannerImage = featuredProduct.images[0];
 
   return (
     <div className="container mx-auto grid min-h-screen grid-cols-1 items-center gap-6 md:grid-cols-10">
@@ -182,7 +269,8 @@ const FeaturedCategorySection = ({ category, orientation = 'left' }: { category:
         </div>
         <div className="grid grid-cols-2 gap-4">
           {otherProducts.slice(0, 2).map((product) => (
-            <ProductCard key={product.id} product={transformProductForClient(product)} />
+            // Aplica a transformação aqui
+            <ProductCard key={product.id} product={transformForCard(product)} />
           ))}
         </div>
         <div className="mt-4 text-center md:text-left">
@@ -195,7 +283,7 @@ const FeaturedCategorySection = ({ category, orientation = 'left' }: { category:
 
 // --- Componente Principal da Página ---
 export default function ProductsPage() {
-  const [bannerProducts, setBannerProducts] = useState<ProductWithDetails[]>([]);
+  const [boostedProducts, setBoostedProducts] = useState<ProductWithDetails[]>([]);
   const [categories, setCategories] = useState<CategoryWithProducts[]>([]);
   const [sellers, setSellers] = useState<SellerWithProducts[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -204,16 +292,16 @@ export default function ProductsPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true)
-        const [bannerRes, categoriesRes, sellersRes] = await Promise.all([
-          fetch(`/api/products?limit=5&sort=createdAt:desc`),
+        const [boostedRes, categoriesRes, sellersRes] = await Promise.all([
+          fetch(`/api/products/boosted`),
           fetch(`/api/products/by-category`),
           fetch(`/api/sellers/featured`),
         ])
-        if (!bannerRes.ok || !categoriesRes.ok || !sellersRes.ok) throw new Error('Falha ao buscar os dados da página.')
-        const bannerData = await bannerRes.json()
+        if (!boostedRes.ok || !categoriesRes.ok || !sellersRes.ok) throw new Error('Falha ao buscar os dados da página.')
+        const boostedData = await boostedRes.json()
         const categoriesData = await categoriesRes.json()
         const sellersData = await sellersRes.json()
-        setBannerProducts(bannerData)
+        setBoostedProducts(boostedData.products || boostedData)
         setCategories(categoriesData)
         setSellers(sellersData)
       } catch (error) {
@@ -239,7 +327,7 @@ export default function ProductsPage() {
     <>
     <Navbar/>
     <main>
-      <AchadinhosDoZacaBanner products={bannerProducts.map(transformProductForClient)} isLoading={isLoading} />
+      <BoostedProductsBanner products={boostedProducts} isLoading={isLoading} />
       {isLoading && (
         <div className="container mx-auto py-12">
           <div className="space-y-12">
@@ -261,7 +349,9 @@ export default function ProductsPage() {
               return <SellerSection key={`seller-${section.data.id}`} seller={section.data} />
             }
             if (section.type === 'category') {
-              if ((index + 1) % 4 === 0 && section.data.products.length >= 3) {
+              // Condição atualizada para checar se há produtos com imagens
+              const productsWithImages = section.data.products.filter(p => p.images && p.images.length > 0);
+              if ((index + 1) % 4 === 0 && productsWithImages.length >= 3) {
                 return (
                   <FeaturedCategorySection
                     key={`featured-${section.data.id}`}

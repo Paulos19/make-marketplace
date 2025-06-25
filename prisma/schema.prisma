@@ -40,44 +40,44 @@ enum PurchaseType {
 }
 
 enum ProductCondition {
-  NEW             // Novo
-  GOOD_CONDITION  // Em boas condições
-  USED            // Usado
-  REFURBISHED     // Recondicionado
-  OTHER           // Outro
+  NEW // Novo
+  GOOD_CONDITION // Em boas condições
+  USED // Usado
+  REFURBISHED // Recondicionado
+  OTHER // Outro
 }
 
 // Modelo para Usuários, Vendedores e Administradores
 model User {
-  id                     String              @id @default(cuid())
-  name                   String?
-  email                  String?             @unique
-  emailVerified          DateTime?
-  image                  String?
-  passwordHash           String?
-  role                   UserRole            @default(USER)
-  storeName              String?
-  whatsappLink           String?
-  profileDescription     String?
-  sellerBannerImageUrl   String?
-  showInSellersPage      Boolean             @default(false)
-  createdAt              DateTime            @default(now())
-  updatedAt              DateTime            @updatedAt
-  stripeCustomerId       String?             @unique @map("stripe_customer_id")
-  stripeSubscriptionId   String?             @unique @map("stripe_subscription_id")
+  id                       String              @id @default(cuid())
+  name                     String?
+  email                    String?             @unique
+  emailVerified            DateTime?
+  image                    String?
+  passwordHash             String?
+  role                     UserRole            @default(USER)
+  storeName                String?
+  whatsappLink             String?
+  profileDescription       String?
+  sellerBannerImageUrl     String?
+  showInSellersPage        Boolean             @default(false)
+  createdAt                DateTime            @default(now())
+  updatedAt                DateTime            @updatedAt
+  stripeCustomerId         String?             @unique @map("stripe_customer_id")
+  stripeSubscriptionId     String?             @unique @map("stripe_subscription_id")
   stripeSubscriptionStatus SubscriptionStatus? @map("stripe_subscription_status")
-  stripePriceId          String?             @map("stripe_price_id")
-  stripeCurrentPeriodEnd DateTime?           @map("stripe_current_period_end")
+  stripePriceId            String?             @map("stripe_price_id")
+  stripeCurrentPeriodEnd   DateTime?           @map("stripe_current_period_end")
 
-  accounts             Account[]
-  sessions             Session[]
-  products             Product[]
-  reservations         Reservation[]
-  reviewsMade          Review[]            @relation("BuyerReviews")
-  reviewsReceived      Review[]            @relation("SellerReviews")
-  shortLinks           ShortLink[]
-  adminNotifications   AdminNotification[]
-  purchases            Purchase[]
+  accounts           Account[]
+  sessions           Session[]
+  products           Product[]
+  reservations       Reservation[]
+  reviewsMade        Review[]            @relation("BuyerReviews")
+  reviewsReceived    Review[]            @relation("SellerReviews")
+  shortLinks         ShortLink[]
+  adminNotifications AdminNotification[]
+  purchases          Purchase[]
 
   @@map("User")
 }
@@ -125,24 +125,25 @@ model VerificationToken {
 
 // Modelo de Produtos
 model Product {
-  id            String        @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
   description   String
   price         Float
   originalPrice Float?
   images        String[]
-  isFeatured    Boolean       @default(false)
-  isReserved    Boolean       @default(false)
-  isSold        Boolean       @default(false)
-  quantity      Int           @default(1)
-  onPromotion   Boolean       @default(false)
-  
-  // <<< NOVO CAMPO ADICIONADO >>>
-  condition     ProductCondition @default(NEW)
+  isFeatured    Boolean  @default(false)
+  isReserved    Boolean  @default(false)
+  isSold        Boolean  @default(false)
+  isService     Boolean  @default(false)
+  quantity      Int      @default(1)
+  onPromotion   Boolean  @default(false)
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  boostedUntil  DateTime?     @map("boosted_until")
+  // <<< NOVO CAMPO ADICIONADO >>>
+  condition ProductCondition @default(NEW)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  boostedUntil DateTime? @map("boosted_until")
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
@@ -159,16 +160,16 @@ model Product {
 
 // Modelo para rastrear compras de impulsionamentos avulsos
 model Purchase {
-  id                      String   @id @default(cuid())
-  type                    PurchaseType
-  status                  String   @default("PAID") // Pode ser PENDING, PAID, FAILED
-  submissionStatus        String   @default("AVAILABLE") // Usado para o Carrossel: AVAILABLE, PENDING_APPROVAL, USED
-  stripePaymentIntentId   String   @unique
-  createdAt               DateTime @default(now())
-  
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id                    String       @id @default(cuid())
+  type                  PurchaseType
+  status                String       @default("PAID") // Pode ser PENDING, PAID, FAILED
+  submissionStatus      String       @default("AVAILABLE") // Usado para o Carrossel: AVAILABLE, PENDING_APPROVAL, USED
+  stripePaymentIntentId String       @unique
+  createdAt             DateTime     @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   // Opcional: liga a compra a um produto específico (útil para o 'Achadinho Turbo')
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
@@ -199,9 +200,9 @@ model Reservation {
   reviewToken String?           @unique
   isArchived  Boolean           @default(false)
 
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product     Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
-  review      Review?
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product           Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  review            Review?
   adminNotification AdminNotification?
 
   @@map("Reservation")
@@ -219,21 +220,21 @@ model Review {
   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
   seller        User        @relation("SellerReviews", fields: [sellerId], references: [id], onDelete: Cascade)
   buyer         User        @relation("BuyerReviews", fields: [buyerId], references: [id], onDelete: Cascade)
-  
+
   @@index([sellerId])
   @@map("Review")
 }
 
 // Modelo para Configurações do Tema
 model ThemeSettings {
-  id            String    @id @default(cuid())
-  zaca_roxo       String?
-  zaca_azul       String?
-  zaca_magenta    String?
-  zaca_vermelho   String?
+  id            String   @id @default(cuid())
+  zaca_roxo     String?
+  zaca_azul     String?
+  zaca_magenta  String?
+  zaca_vermelho String?
   font_sans     String?
   font_display  String?
-  updatedAt     DateTime  @updatedAt
+  updatedAt     DateTime @updatedAt
 
   @@map("ThemeSettings")
 }
@@ -305,30 +306,30 @@ model ShortLink {
   title       String?
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   // O productId agora é opcional, permitindo links para a página do vendedor
-  productId   String?
-  product     Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
   @@map("ShortLink")
 }
 
 // Modelo para Notificações do Administrador
 model AdminNotification {
-  id                 String   @id @default(cuid())
-  message            String
-  isRead             Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  type               String   @default("RESERVATION")
-  metadata           Json?
+  id        String   @id @default(cuid())
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  type      String   @default("RESERVATION")
+  metadata  Json?
 
-  reservationId      String?  @unique
+  reservationId      String? @unique
   sellerId           String?
   sellerWhatsappLink String?
 
   reservation Reservation? @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-  seller        User?        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  seller      User?        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
   @@map("AdminNotification")
 }

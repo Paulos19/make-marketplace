@@ -5,35 +5,41 @@ export async function GET() {
   try {
     const categoriesWithProducts = await prisma.category.findMany({
       where: {
-        // Apenas categorias que têm pelo menos um produto associado
         products: {
           some: {
+            isSold: false,
             isReserved: false,
+            isService: false, // <-- FILTRO ADICIONADO AQUI
           },
         },
       },
       include: {
         products: {
           where: {
+            isSold: false,
             isReserved: false,
+            isService: false, // <-- FILTRO ADICIONADO AQUI TAMBÉM
           },
-          // Inclui os dados do vendedor (user) e da categoria para cada produto
           include: {
             user: true,
-            category: true,
+            category: true
           },
-          // Limita a 10 produtos por categoria para não sobrecarregar a página
+          orderBy: {
+            createdAt: 'desc',
+          },
           take: 10,
         },
       },
     })
-
-    return NextResponse.json(categoriesWithProducts)
-  } catch (error) {
-    console.error('Erro ao buscar produtos por categoria:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor.' },
-      { status: 500 },
+    
+    // Filtra categorias que ficaram sem produtos após a filtragem
+    const filteredCategories = categoriesWithProducts.filter(
+      (category) => category.products.length > 0
     )
+
+    return NextResponse.json(filteredCategories)
+  } catch (error) {
+    console.error('[PRODUCTS_BY_CATEGORY_GET]', error)
+    return new NextResponse('Erro interno do servidor', { status: 500 })
   }
 }

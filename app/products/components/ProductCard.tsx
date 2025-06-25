@@ -2,107 +2,96 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Prisma, Product } from '@prisma/client'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
+import { Rocket, Wrench, Tag } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { Product, Category, User } from '@prisma/client'
 
-// Tipo expandido para incluir as relações
-type ProductWithDetails = Product & {
-  categories: Category[];
-  user: Pick<User, 'name' | 'storeName'>;
-}
-
-interface ProductCardProps {
-  product: ProductWithDetails
-}
-
-// Função para formatar o preço
-const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(price)
+// Tipagem que o ProductCard espera receber
+type ProductCardProps = {
+  product: Product & {
+    user: { name: string | null, storeName: string | null } | null;
+    categories: { id: string, name: string }[];
+    boostedUntil: Date | null;
+    onPromotion: boolean;
+    originalPrice: number | null;
+  }
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const imageUrl = (product.images && product.images.length > 0) 
-    ? product.images[0] 
-    : '/img-placeholder.png'
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  }
   
-  const isOnSale = product.onPromotion && product.originalPrice && product.originalPrice > product.price;
+  // --- LÓGICA PRINCIPAL ---
+  // Determina a URL correta com base no tipo de item
+  const itemUrl = product.isService
+    ? `/services/${product.id}`
+    : `/products/${product.id}`;
 
+  const firstImage = product.images && product.images.length > 0 ? product.images[0] : '/img-placeholder.png';
+  const isBoosted = product.boostedUntil && new Date(product.boostedUntil) > new Date();
+  
   return (
-    <Card className="flex h-full w-full flex-col overflow-hidden rounded-lg shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-      <Link href={`/products/${product.id}`} className="group block">
-        <CardHeader className="relative h-48 w-full p-0">
-          <Image
-            src={imageUrl}
-            alt={product.name}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-          {/* Badge de Promoção */}
-          {isOnSale && (
-            <Badge className="absolute right-2 top-2 bg-red-500 text-white border-none">
-              Promo!
-            </Badge>
-          )}
-        </CardHeader>
-        <CardContent className="flex-grow p-4">
-          {product.categories[0] && (
-            <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
-              {product.categories[0].name}
-            </p>
-          )}
-          <CardTitle className="text-base font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
-            {product.name}
-          </CardTitle>
-        </CardContent>
-      </Link>
-      <CardFooter className="flex flex-col items-start p-4 pt-0">
-        <div className="w-full">
-            {/* Lógica de exibição de preço */}
-            {isOnSale ? (
-                <div className="flex flex-col items-start">
-                    <p className="text-sm text-red-600 dark:text-red-400">
-                        <span className="mr-2 text-muted-foreground line-through">
-                            {formatPrice(product.originalPrice!)}
-                        </span>
-                    </p>
-                    <p className="text-xl font-bold text-foreground">
-                        {formatPrice(product.price)}
-                    </p>
+    <Link href={itemUrl} className="group outline-none" tabIndex={-1}>
+        <Card className="h-full w-full overflow-hidden transition-all duration-300 ease-in-out group-hover:shadow-xl group-focus-visible:ring-2 group-focus-visible:ring-primary">
+            <CardHeader className="relative h-48 w-full p-0">
+                <Image
+                    src={firstImage}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+                {isBoosted && (
+                    <Badge variant="secondary" className="absolute top-2 right-2 border-blue-400 bg-blue-900/50 text-blue-300">
+                        <Rocket className="mr-1 h-3 w-3" />
+                        Turbinado
+                    </Badge>
+                )}
+                 <Badge variant="secondary" className={cn(
+                    "absolute top-2 left-2 z-10",
+                    product.isService ? "bg-sky-500/80 text-white" : "bg-amber-500/80 text-white"
+                )}>
+                    {product.isService ? <Wrench className="mr-1.5 h-3 w-3"/> : <Tag className="mr-1.5 h-3 w-3"/>}
+                    {product.isService ? 'Serviço' : 'Produto'}
+                </Badge>
+            </CardHeader>
+            <CardContent className="p-4">
+                <h3 className="truncate font-semibold">{product.name}</h3>
+                <p className="text-sm text-muted-foreground truncate">{product?.user?.storeName || product?.user?.name || "Vendedor não informado"}</p>
+            </CardContent>
+            <CardFooter className="p-4 pt-0">
+                <div className="flex w-full items-end justify-between">
+                    <div>
+                        {product.onPromotion && product.originalPrice && (
+                            <p className="text-xs text-red-500 line-through">{formatCurrency(product.originalPrice)}</p>
+                        )}
+                        <p className="font-bold text-lg text-primary">{formatCurrency(product.price)}</p>
+                    </div>
                 </div>
-            ) : (
-                <p className="text-xl font-bold text-foreground">
-                    {formatPrice(product.price)}
-                </p>
-            )}
-        </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Vendido por: {product.user.storeName || product.user.name}
-        </p>
-      </CardFooter>
-    </Card>
+            </CardFooter>
+        </Card>
+    </Link>
   )
 }
 
-// Skeleton para o estado de carregamento
+// O esqueleto do card permanece o mesmo
 export function ProductCardSkeleton() {
-  return (
-    <Card className="flex h-full w-full flex-col overflow-hidden rounded-lg">
-      <CardHeader className="h-48 w-full p-0">
-        <Skeleton className="h-full w-full" />
-      </CardHeader>
-      <CardContent className="flex-grow p-4">
-        <Skeleton className="mb-2 h-4 w-1/3" />
-        <Skeleton className="h-6 w-full" />
-      </CardContent>
-      <CardFooter className="flex flex-col items-start p-4 pt-0">
-        <Skeleton className="h-8 w-1/2" />
-        <Skeleton className="mt-2 h-4 w-2/3" />
-      </CardFooter>
-    </Card>
-  )
+    return (
+        <Card className="h-full w-full overflow-hidden">
+            <CardHeader className="relative h-48 w-full p-0">
+                <Skeleton className="h-full w-full" />
+            </CardHeader>
+            <CardContent className="p-4">
+                <Skeleton className="h-5 w-4/5 mb-2" />
+                <Skeleton className="h-4 w-3/5" />
+            </CardContent>
+            <CardFooter className="p-4 pt-0">
+                 <Skeleton className="h-6 w-1/3" />
+            </CardFooter>
+        </Card>
+    )
 }

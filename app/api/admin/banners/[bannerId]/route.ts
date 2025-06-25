@@ -4,7 +4,17 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
-import { revalidatePath } from 'next/cache'; // <<< 1. IMPORTADO
+import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
+
+// Schema para validar os dados recebidos no PATCH
+const bannerPatchSchema = z.object({
+    title: z.string().optional().nullable(),
+    imageUrl: z.string().url({ message: "URL da imagem é obrigatória." }),
+    linkUrl: z.string().url({ message: "URL do link inválida." }).optional().or(z.literal('')),
+    isActive: z.boolean().optional(),
+});
+
 
 export async function DELETE(
   req: Request,
@@ -26,7 +36,7 @@ export async function DELETE(
       },
     });
     
-    revalidatePath('/'); // <<< 2. ADICIONADO: Revalida a homepage
+    revalidatePath('/');
 
     return new NextResponse(null, { status: 204 }); 
   } catch (error) {
@@ -45,27 +55,28 @@ export async function PATCH(
       return new NextResponse('Não autorizado', { status: 401 });
     }
 
+    // 1. Consome o corpo da requisição ANTES de acessar os parâmetros
+    const body = await req.json();
     const { bannerId } = params;
+
     if (!bannerId) {
       return new NextResponse('ID do Banner não encontrado', { status: 400 });
     }
     
-    const body = await req.json();
-    const { title, imageUrl, linkUrl, isActive } = body;
-
-    if (!title || !imageUrl) {
-      return new NextResponse('Título e URL da imagem são obrigatórios', { status: 400 });
+    // 2. Valida os dados do corpo com Zod
+    const validation = bannerPatchSchema.safeParse(body);
+    if (!validation.success) {
+        return NextResponse.json({ message: 'Dados inválidos', errors: validation.error.flatten() }, { status: 400 });
     }
-
+    
+    // 3. Atualiza o banco de dados com os dados validados
     const banner = await prisma.homePageBanner.update({
       where: {
         id: bannerId,
       },
       data: {
-        title,
-        imageUrl,
-        linkUrl,
-        isActive,
+        ...validation.data,
+        title: validation.data.title || '', // Garante que o título seja uma string
       },
     });
 

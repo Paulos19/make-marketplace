@@ -28,7 +28,7 @@ import { useRouter } from 'next/navigation'
 import ImageUpload from '@/app/components/ImageUpload'
 import type { Category, Product } from '@prisma/client'
 import { ProductCondition } from '@prisma/client'
-import { Loader2, Tag } from 'lucide-react'
+import { Loader2, Tag, Wrench } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -54,6 +54,7 @@ const formSchema = z.object({
   condition: z.nativeEnum(ProductCondition, {
     required_error: "Selecione a condição do produto."
   }),
+  isService: z.boolean().default(false),
 }).refine((data) => {
     if (data.onPromotion && (!data.originalPrice || data.originalPrice <= 0)) {
         return false;
@@ -74,13 +75,13 @@ const formSchema = z.object({
 
 
 interface ProductFormProps {
-  initialData: Product | null
+  initialData?: Product | null
 }
 
 export const ProductForm = ({ initialData }: ProductFormProps) => {
   const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true) // <-- Estado de carregamento
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -95,13 +96,14 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
       quantity: 1,
       condition: ProductCondition.NEW,
       onPromotion: false,
+      isService: false,
     },
   })
   
   const onPromotion = form.watch('onPromotion');
+  const isService = form.watch('isService');
 
   useEffect(() => {
-    // Busca as categorias para preencher o seletor
     const fetchCategories = async () => {
       setIsLoadingCategories(true);
       try {
@@ -123,6 +125,7 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
         price: Number(initialData.price),
         originalPrice: initialData.originalPrice ? Number(initialData.originalPrice) : null,
         quantity: Number(initialData.quantity),
+        isService: !!initialData.isService,
       })
     }
   }, [initialData, form])
@@ -132,7 +135,9 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
     try {
       const dataToSend = {
           ...values,
-          originalPrice: values.onPromotion ? values.originalPrice : null
+          originalPrice: values.onPromotion ? values.originalPrice : null,
+          quantity: values.isService ? 1 : values.quantity,
+          condition: values.isService ? ProductCondition.OTHER : values.condition,
       };
 
       const url = initialData ? `/api/products/${initialData.id}` : '/api/products'
@@ -145,14 +150,24 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
       })
 
       if (!response.ok) {
-        throw new Error(`Falha ao ${initialData ? 'atualizar' : 'criar'} o produto.`)
+        // Lógica de erro melhorada para exibir a mensagem da API
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Falha ao ${initialData ? 'atualizar' : 'criar'} o item.`);
       }
 
-      toast.success(`Produto ${initialData ? 'atualizado' : 'criado'} com sucesso!`)
-      router.push('/dashboard')
-      router.refresh()
+      const itemType = values.isService ? 'Serviço' : 'Produto';
+      toast.success(`${itemType} ${initialData ? 'atualizado' : 'criado'} com sucesso!`);
+      
+      if (values.isService) {
+        router.push('/services');
+      } else {
+        router.push('/dashboard');
+      }
+      router.refresh();
+
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Ocorreu um erro.')
+      // Exibe a mensagem de erro específica no toast
+      toast.error(error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.');
     } finally {
       setIsSubmitting(false)
     }
@@ -161,19 +176,51 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Tipo de Anúncio</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <FormField control={form.control} name="isService" render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                        <div className="space-y-0.5">
+                            <FormLabel className="text-base flex items-center gap-2"><Wrench className="h-5 w-5 text-primary" />É um Serviço?</FormLabel>
+                            <FormDescription>Marque esta opção se você está anunciando um serviço (manicure, aulas, etc.) em vez de um produto físico.</FormDescription>
+                        </div>
+                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                )}/>
+            </CardContent>
+        </Card>
+
         <Card>
             <CardHeader><CardTitle>Informações Básicas</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-                <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Nome do Produto</FormLabel><FormControl><Input placeholder="Ex: Camiseta Estampada" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="description" render={({ field }) => ( <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Descreva os detalhes do seu produto..." {...field} rows={5} /></FormControl><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="images" render={({ field }) => ( <FormItem><FormLabel>Imagens do Produto</FormLabel><FormControl><ImageUpload onUploadComplete={field.onChange} currentFiles={field.value} maxFiles={5} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Nome do {isService ? 'Serviço' : 'Produto'}</FormLabel><FormControl><Input placeholder={isService ? "Ex: Manicure e Pedicure Completa" : "Ex: Camiseta Estampada"} {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="description" render={({ field }) => ( <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder={isService ? "Descreva os detalhes do serviço oferecido..." : "Descreva os detalhes do seu produto..."} {...field} rows={5} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="images" render={({ field }) => ( <FormItem><FormLabel>Imagens de Divulgação</FormLabel><FormControl><ImageUpload onUploadComplete={field.onChange} currentFiles={field.value} maxFiles={5} /></FormControl><FormMessage /></FormItem> )} />
             </CardContent>
         </Card>
         
+        <AnimatePresence>
+        {!isService && (
+            <motion.div initial={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }}>
+                <Card>
+                    <CardHeader><CardTitle>Detalhes e Estoque</CardTitle></CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField control={form.control} name="condition" render={({ field }) => ( <FormItem><FormLabel>Condição do Produto</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o estado do produto" /></SelectTrigger></FormControl><SelectContent>{Object.values(ProductCondition).map((c) => (<SelectItem key={c} value={c}>{conditionLabels[c]}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem> )} />
+                        <FormField control={form.control} name="quantity" render={({ field }) => ( <FormItem><FormLabel>Quantidade em Estoque</FormLabel><FormControl><Input type="number" step="1" placeholder="10" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    </CardContent>
+                </Card>
+            </motion.div>
+        )}
+        </AnimatePresence>
+        
         <Card>
-            <CardHeader><CardTitle>Detalhes e Estoque</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="categoryId" render={({ field }) => ( 
+             <CardHeader><CardTitle>{isService ? 'Preço e Categoria do Serviço' : 'Preço, Promoções e Categoria'}</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+                 <FormField control={form.control} name="categoryId" render={({ field }) => ( 
                     <FormItem>
                         <FormLabel>Categoria</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingCategories}>
@@ -189,14 +236,9 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
                         <FormMessage />
                     </FormItem> 
                 )} />
-                <FormField control={form.control} name="condition" render={({ field }) => ( <FormItem><FormLabel>Condição do Produto</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o estado do produto" /></SelectTrigger></FormControl><SelectContent>{Object.values(ProductCondition).map((c) => (<SelectItem key={c} value={c}>{conditionLabels[c]}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="quantity" render={({ field }) => ( <FormItem><FormLabel>Quantidade em Estoque</FormLabel><FormControl><Input type="number" step="1" placeholder="10" {...field} /></FormControl><FormMessage /></FormItem> )} />
-            </CardContent>
-        </Card>
 
-        <Card>
-            <CardHeader><CardTitle>Preço e Promoções</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
+                <Separator />
+
                  <FormField control={form.control} name="onPromotion" render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                         <div className="space-y-0.5">
@@ -209,24 +251,12 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
 
                 <AnimatePresence>
                 {onPromotion && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                    >
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden">
                         <Card className="bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300"><Tag className="h-5 w-5"/> Preço Promocional</CardTitle>
-                            </CardHeader>
+                            <CardHeader><CardTitle className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300"><Tag className="h-5 w-5"/> Preço Promocional</CardTitle></CardHeader>
                             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                 <FormField control={form.control} name="originalPrice" render={({ field }) => (
-                                    <FormItem><FormLabel>Preço Original (De:)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="29,90" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                 <FormField control={form.control} name="price" render={({ field }) => (
-                                    <FormItem><FormLabel>Preço Promocional (Por:)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="19,90" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
+                                 <FormField control={form.control} name="originalPrice" render={({ field }) => ( <FormItem><FormLabel>Preço Original (De:)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="29,90" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
+                                 <FormField control={form.control} name="price" render={({ field }) => ( <FormItem><FormLabel>Preço Promocional (Por:)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="19,90" {...field} /></FormControl><FormMessage /></FormItem> )} />
                             </CardContent>
                         </Card>
                     </motion.div>
@@ -234,9 +264,7 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
                 </AnimatePresence>
 
                 {!onPromotion && (
-                    <FormField control={form.control} name="price" render={({ field }) => (
-                        <FormItem><FormLabel>Preço Padrão (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="19,90" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    <FormField control={form.control} name="price" render={({ field }) => ( <FormItem><FormLabel>Preço Padrão (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="19,90" {...field} /></FormControl><FormMessage /></FormItem> )} />
                 )}
             </CardContent>
         </Card>
@@ -244,7 +272,7 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
         <div className="flex justify-end">
             <Button type="submit" disabled={isSubmitting} size="lg">
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {initialData ? 'Salvar Alterações' : 'Adicionar Produto'}
+            {initialData ? 'Salvar Alterações' : `Adicionar ${isService ? 'Serviço' : 'Produto'}`}
             </Button>
         </div>
       </form>

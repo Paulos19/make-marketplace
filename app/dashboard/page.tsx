@@ -10,22 +10,17 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutDashboard, PlusCircle, Settings, LogOut, Menu, UserCircle2, ShoppingBag, Edit3, AlertTriangle, Loader2, LinkIcon, Trash2, Crown, Rocket, Zap, Send, Clock } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Settings, LogOut, Menu, UserCircle2, ShoppingBag, Edit3, AlertTriangle, Loader2, LinkIcon, Trash2, Crown, Rocket, Zap, Send, Clock, ArrowLeft, Wrench, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { SubscriptionStatus, PurchaseType } from '@prisma/client';
+// O tipo Product agora é importado diretamente do Prisma
+import { SubscriptionStatus, PurchaseType, Product } from '@prisma/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 
 // --- Tipos de Dados ---
-interface Product {
-  id: string;
-  name: string;
-  images: string[];
-  description?: string | null;
-  price: number;
-  createdAt: string;
-}
+// A interface local foi removida. Usaremos o tipo 'Product' importado.
 
 interface PurchaseInfo {
     id: string;
@@ -74,9 +69,10 @@ const CarouselRequestCard = ({ purchases, onSubmission }: { purchases: PurchaseI
     useEffect(() => {
         if(session?.user?.id) {
             setIsFetchingProducts(true);
-            fetch(`/api/products?userId=${session.user.id}`)
+            // Busca apenas produtos físicos para o carrossel
+            fetch(`/api/products?userId=${session.user.id}&isService=false`)
                 .then(res => res.json())
-                .then(data => setProducts(data))
+                .then(data => setProducts(data.products || []))
                 .catch(err => console.error("Falha ao buscar produtos do vendedor", err))
                 .finally(() => setIsFetchingProducts(false));
         }
@@ -248,7 +244,7 @@ const SidebarNavLinks = ({ isMobile = false, closeSheet }: { isMobile?: boolean,
   const pathname = usePathname();
   const navItems = [
     { href: "/dashboard", label: "Painel Principal", icon: LayoutDashboard },
-    { href: "/dashboard/add-product", label: "Adicionar Produto", icon: PlusCircle },
+    { href: "/dashboard/add-product", label: "Adicionar Item", icon: PlusCircle },
     { href: "/dashboard/link-shortener", label: "Encurtador de Links", icon: LinkIcon },
     { href: "/dashboard/sales", label: "Minhas Vendas", icon: ShoppingBag },
     { href: "/dashboard/settings", label: "Configurações", icon: Settings },
@@ -289,9 +285,19 @@ export default function DashboardPage() {
       if (status === 'authenticated' && userId) {
         setIsLoadingProducts(true);
         fetch(`/api/products?userId=${userId}`)
-          .then(res => res.ok ? res.json() : Promise.reject(new Error('Falha ao buscar produtos.')))
-          .then(data => setProducts(Array.isArray(data) ? data : []))
-          .catch(err => setProductError(err.message))
+          .then(res => {
+            if (!res.ok) {
+              return Promise.reject(new Error('Falha ao buscar seus itens.'));
+            }
+            return res.json();
+          })
+          .then(data => {
+            setProducts(Array.isArray(data.products) ? data.products : []);
+          })
+          .catch(err => {
+            setProductError(err.message);
+            setProducts([]);
+          })
           .finally(() => setIsLoadingProducts(false));
       }
     }, [status, userId, router]);
@@ -304,8 +310,8 @@ export default function DashboardPage() {
       setIsDeleting(true);
       try {
         const response = await fetch(`/api/products/${productToDelete.id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error((await response.json()).error || 'Falha ao excluir o produto.');
-        toast.success(`Produto "${productToDelete.name}" excluído!`);
+        if (!response.ok) throw new Error((await response.json()).error || 'Falha ao excluir o item.');
+        toast.success(`Item "${productToDelete.name}" excluído!`);
         setProducts(products.filter((p) => p.id !== productToDelete.id));
         closeDeleteDialog();
       } catch (error) {
@@ -345,8 +351,18 @@ export default function DashboardPage() {
             <main className="flex-1 overflow-auto p-4 sm:p-6 space-y-8">
               <Card>
                 <CardHeader>
-                    <CardTitle className="text-3xl font-bangers">Painel do Vendedor</CardTitle>
-                    <CardDescription>Bem-vindo, {session.user.name?.split(' ')[0]}!</CardDescription>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle className="text-3xl font-bangers">Painel do Vendedor</CardTitle>
+                      <CardDescription>Bem-vindo, {session.user.name?.split(' ')[0]}!</CardDescription>
+                    </div>
+                    <Button asChild variant="outline">
+                        <Link href="/">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Voltar para Home
+                        </Link>
+                    </Button>
+                  </div>
                 </CardHeader>
               </Card>
               
@@ -354,23 +370,33 @@ export default function DashboardPage() {
   
               <section>
                   <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-2xl font-semibold">Seus Produtos</h2>
-                      <Button asChild size="lg"><Link href="/dashboard/add-product"><PlusCircle className="mr-2" /> Adicionar Produto</Link></Button>
+                      <h2 className="text-2xl font-semibold">Seus Itens Cadastrados</h2>
+                      <Button asChild size="lg"><Link href="/dashboard/add-product"><PlusCircle className="mr-2" /> Adicionar Novo Item</Link></Button>
                   </div>
                   {isLoadingProducts ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-80 w-full" />)}</div>
                         ) : productError ? (
                         <Card className="text-center p-6 bg-red-50 dark:bg-red-900/20"><AlertTriangle className="mx-auto h-8 w-8 text-red-500" />{productError}</Card>
                         ) : products.length === 0 ? (
-                        <Card className="text-center p-10"><ShoppingBag className="mx-auto h-12 w-12 text-gray-400" /><h3 className="mt-4 text-xl">Nenhum produto cadastrado.</h3><p className="text-sm text-muted-foreground">Adicione seu primeiro produto para começar a vender!</p></Card>
+                        <Card className="text-center p-10"><ShoppingBag className="mx-auto h-12 w-12 text-gray-400" /><h3 className="mt-4 text-xl">Nenhum item cadastrado.</h3><p className="text-sm text-muted-foreground">Adicione seu primeiro produto ou serviço para começar a vender!</p></Card>
                         ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {products.map((product) => (
                             <Card key={product.id} className="flex flex-col overflow-hidden group">
                                 <CardHeader className="p-0 border-b relative">
-                                <div className="aspect-square w-full">
+                                  <Badge 
+                                    className={cn(
+                                        "absolute top-2 left-2 z-10",
+                                        product.isService ? "bg-sky-500" : "bg-amber-500"
+                                    )}
+                                  >
+                                    {product.isService ? <Wrench className="mr-1.5 h-3 w-3"/> : <Tag className="mr-1.5 h-3 w-3"/>}
+                                    {product.isService ? 'Serviço' : 'Produto'}
+                                  </Badge>
+
+                                  <div className="aspect-square w-full">
                                     <Image src={(product.images && product.images.length > 0) ? product.images[0] : '/img-placeholder.png'} alt={product.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
-                                </div>
+                                  </div>
                                 </CardHeader>
                                 <CardContent className="p-4 flex-grow">
                                     <CardTitle className="text-lg truncate">{product.name}</CardTitle>
@@ -380,7 +406,6 @@ export default function DashboardPage() {
                                     <Button asChild variant="outline" size="sm" className="w-full">
                                         <Link href={`/dashboard/edit-product/${product.id}`}><Edit3 className="mr-2 h-4 w-4" /> Editar</Link>
                                     </Button>
-                                    {/* <<< CORREÇÃO APLICADA AQUI >>> */}
                                     <Button variant="destructive" size="sm" className="w-full" onClick={() => openDeleteDialog(product)}>
                                         <Trash2 className="mr-2 h-4 w-4" /> Excluir
                                     </Button>
@@ -400,7 +425,7 @@ export default function DashboardPage() {
               <DialogHeader>
                   <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>Confirmar Exclusão</DialogTitle>
                   <DialogDescription>
-                      Tem certeza que deseja excluir o produto "<strong>{productToDelete?.name}</strong>"? Esta ação é irreversível e removerá o produto permanentemente.
+                      Tem certeza que deseja excluir o item "<strong>{productToDelete?.name}</strong>"? Esta ação é irreversível e removerá o item permanentemente.
                   </DialogDescription>
               </DialogHeader>
               <DialogFooter className="gap-2 mt-4">

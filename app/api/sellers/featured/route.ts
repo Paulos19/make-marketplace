@@ -1,42 +1,49 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { UserRole } from '@prisma/client'
 
 export async function GET() {
   try {
     const featuredSellers = await prisma.user.findMany({
       where: {
-        // Filtra apenas usuários que são vendedores
-        role: 'SELLER',
-        // Filtra apenas vendedores marcados para aparecer
+        role: UserRole.SELLER,
         showInSellersPage: true,
-        // Garante que o vendedor tenha pelo menos um produto disponível
         products: {
           some: {
+            isSold: false,
             isReserved: false,
+            isService: false, // <-- FILTRO ADICIONADO AQUI
           },
         },
       },
       include: {
         products: {
           where: {
+            isSold: false,
             isReserved: false,
+            isService: false, // <-- FILTRO ADICIONADO AQUI TAMBÉM
           },
           include: {
             user: true,
-            category: true,
+            category: true
           },
-          // Limita a 10 produtos por vendedor
-          take: 10,
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 5,
         },
       },
+      take: 5,
     })
 
-    return NextResponse.json(featuredSellers)
-  } catch (error) {
-    console.error('Erro ao buscar vendedores em destaque:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor.' },
-      { status: 500 },
+    // Filtra vendedores que ficaram sem produtos após a filtragem
+    const filteredSellers = featuredSellers.filter(
+      (seller) => seller.products.length > 0
     )
+
+    return NextResponse.json(filteredSellers)
+  } catch (error) {
+    console.error('[FEATURED_SELLERS_GET]', error)
+    return new NextResponse('Internal Error', { status: 500 })
   }
 }

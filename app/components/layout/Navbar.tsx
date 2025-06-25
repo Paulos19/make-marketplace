@@ -37,6 +37,7 @@ import {
   Crown,
   Search,
   BadgeCent,
+  Wrench, // Ícone importado
 } from 'lucide-react'
 import { UserRole } from '@prisma/client'
 import { Separator } from '@/components/ui/separator'
@@ -98,6 +99,7 @@ export default function Navbar() {
   const mainNavLinks = [
     { href: '/', label: 'Início', icon: Home },
     { href: '/products', label: 'Achadinhos', icon: Package2 },
+    { href: '/services', label: 'Serviços', icon: Wrench }, // Link de serviços adicionado
     { href: '/sellers', label: 'Vendedores', icon: Store },
     { href: '/planos', label: 'Planos', icon: BadgeCent },
   ];
@@ -121,7 +123,6 @@ export default function Navbar() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-slate-800/60">
         <div className="container mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
           
-          {/* Lado Esquerdo: Logo e Navegação Desktop */}
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center space-x-2">
               <Image src="/zacalogo.png" alt="Zacaplace Logo" width={180} height={50} priority />
@@ -139,10 +140,8 @@ export default function Navbar() {
             </nav>
           </div>
           
-          {/* Lado Direito: Ações */}
           <div className="flex items-center justify-end gap-x-2">
             
-            {/* <<< ESTRUTURA CORRIGIDA PARA DESKTOP >>> */}
             <div className="hidden lg:flex items-center gap-x-1">
                 <Button onClick={() => setOpenSearch(true)} variant="ghost" size="icon" aria-label="Buscar"><Search className="h-5 w-5" /></Button>
                 <Link href='/my-reservations'><Button variant="ghost" size="icon" aria-label="Favoritos"><Heart className="h-5 w-5" /></Button></Link>
@@ -178,7 +177,6 @@ export default function Navbar() {
                 ) : <Button asChild><Link href="/auth/signin">Entrar</Link></Button>}
             </div>
 
-            {/* <<< ESTRUTURA CORRIGIDA PARA MOBILE >>> */}
             <div className="flex items-center lg:hidden">
                 <Button onClick={() => setOpenSearch(true)} variant="ghost" size="icon" aria-label="Buscar"><Search className="h-5 w-5" /></Button>
                 <Link href='/my-reservations'><Button variant="ghost" size="icon" aria-label="Favoritos"><Heart className="h-5 w-5" /></Button></Link>

@@ -1,155 +1,149 @@
-import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
-import prisma from '@/lib/prisma'
-import { UserRole, ProductCondition } from '@prisma/client'
-import { z } from 'zod'
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import prisma from '@/lib/prisma';
+import { ProductCondition, UserRole } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 
-const updateProductSchema = z.object({
-    name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
-    description: z.string().min(10, 'A descrição deve ter pelo menos 10 caracteres.'),
-    price: z.number().min(0.01, 'O preço deve ser maior que zero.'),
-    onPromotion: z.boolean().default(false),
-    originalPrice: z.number().optional().nullable(),
-    images: z.array(z.string()).min(1, 'Pelo menos uma imagem é necessária.'),
-    categoryId: z.string().min(1, 'Selecione uma categoria.'),
-    quantity: z.number().int().min(1, 'A quantidade deve ser de pelo menos 1.'),
-    condition: z.nativeEnum(ProductCondition),
-  });
+// Schema de validação para a edição, também com 'isService'
+const productUpdateSchema = z.object({
+  name: z.string().min(3).optional(),
+  description: z.string().min(10).optional(),
+  price: z.number().min(0.01).optional(),
+  originalPrice: z.number().optional().nullable(),
+  images: z.array(z.string()).min(1).optional(),
+  categoryId: z.string().optional(),
+  quantity: z.number().int().min(1).optional(),
+  condition: z.nativeEnum(ProductCondition).optional(),
+  onPromotion: z.boolean().optional(),
+  isService: z.boolean().optional(), // <-- CAMPO ADICIONADO AQUI
+  isSold: z.boolean().optional(),
+});
 
-
-// Handler GET para buscar um único produto por ID
-export async function GET(
-  req: Request,
-  { params }: { params: { productId: string } }
-) {
-  try {
-    const { productId } = params
-    if (!productId) {
-      return new NextResponse('ID do produto não fornecido', { status: 400 })
-    }
-
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        category: true,
-        user: true, // Inclui o vendedor
-      },
-    })
-
-    if (!product) {
-      return new NextResponse('Produto não encontrado', { status: 404 })
-    }
-
-    return NextResponse.json(product)
-  } catch (error) {
-    console.error('[PRODUCT_GET]', error)
-    return new NextResponse('Erro interno do servidor', { status: 500 })
-  }
-}
-
-
-// Handler PATCH para atualizar um produto existente
 export async function PATCH(
   req: Request,
   { params }: { params: { productId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-
-    const { productId } = params;
-    if (!productId) {
-      return NextResponse.json({ error: 'ID do produto não fornecido' }, { status: 400 });
-    }
-
     const body = await req.json();
-    const validation = updateProductSchema.safeParse(body);
+    const { productId } = params;
 
-    if (!validation.success) {
-        return NextResponse.json({ error: validation.error.flatten().fieldErrors }, { status: 400 });
+    if (!session?.user?.id) {
+      return new NextResponse('Não autenticado', { status: 401 });
     }
-    const { name, description, price, originalPrice, images, categoryId, quantity, condition, onPromotion } = validation.data;
+
+    if (!productId) {
+      return new NextResponse('ID do produto não encontrado', { status: 400 });
+    }
     
-    // Garante que apenas o dono do produto (ou um admin) possa editá-lo
-    const productToUpdate = await prisma.product.findFirst({
-        where: {
-            id: productId,
-            userId: session.user.role === UserRole.ADMIN ? undefined : session.user.id,
-        }
+    // Valida o corpo da requisição com o schema de edição
+    const validation = productUpdateSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json({ errors: validation.error.flatten() }, { status: 400 });
+    }
+    
+    // Garante que o usuário só possa editar seus próprios produtos (a menos que seja admin)
+    const productToUpdate = await prisma.product.findUnique({
+      where: { id: productId },
     });
 
     if (!productToUpdate) {
-        return NextResponse.json({ error: 'Produto não encontrado ou permissão negada.' }, { status: 404 });
+      return new NextResponse('Produto não encontrado', { status: 404 });
+    }
+
+    if (productToUpdate.userId !== session.user.id && session.user.role !== UserRole.ADMIN) {
+      return new NextResponse('Não autorizado', { status: 403 });
     }
 
     const updatedProduct = await prisma.product.update({
       where: {
         id: productId,
       },
-      data: {
-        name,
-        description,
-        price,
-        originalPrice: onPromotion ? originalPrice : null,
-        images,
-        quantity,
-        condition,
-        onPromotion,
-        categoryId,
-      },
+      data: validation.data,
     });
+    
+    // Invalida o cache para que a alteração apareça imediatamente
+    revalidatePath(`/products/${productId}`);
+    revalidatePath(`/dashboard`);
 
     return NextResponse.json(updatedProduct);
   } catch (error) {
-    console.error('[PRODUCT_PATCH_ERROR]', error);
-    if (error instanceof z.ZodError) {
-        return new NextResponse(JSON.stringify(error.issues), { status: 422 });
-    }
-    return NextResponse.json({ error: 'Erro interno do servidor ao atualizar o produto.' }, { status: 500 });
+    console.error(`[PRODUCT_PATCH]`, error);
+    return new NextResponse('Erro Interno do Servidor', { status: 500 });
   }
 }
 
+// ... o restante do arquivo (funções GET e DELETE) permanece o mesmo
+export async function GET(
+    req: Request,
+    { params }: { params: { productId: string } }
+  ) {
+    try {
+      if (!params.productId) {
+        return new NextResponse("Product id is required", { status: 400 });
+      }
+  
+      const product = await prisma.product.findUnique({
+        where: {
+          id: params.productId,
+        },
+        include: {
+          user: true,
+          category: true,
+          reservations: {
+            include: {
+              user: true,
+            },
+            orderBy: {
+              createdAt: 'desc'
+            }
+          }
+        },
+      });
+    
+      return NextResponse.json(product);
+    } catch (error) {
+      console.error('[PRODUCT_GET]', error);
+      return new NextResponse("Internal error", { status: 500 });
+    }
+};
 
-// Handler DELETE para excluir um produto
 export async function DELETE(
     req: Request,
     { params }: { params: { productId: string } }
-) {
+  ) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.id) {
-            return new NextResponse('Não autorizado', { status: 401 });
+      const session = await getServerSession(authOptions);
+  
+      if (!session?.user?.id) {
+        return new NextResponse("Unauthenticated", { status: 403 });
+      }
+  
+      if (!params.productId) {
+        return new NextResponse("Product id is required", { status: 400 });
+      }
+  
+      const product = await prisma.product.findUnique({
+        where: {
+          id: params.productId,
         }
-        
-        const { productId } = params;
-        if (!productId) {
-            return new NextResponse('ID do produto não fornecido', { status: 400 });
-        }
-
-        const productToDelete = await prisma.product.findFirst({
-            where: {
-                id: productId,
-                userId: session.user.role === UserRole.ADMIN ? undefined : session.user.id,
-            }
-        });
-    
-        if (!productToDelete) {
-            return new NextResponse('Produto não encontrado ou permissão negada', { status: 404 });
-        }
-
-        await prisma.product.delete({
-            where: {
-                id: productId
-            }
-        });
-
-        return new NextResponse('Produto excluído com sucesso', { status: 200 });
-
+      });
+  
+      if (product?.userId !== session.user.id) {
+        return new NextResponse("Unauthorized", { status: 401 });
+      }
+  
+      await prisma.product.delete({
+        where: {
+          id: params.productId,
+        },
+      });
+  
+      return new NextResponse(null, { status: 204 });
     } catch (error) {
-        console.error('[PRODUCT_DELETE]', error);
-        return new NextResponse('Erro interno do servidor', { status: 500 });
+      console.error('[PRODUCT_DELETE]', error);
+      return new NextResponse("Internal error", { status: 500 });
     }
-}
+};

@@ -1,6 +1,8 @@
+// app/page.tsx
+
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { Rocket } from 'lucide-react';
+import { Rocket, ArrowRight, ShoppingBag, UserPlus } from 'lucide-react';
 import { HeroCarousel } from './components/home/HeroCarousel';
 import { ProductScrollArea } from './components/home/ProductScrollArea';
 import Navbar from './components/layout/Navbar';
@@ -8,6 +10,10 @@ import Footer from './components/layout/Footer';
 import { ModernProductSection } from './components/home/ModernProductSection';
 import { CategoryHighlights } from './components/home/CategoryHighlights';
 import { TopSellers } from './components/home/TopSellers';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import Image from 'next/image';
+import { ProductCard } from './products/components/ProductCard';
 
 type ProductWithDetails = Prisma.ProductGetPayload<{
   include: { user: true; category: true };
@@ -15,6 +21,16 @@ type ProductWithDetails = Prisma.ProductGetPayload<{
 type SectionWithProducts = Prisma.HomepageSectionGetPayload<{}> & {
   products: ProductWithDetails[];
 };
+
+const transformProductForClient = (product: ProductWithDetails) => {
+    if (!product) return null;
+    return {
+      ...product,
+      categories: product.category ? [product.category] : [],
+      createdAt: new Date(product.createdAt).toISOString(),
+      updatedAt: new Date(product.updatedAt).toISOString(),
+    }
+}
 
 export default async function HomePage() {
   const [
@@ -26,13 +42,18 @@ export default async function HomePage() {
   ] = await Promise.all([
     prisma.homePageBanner.findMany({ where: { isActive: true }, orderBy: { createdAt: 'desc' } }),
     prisma.product.findMany({
-      where: { boostedUntil: { gte: new Date() }, isSold: false, isReserved: false },
+      where: { 
+        boostedUntil: { gte: new Date() }, 
+        isSold: false, 
+        isReserved: false,
+        isService: false, // <-- FILTRO ADICIONADO AQUI
+      },
       include: { user: true, category: true },
       orderBy: { boostedUntil: 'asc' },
       take: 10,
     }),
     prisma.homepageSection.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } }),
-    prisma.category.findMany({ where: { products: { some: {} } }, take: 5 }),
+    prisma.category.findMany({ where: { products: { some: { isService: false } } }, take: 5 }), // Filtro adicionado
     (async () => {
         const sellers = await prisma.user.findMany({
             where: {
@@ -68,7 +89,10 @@ export default async function HomePage() {
   const sectionProducts =
     allProductIds.length > 0
       ? await prisma.product.findMany({
-          where: { id: { in: allProductIds } },
+          where: { 
+            id: { in: allProductIds },
+            isService: false, // <-- FILTRO ADICIONADO AQUI
+          },
           include: { user: true, category: true },
         })
       : [];
@@ -90,19 +114,37 @@ export default async function HomePage() {
           <div className="container mx-auto flex flex-col gap-12 sm:gap-16 py-12 sm:py-16">
             
             {boostedProducts.length > 0 && (
-              <section className="rounded-xl bg-gradient-to-tr from-blue-900 via-slate-900 to-zaca-roxo p-1 shadow-2xl">
-                <div className="rounded-lg bg-slate-50 dark:bg-slate-900 p-6 sm:p-8">
-                    <ProductScrollArea
-                        title="Turbinados da Semana"
-                        products={boostedProducts}
-                        icon={<Rocket className="h-6 w-6 text-blue-400" />}
-                    />
-                </div>
-              </section>
-            )}
+              <>
+                {/* Versão Desktop */}
+                <section className="hidden md:block rounded-xl bg-gradient-to-tr from-blue-900 via-slate-900 to-zaca-roxo p-1 shadow-2xl">
+                  <div className="rounded-lg bg-slate-50 dark:bg-slate-900 p-6 sm:p-8">
+                      <ProductScrollArea
+                          title="Turbinados da Semana"
+                          products={boostedProducts}
+                          icon={<Rocket className="h-6 w-6 text-blue-400" />}
+                      />
+                  </div>
+                </section>
 
-            {topSellers.length > 0 && (
-                <TopSellers sellers={topSellers} />
+                {/* Versão Mobile */}
+                <section className="md:hidden">
+                    <div className="rounded-xl bg-gradient-to-tr from-blue-900 via-slate-900 to-zaca-roxo p-1 shadow-2xl">
+                        <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-900">
+                            <Rocket className="h-6 w-6 text-blue-400" />
+                            <h2 className="text-2xl font-bold tracking-tight text-gray-800 dark:text-gray-100">
+                                Turbinados da Semana
+                            </h2>
+                        </div>
+                    </div>
+                    <div className="mt-4 flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                        {boostedProducts.map((product) => (
+                            <div key={product.id} className="w-48 flex-shrink-0">
+                                <ProductCard product={transformProductForClient(product) as any} />
+                            </div>
+                        ))}
+                    </div>
+                </section>
+              </>
             )}
 
             <CategoryHighlights categories={highlightedCategories} />
@@ -110,8 +152,52 @@ export default async function HomePage() {
             {sectionsWithProducts.map((section) => (
               <ModernProductSection key={section.id} {...section} />
             ))}
+
+            <div className="text-center">
+              <Button asChild size="lg">
+                <Link href="/products">
+                  Ver todos os produtos <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+            </div>
             
+            {topSellers.length > 0 && (
+                <TopSellers sellers={topSellers} />
+            )}
           </div>
+          
+          <section className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
+            <div className="container mx-auto px-4 py-16">
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                    <div className="text-center">
+                        <Image src="/zaca.svg" alt="Ilustração do Zaca" width={500} height={500} className="mx-auto w-full max-w-md" />
+                    </div>
+                    <div className="text-center md:text-left">
+                        <h2 className="text-4xl md:text-5xl font-extrabold text-zaca-roxo dark:text-zaca-lilas leading-tight">
+                            FAÇA PARTE DA NOSSA COMUNIDADE!
+                        </h2>
+                        <p className="mt-4 text-lg text-muted-foreground">
+                            Cadastre-se para começar a vender seus produtos ou para encontrar os melhores achadinhos da sua região.
+                        </p>
+                        <div className="mt-8 flex flex-col sm:flex-row justify-center md:justify-start gap-4">
+                            <Button asChild size="lg" className="bg-zaca-magenta hover:bg-zaca-magenta/90 text-white shadow-lg">
+                                <Link href="/auth/signup">
+                                    <UserPlus className="mr-2 h-5 w-5" />
+                                    QUERO VENDER
+                                </Link>
+                            </Button>
+                            <Button asChild size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/10 hover:text-primary shadow-lg">
+                                <Link href="/products">
+                                    <ShoppingBag className="mr-2 h-5 w-5" />
+                                    QUERO COMPRAR
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </section>
+
         </div>
       </main>
       <Footer />
