@@ -21,7 +21,8 @@ interface HeroCarouselProps {
 export function HeroCarousel({ banners }: HeroCarouselProps) {
   if (!banners || banners.length === 0) {
     return (
-        <div className="w-full h-[60vh] sm:h-[70vh] lg:h-[calc(100vh-4rem)] bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+        // Altura do fallback também foi ajustada
+        <div className="w-full h-[50vh] sm:h-[65vh] lg:h-[calc(100vh-4rem)] bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
             <p className="text-muted-foreground">Nenhum banner ativo.</p>
         </div>
     )
@@ -44,9 +45,8 @@ export function HeroCarousel({ banners }: HeroCarouselProps) {
           <CarouselItem key={banner.id}>
             <div className="relative">
               {/* <<< CORREÇÃO APLICADA AQUI >>> */}
-              {/* A altura agora é responsiva: 60% da altura da tela em mobile, 
-                  70% em telas pequenas, e quase toda a altura em desktops. */}
-              <div className="h-[60vh] sm:h-[70vh] lg:h-[calc(100vh-4rem)] w-full">
+              {/* A altura em dispositivos móveis foi reduzida de h-[60vh] para h-[50vh] */}
+              <div className="h-[20vh] sm:h-[65vh] lg:h-[calc(100vh-4rem)] w-full">
                 <Image
                   src={banner.imageUrl}
                   alt={banner.title}
