@@ -124,7 +124,7 @@ export default function Navbar() {
           {/* Lado Esquerdo: Logo e Navegação Desktop */}
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center space-x-2">
-              <Image src="/zacalogo2.svg" alt="Zacaplace Logo" width={180} height={50} priority />
+              <Image src="/zacalogo.png" alt="Zacaplace Logo" width={180} height={50} priority />
             </Link>
             <nav className="hidden lg:flex">
               <ul className="flex items-center space-x-6 text-sm font-medium">
@@ -204,7 +204,7 @@ export default function Navbar() {
                         ) : (
                             <div className="p-4 border-b dark:border-slate-800">
                                 <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <Image src="/zacalogo2.svg" alt="Zacaplace Logo" width={150} height={40} />
+                                    <Image src="/zacalogo.png" alt="Zacaplace Logo" width={150} height={40} />
                                 </Link>
                             </div>
                         )}
