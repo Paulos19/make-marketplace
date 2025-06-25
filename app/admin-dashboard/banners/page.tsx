@@ -1,6 +1,9 @@
 import { BannersClient } from './components/BannersClient';
+import prisma from '@/lib/prisma';
 
-export default function AdminBannersPage() {
+export default async function AdminBannersPage() {
+  const banners = await prisma.homePageBanner.findMany();
+
   return (
     <div className="space-y-4">
       <div>
@@ -9,7 +12,7 @@ export default function AdminBannersPage() {
           Crie e gira os banners que aparecem na página inicial.
         </p>
       </div>
-      <BannersClient />
+      <BannersClient initialBanners={banners} />
     </div>
   );
 }

@@ -1,70 +1,113 @@
-// app/api/shortener/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
-import { nanoid } from 'nanoid';
 
-const createLinkSchema = z.object({
-  url: z.string().url({ message: "Por favor, insira uma URL válida." }),
+// <<< INÍCIO DA CORREÇÃO >>>
+// O schema foi atualizado para aceitar `null` nos campos opcionais,
+// tornando a API mais robusta contra diferentes tipos de dados do frontend.
+const shortenerSchema = z.object({
+  originalUrl: z.string().url({ message: "URL original inválida." }),
+  productId: z.string().cuid({ message: "ID do produto inválido." }).optional(),
+  title: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  imageUrl: z.string().url().optional().nullable(),
 });
+// <<< FIM DA CORREÇÃO >>>
 
-// POST: Cria um novo link encurtado
+const generateShortCode = async (): Promise<string> => {
+    const code = Math.random().toString(36).substring(2, 8);
+    const existing = await prisma.shortLink.findUnique({ where: { shortCode: code } });
+    return existing ? generateShortCode() : code;
+};
+
+// Handler POST para criar um novo link encurtado
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
     }
 
     const body = await request.json();
-    const validation = createLinkSchema.safeParse(body);
+    const validation = shortenerSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json({ message: validation.error.errors[0].message }, { status: 400 });
+      // Este log ajuda a depurar, mostrando o erro de validação exato no servidor
+      console.error('Validation Error:', validation.error.flatten());
+      return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
+    }
+    const { originalUrl, productId, title, description, imageUrl } = validation.data;
+    
+    let ownerId: string;
+    
+    if (productId) {
+        const product = await prisma.product.findUnique({ where: { id: productId }, select: { userId: true } });
+        if (!product) return NextResponse.json({ error: 'Produto não encontrado.' }, { status: 404 });
+        ownerId = product.userId;
+    } else {
+        const sellerIdFromUrl = new URL(originalUrl).pathname.split('/').pop();
+        if (!sellerIdFromUrl) return NextResponse.json({ error: 'ID do vendedor inválido no URL.' }, { status: 400 });
+        ownerId = sellerIdFromUrl;
     }
 
-    const { url } = validation.data;
-    const shortCode = nanoid(8); // Gera um código aleatório de 8 caracteres
+    let existingLink;
+    if (productId) {
+      existingLink = await prisma.shortLink.findFirst({
+        where: { userId: ownerId, productId: productId },
+      });
+    } else {
+      existingLink = await prisma.shortLink.findFirst({
+        where: { userId: ownerId, productId: null },
+      });
+    }
 
+    if (existingLink) {
+      return NextResponse.json({ shortCode: existingLink.shortCode });
+    }
+
+    const shortCode = await generateShortCode();
     const newLink = await prisma.shortLink.create({
       data: {
-        originalUrl: url,
-        shortCode: shortCode,
-        userId: session.user.id,
+        originalUrl,
+        shortCode,
+        userId: ownerId,
+        productId,
+        title: title || undefined,
+        description: description || undefined,
+        imageUrl: imageUrl || undefined,
       },
     });
 
-    const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL}/s/${newLink.shortCode}`;
-    return NextResponse.json({ ...newLink, shortUrl }, { status: 201 });
+    return NextResponse.json({ shortCode: newLink.shortCode }, { status: 201 });
 
   } catch (error) {
-    console.error("Erro ao criar link encurtado:", error);
-    return NextResponse.json({ message: 'Erro interno do servidor' }, { status: 500 });
+    console.error('[SHORTENER_POST_ERROR]', error);
+    return new NextResponse('Erro interno do servidor', { status: 500 });
   }
 }
 
-// GET: Lista os links encurtados do usuário logado
+// Handler GET para buscar a lista de links do utilizador
 export async function GET(request: Request) {
     try {
         const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
-            return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+          return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
-
-        const links = await prisma.shortLink.findMany({
-            where: {
-                userId: session.user.id,
-            },
-            orderBy: {
-                createdAt: 'desc',
-            }
+    
+        const userLinks = await prisma.shortLink.findMany({
+          where: {
+            userId: session.user.id,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
         });
-
-        return NextResponse.json(links, { status: 200 });
-
-    } catch (error) {
-        console.error("Erro ao buscar links encurtados:", error);
-        return NextResponse.json({ message: 'Erro interno do servidor' }, { status: 500 });
-    }
+    
+        return NextResponse.json(userLinks);
+        
+      } catch (error) {
+        console.error('[SHORTENER_GET_ERROR]', error);
+        return new NextResponse('Erro interno do servidor', { status: 500 });
+      }
 }

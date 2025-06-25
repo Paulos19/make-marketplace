@@ -97,7 +97,7 @@ export const sendReservationNotificationEmail = async ({
 }: ReservationNotificationParams) => {
   const siteName = "Zacaplace";
   const productUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/products/${productId}`;
-  const reservationsUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/reservations`;
+  const reservationsUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/sales`;
 
   const subject = `🎉 Nova Reserva no ${siteName}: ${quantity}x ${productName}!`;
   const html = `

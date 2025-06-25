@@ -39,6 +39,14 @@ enum PurchaseType {
   CARROSSEL_PRACA
 }
 
+enum ProductCondition {
+  NEW             // Novo
+  GOOD_CONDITION  // Em boas condições
+  USED            // Usado
+  REFURBISHED     // Recondicionado
+  OTHER           // Outro
+}
+
 // Modelo para Usuários, Vendedores e Administradores
 model User {
   id                     String              @id @default(cuid())
@@ -128,6 +136,10 @@ model Product {
   isSold        Boolean       @default(false)
   quantity      Int           @default(1)
   onPromotion   Boolean       @default(false)
+  
+  // <<< NOVO CAMPO ADICIONADO >>>
+  condition     ProductCondition @default(NEW)
+
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   boostedUntil  DateTime?     @map("boosted_until")
@@ -140,10 +152,10 @@ model Product {
 
   reservations Reservation[]
   purchases    Purchase[]
+  shortLinks   ShortLink[]
 
   @@map("Product")
 }
-
 
 // Modelo para rastrear compras de impulsionamentos avulsos
 model Purchase {
@@ -185,6 +197,8 @@ model Reservation {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   reviewToken String?           @unique
+  isArchived  Boolean           @default(false)
+
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   product     Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
   review      Review?
@@ -289,10 +303,14 @@ model ShortLink {
   description String?
   imageUrl    String?
   title       String?
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  @@index([userId])
+  // O productId agora é opcional, permitindo links para a página do vendedor
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
   @@map("ShortLink")
 }
 

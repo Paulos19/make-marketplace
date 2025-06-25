@@ -1,71 +1,78 @@
+import * as React from 'react';
 import {
-  Body,
-  Button,
-  Container,
-  Head,
   Html,
-  Img,
+  Body,
+  Head,
+  Heading,
+  Container,
   Preview,
   Section,
   Text,
-} from '@react-email/components'
-import * as React from 'react'
+  Button,
+  Tailwind,
+  Img,
+  Hr,
+} from '@react-email/components';
 
 interface ReviewRequestEmailProps {
-  buyerName: string
-  productName: string
-  sellerName: string
-  reviewLink: string
+  buyerName: string; // Espera uma 'string', não 'string | null'
+  productName: string;
+  reviewLink: string;
 }
 
-export const ReviewRequestEmail = ({
+export const ReviewRequestEmail: React.FC<Readonly<ReviewRequestEmailProps>> = ({
   buyerName,
   productName,
-  sellerName,
   reviewLink,
-}: ReviewRequestEmailProps) => (
+}) => (
   <Html>
     <Head />
-    <Preview>Avalie sua recente compra no Zacaplace!</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Img
-          src={`${process.env.NEXT_PUBLIC_APP_URL}/logo.png`} // Adapte para a sua logo
-          width="120"
-          height="auto"
-          alt="Zacaplace"
-          style={logo}
-        />
-        <Text style={paragraph}>Olá {buyerName},</Text>
-        <Text style={paragraph}>
-          Obrigado por comprar no Zacaplace! Esperamos que você tenha gostado do
-          seu produto: <strong>{productName}</strong>, vendido por{' '}
-          <strong>{sellerName}</strong>.
-        </Text>
-        <Text style={paragraph}>
-          Sua opinião é muito importante para nós e para toda a comunidade. Por
-          favor, tire um momento para avaliar sua experiência.
-        </Text>
-        <Section style={btnContainer}>
-          <Button style={button} href={reviewLink}>
-            Deixar uma Avaliação
-          </Button>
-        </Section>
-        <Text style={paragraph}>
-          Atenciosamente,
-          <br />A equipe do Zacaplace
-        </Text>
-      </Container>
-    </Body>
+    <Preview>Sua opinião é importante: Avalie sua compra de {productName}</Preview>
+    <Tailwind>
+      <Body className="bg-slate-100 p-4 font-sans text-base text-slate-800">
+        <Container className="bg-white border border-slate-200 p-8 rounded-lg max-w-lg mx-auto">
+          <Section className="text-center mb-8">
+            <Img
+              src="https://www.zacaplace.com.br/logo.svg"
+              width="180"
+              alt="Zacaplace Logo"
+            />
+          </Section>
+
+          <Heading as="h2" className="text-2xl font-bold text-zaca-roxo text-center">
+            Gostou do seu Achadinho?
+          </Heading>
+
+          <Text className="text-base leading-relaxed">
+            Olá, <strong>{buyerName}</strong>!
+          </Text>
+
+          <Text className="text-base leading-relaxed">
+            Esperamos que você esteja a adorar o seu produto: <strong>"{productName}"</strong>. A sua opinião é muito importante para nós e para outros compradores na comunidade Zacaplace.
+          </Text>
+
+          <Text className="text-base leading-relaxed">
+            Que tal tirar um minutinho para deixar uma avaliação?
+          </Text>
+
+          <Section className="text-center my-8">
+            <Button
+              className="bg-purple-600 text-white font-bold py-3 px-6 rounded-md"
+              href={reviewLink}
+            >
+              Avaliar Agora
+            </Button>
+          </Section>
+
+          <Hr className="border-slate-200 my-6" />
+
+          <Text className="text-xs text-slate-500 text-center">
+            Agradecemos por fazer parte da nossa comunidade!
+          </Text>
+        </Container>
+      </Body>
+    </Tailwind>
   </Html>
-)
+);
 
-export default ReviewRequestEmail
-
-// Estilos
-const main = { backgroundColor: '#ffffff', fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif' };
-const container = { margin: '0 auto', padding: '20px 0 48px' };
-const logo = { margin: '0 auto' };
-const paragraph = { fontSize: '16px', lineHeight: '26px' };
-const btnContainer = { textAlign: 'center' as const, marginTop: '32px' };
-const button = { backgroundColor: '#5D3A9E', borderRadius: '3px', color: '#fff', fontSize: '16px', textDecoration: 'none', textAlign: 'center' as const, display: 'block', padding: '12px', };
+export default ReviewRequestEmail;

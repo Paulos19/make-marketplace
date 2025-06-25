@@ -2,12 +2,12 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icon';
 import type { Category } from '@prisma/client';
+import { Search } from 'lucide-react';
 
 interface CategoryHighlightsProps {
   categories: Category[];
 }
 
-// Mapeamento de ícones para categorias específicas para dar um toque visual
 const categoryIcons: Record<string, IconName> = {
   'Moda': 'shirt',
   'Tecnologia': 'smartphone',
@@ -29,9 +29,7 @@ const getCategoryIcon = (categoryName: string): IconName => {
 
 
 export function CategoryHighlights({ categories }: CategoryHighlightsProps) {
-  if (!categories || categories.length === 0) {
-    return null;
-  }
+  const displayCategories = categories.slice(0, 5);
 
   return (
     <section className="w-full">
@@ -40,10 +38,10 @@ export function CategoryHighlights({ categories }: CategoryHighlightsProps) {
         <p className="text-muted-foreground mt-1">Encontre exatamente o que você procura.</p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {categories.map((category) => (
-          <Link key={category.id} href={`/products?category=${category.id}`} className="group block">
+        {displayCategories.map((category) => (
+          <Link key={category.id} href={`/categories/${category.id}`} className="group block">
             <Card className="overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-              <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+              <CardContent className="flex flex-col items-center justify-center p-6 text-center h-full">
                 <div className="p-4 bg-primary/10 rounded-full mb-3 transition-colors duration-300 group-hover:bg-primary/20">
                    <Icon name={getCategoryIcon(category.name)} className="h-8 w-8 text-primary" />
                 </div>
@@ -52,6 +50,17 @@ export function CategoryHighlights({ categories }: CategoryHighlightsProps) {
             </Card>
           </Link>
         ))}
+        {/* Card para "Buscar Todas" */}
+        <Link href="/categories" className="group block">
+            <Card className="overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 border-dashed hover:border-primary h-full">
+              <CardContent className="flex flex-col items-center justify-center p-6 text-center h-full">
+                <div className="p-4 bg-slate-200 dark:bg-slate-700 rounded-full mb-3 transition-colors duration-300 group-hover:bg-primary/20">
+                   <Search className="h-8 w-8 text-slate-500 dark:text-slate-300 group-hover:text-primary" />
+                </div>
+                <span className="font-semibold text-sm text-center text-foreground">Ver Todas</span>
+              </CardContent>
+            </Card>
+          </Link>
       </div>
     </section>
   );

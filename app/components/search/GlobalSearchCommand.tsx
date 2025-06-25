@@ -1,139 +1,119 @@
-// app/components/search/GlobalSearchCommand.tsx
-'use client';
+'use client'
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { useDebounce } from 'use-debounce';
+import * as React from 'react'
 import Image from 'next/image';
-import { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Button } from '@/components/ui/button';
-import { Search, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation'
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { Package, Store, Shapes, Loader2 } from 'lucide-react'
+import { useDebouncedCallback } from 'use-debounce'
 
 interface SearchResult {
-  id: string;
-  name: string;
-  images: string[];
-  price: number;
+  type: 'product' | 'seller' | 'category'
+  id: string
+  name: string
+  image?: string | null
 }
 
-export function GlobalSearchCommand() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm] = useDebounce(searchTerm, 300); // Aguarda 300ms após o usuário parar de digitar
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+// O componente agora é "controlado", recebendo o estado de abertura como props
+interface GlobalSearchCommandProps {
+  open: boolean
+  setOpen: (open: boolean) => void
+}
 
-  // Atalho de teclado (Cmd+K ou Ctrl+K) para abrir/fechar a busca
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setIsOpen((open) => !open);
+export function GlobalSearchCommand({ open, setOpen }: GlobalSearchCommandProps) {
+  const [query, setQuery] = React.useState('')
+  const [results, setResults] = React.useState<SearchResult[]>([])
+  const [loading, setLoading] = React.useState(false)
+  const router = useRouter()
+
+  const debouncedSearch = useDebouncedCallback(async (searchQuery: string) => {
+    if (searchQuery.length < 2) {
+      setResults([])
+      return
+    }
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/search?q=${searchQuery}`)
+      if (response.ok) {
+        const data = await response.json()
+        setResults(data)
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // Busca os resultados quando o termo de busca (debounced) muda
-  useEffect(() => {
-    if (debouncedSearchTerm.length > 1) {
-      const fetchResults = async () => {
-        setIsLoading(true);
-        try {
-          const response = await fetch(`/api/search?q=${debouncedSearchTerm}`);
-          if (!response.ok) throw new Error('Falha ao buscar resultados da pesquisa');
-          const data = await response.json();
-          setResults(data);
-        } catch (error) {
-          console.error(error);
-          setResults([]);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchResults();
-    } else {
-      setResults([]);
+    } catch (error) {
+      console.error('Search failed:', error)
+    } finally {
+      setLoading(false)
     }
-  }, [debouncedSearchTerm]);
+  }, 300)
 
-  // Navega para a página do produto ao selecionar um item
-  const handleSelect = useCallback((productId: string) => {
-    setIsOpen(false);
-    setSearchTerm('');
-    router.push(`/products/${productId}`);
-  }, [router]);
-  
-  // Limpa o termo de busca quando a caixa de diálogo é fechada
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchTerm('');
+  React.useEffect(() => {
+    debouncedSearch(query)
+  }, [query, debouncedSearch])
+
+  const runCommand = React.useCallback((command: () => unknown) => {
+    setOpen(false)
+    command()
+  }, [setOpen])
+
+  const renderIcon = (result: SearchResult) => {
+    if (result.image) {
+      return <Image src={result.image} alt={result.name} width={24} height={24} className="h-6 w-6 rounded-sm object-cover" />
     }
-  }, [isOpen]);
+    switch (result.type) {
+      case 'product': return <Package className="h-5 w-5 text-muted-foreground" />;
+      case 'seller': return <Store className="h-5 w-5 text-muted-foreground" />;
+      case 'category': return <Shapes className="h-5 w-5 text-muted-foreground" />;
+      default: return null;
+    }
+  }
 
+  // O componente agora renderiza apenas o diálogo, sem o botão de gatilho
   return (
-    <>
-      {/* Botão que aciona a busca */}
-      <Button
-        variant="ghost"
-        className={cn(
-          ""
-        )}
-        onClick={() => setIsOpen(true)}
-      >
-        <Search className="mr-2 h-4 w-4 shrink-0" />
-      </Button>
-
-      {/* Caixa de diálogo com os resultados */}
-      <CommandDialog open={isOpen} onOpenChange={setIsOpen}>
+      <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
-          placeholder="Digite o nome de um produto..."
-          value={searchTerm}
-          onValueChange={setSearchTerm}
+          placeholder="Buscar produtos, vendedores ou categorias..."
+          value={query}
+          onValueChange={setQuery}
         />
         <CommandList>
-          {isLoading ? (
-            <div className="p-4 text-center text-sm text-muted-foreground flex items-center justify-center">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Buscando...
-            </div>
-          ) : (
-            <>
-              {results.length === 0 && debouncedSearchTerm.length > 1 && (
-                 <CommandEmpty>Nenhum resultado encontrado para "{debouncedSearchTerm}".</CommandEmpty>
-              )}
-              {results.length > 0 && (
-                <CommandGroup heading="Produtos">
-                  {results.map((product) => (
-                    <CommandItem
-                      key={product.id}
-                      value={product.name}
-                      onSelect={() => handleSelect(product.id)}
-                      className="flex items-center gap-3 cursor-pointer"
-                    >
-                      <div className="relative h-10 w-10 shrink-0 rounded-md overflow-hidden bg-muted">
-                        <Image
-                          src={product.images?.[0] || '/img-placeholder.png'}
-                          alt={product.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium truncate">{product.name}</p>
-                        <p className="text-xs text-muted-foreground">R$ {product.price.toFixed(2)}</p>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-            </>
+          {loading && <div className='p-4 text-sm flex items-center justify-center'><Loader2 className='h-4 w-4 animate-spin mr-2'/> A buscar...</div>}
+          {!loading && results.length === 0 && query.length > 1 && (
+            <div className="p-4 text-center text-sm">Nenhum resultado encontrado.</div>
+          )}
+          
+          {results.length > 0 && (
+            <CommandGroup heading="Resultados da Busca">
+              {results.map((result) => (
+                <CommandItem
+                  key={`${result.type}-${result.id}`}
+                  value={`${result.name} ${result.type}`}
+                  onSelect={() => {
+                    runCommand(() => {
+                      let path = ''
+                      switch (result.type) {
+                        case 'product': path = `/products/${result.id}`; break;
+                        case 'seller': path = `/seller/${result.id}`; break;
+                        case 'category': path = `/category/${result.id}`; break;
+                      }
+                      router.push(path)
+                    })
+                  }}
+                  className="flex items-center gap-3"
+                >
+                  {renderIcon(result)}
+                  <span className='flex-grow'>{result.name}</span>
+                  <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md text-muted-foreground">{result.type}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
           )}
         </CommandList>
       </CommandDialog>
-    </>
-  );
+  )
 }

@@ -64,7 +64,7 @@ const plans = [
     {
         name: 'Meu Catálogo no Zaca',
         priceId: process.env.NEXT_PUBLIC_STRIPE_SUBSCRIPTION_PRICE_ID,
-        price: 'R$ 9,90',
+        price: 'R$ 19,90',
         frequency: '/mês',
         description: 'Tenha sua própria página de vendedor e apareça na lista de lojas.',
         features: [

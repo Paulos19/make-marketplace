@@ -175,3 +175,31 @@ export const sendCarouselPostConfirmationEmail = async (params: CarouselConfirma
         />
     });
 };
+
+interface SendReviewRequestEmailParams {
+    to: string;
+    buyerName: string | null;
+    productName: string;
+    reviewLink: string;
+}
+
+/**
+ * Envia um e-mail solicitando uma avaliação da compra.
+ * @param params - Parâmetros para o e-mail de solicitação de avaliação.
+ */
+export const sendReviewRequestEmail = async (params: SendReviewRequestEmailParams) => {
+    const { to, buyerName, productName, reviewLink } = params;
+
+    await sendEmail({
+        to,
+        subject: `Deixe sua avaliação para "${productName}"!`,
+        react: <ReviewRequestEmail 
+            // <<< CORREÇÃO APLICADA AQUI >>>
+            // Fornece um valor padrão caso o nome do comprador seja nulo,
+            // garantindo que o tipo 'string' seja sempre satisfeito.
+            buyerName={buyerName || 'Cliente do Zacaplace'}
+            productName={productName}
+            reviewLink={reviewLink}
+        />,
+    });
+};

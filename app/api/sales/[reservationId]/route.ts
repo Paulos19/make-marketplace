@@ -1,86 +1,145 @@
-import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../../auth/[...nextauth]/route'
-import crypto from 'crypto'
-// Importa a nova função da sua biblioteca
-import { sendReviewRequestEmail } from '@/lib/resend'
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { UserRole, ReservationStatus } from '@prisma/client';
+import crypto from 'crypto';
+import { sendReviewRequestEmail } from '@/lib/resend';
 
-// A assinatura da função foi alterada para receber apenas 'NextRequest'
-export async function PATCH(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-  }
 
+// Handler PATCH para atualizar o status de uma reserva
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { reservationId: string } }
+) {
   try {
-    const url = new URL(request.url)
-    const pathParts = url.pathname.split('/')
-    const reservationId = pathParts[pathParts.length - 1]
-
+    const { reservationId } = params;
     if (!reservationId) {
-      return NextResponse.json(
-        { error: 'ID da reserva não fornecido na URL.' },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: 'ID da reserva não fornecido.' }, { status: 400 });
     }
 
-    const reservationToValidate = await prisma.reservation.findUnique({
-      where: { id: reservationId },
-      include: { product: true },
-    })
-
-    if (!reservationToValidate) {
-      return NextResponse.json(
-        { error: 'Reserva não encontrada' },
-        { status: 404 },
-      )
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id || session.user.role !== UserRole.SELLER) {
+      return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 401 });
     }
 
-    if (reservationToValidate.product.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+    const body = await request.json();
+    const newStatus: ReservationStatus = body.status;
+    if (!newStatus || !Object.values(ReservationStatus).includes(newStatus)) {
+      return NextResponse.json({ error: 'Status inválido fornecido.' }, { status: 400 });
     }
 
-    const reviewToken = crypto.randomBytes(32).toString('hex')
-
+    // Utiliza uma transação para garantir a consistência dos dados
     const updatedReservation = await prisma.$transaction(async (tx) => {
-      await tx.product.update({
-        where: { id: reservationToValidate.productId },
-        data: {
-          isSold: true,
-          isReserved: false,
-        },
-      })
+      // 1. Encontra a reserva e o produto associado
+      const reservation = await tx.reservation.findFirst({
+        where: { id: reservationId, product: { userId: session.user?.id } },
+        include: { product: true },
+      });
 
-      const reservation = await tx.reservation.update({
+      if (!reservation) {
+        throw new Error('Reserva não encontrada ou não pertence a este vendedor.');
+      }
+
+      const product = reservation.product;
+      const oldStatus = reservation.status;
+      let reviewToken: string | null = null;
+      
+      const productUpdateData: { quantity?: number; isSold?: boolean; isReserved?: boolean; } = {};
+
+      // 2. Lógica de gestão de stock
+      if (newStatus === ReservationStatus.SOLD && oldStatus !== ReservationStatus.SOLD) {
+        const newQuantity = product.quantity - reservation.quantity;
+        productUpdateData.quantity = newQuantity;
+        productUpdateData.isSold = newQuantity <= 0;
+        productUpdateData.isReserved = false;
+        reviewToken = crypto.randomBytes(32).toString('hex');
+      } 
+      else if (newStatus !== ReservationStatus.SOLD && oldStatus === ReservationStatus.SOLD) {
+        productUpdateData.quantity = product.quantity + reservation.quantity;
+        productUpdateData.isSold = false;
+        productUpdateData.isReserved = newStatus === ReservationStatus.PENDING;
+      }
+      else {
+        productUpdateData.isReserved = newStatus === ReservationStatus.PENDING;
+      }
+      
+      // 3. Atualiza o produto e a reserva
+      await tx.product.update({
+        where: { id: product.id },
+        data: productUpdateData,
+      });
+
+      const finalUpdatedReservation = await tx.reservation.update({
         where: { id: reservationId },
         data: {
-          status: 'SOLD',
-          reviewToken: reviewToken,
+          status: newStatus,
+          ...(reviewToken && { reviewToken }),
         },
-        include: {
-          product: { include: { user: true } },
-          user: true,
-        },
-      })
-      return reservation
-    })
+        include: { user: true, product: true },
+      });
+      
+      // 4. Envia e-mail de avaliação se a venda for concluída
+      if (newStatus === ReservationStatus.SOLD && reviewToken && finalUpdatedReservation.user.email) {
+        const reviewLink = `${process.env.NEXT_PUBLIC_APP_URL}/review/${reviewToken}`;
+        await sendReviewRequestEmail({
+          to: finalUpdatedReservation.user.email,
+          buyerName: finalUpdatedReservation.user.name || 'Cliente Zacaplace',
+          productName: finalUpdatedReservation.product.name,
+          reviewLink: reviewLink,
+        });
+      }
 
-    // CORRIGIDO: Agora usa a nova função da biblioteca para disparar o email
-    await sendReviewRequestEmail({
-      to: updatedReservation.user.email!,
-      buyerName: updatedReservation.user.name || 'Comprador',
-      productName: updatedReservation.product.name,
-      sellerName: updatedReservation.product.user.name || 'Vendedor',
-      reviewToken: reviewToken,
-    })
+      return finalUpdatedReservation;
+    });
 
-    return NextResponse.json(updatedReservation)
+    return NextResponse.json(updatedReservation);
+
   } catch (error) {
-    console.error('Erro ao confirmar venda:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 },
-    )
+    console.error('[RESERVATIONS_PATCH_ERROR]', error);
+    const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro ao atualizar a reserva.';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
+}
+
+
+// Handler DELETE para arquivar a reserva
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: { reservationId: string } }
+) {
+    try {
+        const { reservationId } = params;
+        if (!reservationId) {
+            return NextResponse.json({ error: 'ID da reserva não fornecido.' }, { status: 400 });
+        }
+
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id || session.user.role !== UserRole.SELLER) {
+            return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 401 });
+        }
+
+        const reservationToArchive = await prisma.reservation.findFirst({
+            where: {
+                id: reservationId,
+                product: { userId: session.user.id },
+            },
+        });
+
+        if (!reservationToArchive) {
+            return NextResponse.json({ error: 'Reserva não encontrada ou não pertence a você.' }, { status: 404 });
+        }
+
+        // Não exclui, apenas marca como arquivada
+        await prisma.reservation.update({
+            where: { id: reservationId },
+            data: { isArchived: true },
+        });
+
+        return new NextResponse(null, { status: 204 }); // Sucesso
+
+    } catch (error) {
+        console.error('[RESERVATION_ARCHIVE_ERROR]', error);
+        return NextResponse.json({ error: 'Ocorreu um erro ao arquivar a reserva.' }, { status: 500 });
+    }
 }

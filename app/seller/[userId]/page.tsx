@@ -3,7 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Star, MessageCircle, ChevronLeft, ChevronRight, Ban } from 'lucide-react'
+import { Star, MessageCircle, ChevronLeft, ChevronRight, Ban, Share2, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ProductCard, ProductCardSkeleton } from '@/app/products/components/ProductCard'
@@ -14,8 +14,9 @@ import { cn } from '@/lib/utils'
 import Navbar from '@/app/components/layout/Navbar'
 import Footer from '@/app/components/layout/Footer'
 import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
 
-// Tipos Review, Product, Seller
+// Tipos
 type Review = {
     id: string;
     rating: number;
@@ -85,12 +86,14 @@ const PaginationControls = ({ currentPage, totalPages, basePath }: { currentPage
 
 export default function SellerPage() {
     const params = useParams();
-    const searchParams = useSearchParams();
     const router = useRouter();
+    const { data: session } = useSession();
+    const searchParams = useSearchParams();
     const userId = params.userId as string;
 
     const [seller, setSeller] = useState<Seller | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSharing, setIsSharing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const currentPage = parseInt(searchParams.get('page') || '1');
@@ -102,12 +105,8 @@ export default function SellerPage() {
             try {
                 setIsLoading(true);
                 const response = await fetch(`/api/seller/${userId}`);
-                
-                // <<< LÓGICA DE REDIRECIONAMENTO >>>
                 if (!response.ok) {
-                    toast.error("Este vendedor não está visível publicamente.");
-                    router.push('/sellers'); // Redireciona para a lista geral
-                    return; // Interrompe a execução
+                    throw new Error('Vendedor não encontrado ou não está visível publicamente.');
                 }
                 const dataFromApi: Seller = await response.json();
                 
@@ -123,13 +122,46 @@ export default function SellerPage() {
                 
                 setSeller(completeSellerData);
             } catch (err: any) {
-                setError("Ocorreu um erro ao carregar os dados do vendedor.");
+                setError(err.message);
             } finally {
                 setIsLoading(false);
             }
         };
         fetchSellerData();
     }, [userId, router]);
+
+    const handleShareSellerPage = async () => {
+        if (!seller) return;
+        if (!session) {
+            toast.info("Você precisa de estar logado para criar um link de partilha.");
+            router.push(`/auth/signin?callbackUrl=/seller/${seller.id}`);
+            return;
+        }
+
+        setIsSharing(true);
+        try {
+            const response = await fetch('/api/shortener', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    originalUrl: `${process.env.NEXT_PUBLIC_APP_URL}/seller/${seller.id}`,
+                    title: seller.storeName || seller.name,
+                    description: seller.profileDescription,
+                    imageUrl: seller.sellerBannerImageUrl || seller.image,
+                }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "Não foi possível criar o link.");
+            
+            const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL}/s/${data.shortCode}`;
+            navigator.clipboard.writeText(shortUrl);
+            toast.success("Link da loja copiado para a área de transferência!");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Ocorreu um erro.");
+        } finally {
+            setIsSharing(false);
+        }
+    };
 
     const { paginatedProducts, totalPages } = useMemo(() => {
         if (!seller) return { paginatedProducts: [], totalPages: 0 };
@@ -142,31 +174,31 @@ export default function SellerPage() {
 
     if (isLoading) {
         return (
-            // ... Skeleton de carregamento ...
             <div className="container mx-auto px-4 py-12">
-                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-64 w-full rounded-lg" />
                 <div className="flex justify-center -mt-16">
-                    <Skeleton className="h-32 w-32 rounded-full" />
+                    <Skeleton className="h-32 w-32 rounded-full border-4 border-background" />
                 </div>
-                <div className="text-center mt-16 space-y-4">
+                <div className="text-center mt-6 space-y-4">
                     <Skeleton className="h-10 w-1/2 mx-auto" />
                     <Skeleton className="h-6 w-3/4 mx-auto" />
+                </div>
+                 <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {[...Array(6)].map((_, i) => <ProductCardSkeleton key={i} />)}
                 </div>
             </div>
         )
     }
 
     if (error || !seller) {
-        // O redirecionamento no useEffect já deve ter ocorrido,
-        // mas mantemos um fallback caso algo dê errado.
         return (
             <div className="flex flex-col min-h-screen">
                 <Navbar />
                 <main className="flex-grow flex items-center justify-center text-center p-4">
                     <div>
                         <Ban className="mx-auto h-16 w-16 text-destructive mb-4" />
-                        <h2 className="text-2xl font-bold text-destructive">{error || 'Página não encontrada'}</h2>
-                        <p className="text-muted-foreground mt-2">O perfil deste vendedor não pode ser exibido.</p>
+                        <h2 className="text-2xl font-bold text-destructive">{error}</h2>
+                        <p className="text-muted-foreground mt-2">Este perfil de vendedor pode não existir ou não está disponível para visitação.</p>
                         <Button onClick={() => router.push('/sellers')} className="mt-6">Ver outros vendedores</Button>
                     </div>
                 </main>
@@ -177,30 +209,28 @@ export default function SellerPage() {
     
     return (
       <>
-        <Navbar/>
+      <Navbar/>
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            {/* Seção do Banner e Avatar */}
             <div className="relative h-48 md:h-64">
                 {seller.sellerBannerImageUrl ? (
                     <Image src={seller.sellerBannerImageUrl} alt={`Banner de ${seller.storeName || seller.name}`} fill className="object-cover" />
                 ) : (
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 h-full"></div>
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 h-full"></div>
                 )}
                 <div className="absolute inset-0 bg-black/20" />
                 <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
                     <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
                         <AvatarImage src={seller.image || undefined} />
-                        <AvatarFallback className="text-4xl">{seller.storeName?.charAt(0) || seller.name?.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="text-4xl">{(seller.storeName || seller.name || 'V')[0]}</AvatarFallback>
                     </Avatar>
                 </div>
             </div>
 
-            {/* Informações do Vendedor */}
             <div className="container mx-auto px-4 pt-24 pb-12 text-center">
                 <h1 className="text-4xl font-bold">{seller.storeName || seller.name}</h1>
                 {seller.profileDescription && <p className="mt-2 max-w-2xl mx-auto text-muted-foreground">{seller.profileDescription}</p>}
                 
-                <div className="mt-6 flex items-center justify-center gap-6">
+                <div className="mt-6 flex items-center justify-center gap-2 sm:gap-4">
                     <div className="flex items-center gap-2">
                         <Star className="h-6 w-6 text-yellow-400" />
                         <div className="text-left">
@@ -210,20 +240,22 @@ export default function SellerPage() {
                     </div>
                     {seller.whatsappLink && (
                         <Button asChild>
-                            <a href={seller.whatsappLink} target="_blank" rel="noopener noreferrer">Contatar Vendedor</a>
+                            <a href={seller.whatsappLink} target="_blank" rel="noopener noreferrer"><MessageCircle className='mr-2 h-4 w-4' />Contatar</a>
                         </Button>
                     )}
+                    <Button variant="outline" onClick={handleShareSellerPage} disabled={isSharing}>
+                        {isSharing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Share2 className='h-4 w-4'/>}
+                        <span className="hidden sm:inline ml-2">Compartilhar Loja</span>
+                    </Button>
                 </div>
             </div>
 
-            {/* Layout Principal: Vitrine e Avaliações */}
             <div className="container mx-auto px-4 pb-16">
-                 {/* Vitrine de Produtos */}
-                <div>
+                 <div>
                     <h2 className="text-2xl font-bold mb-6">Vitrine de Produtos</h2>
                     {paginatedProducts.length > 0 ? (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                                 {paginatedProducts.map(product => (
                                     <ProductCard key={product.id} product={product as any} />
                                 ))}
@@ -235,7 +267,6 @@ export default function SellerPage() {
                     )}
                 </div>
 
-                {/* Coluna de Avaliações */}
                 <div className="mt-16">
                      <h2 className="text-2xl font-bold mb-6">Avaliações de Clientes</h2>
                      {seller.reviewsReceived.length > 0 ? (
@@ -255,7 +286,7 @@ export default function SellerPage() {
                 </div>
             </div>
         </div>
-        <Footer/>
+      <Footer/>
       </>
     )
 }

@@ -16,20 +16,21 @@ import {
 import { Input } from '@/components/ui/input'; 
 import { Textarea } from '@/components/ui/textarea'; 
 import { toast } from 'sonner';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import ImageUpload from '@/app/components/ImageUpload'; 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; 
 import { Skeleton } from '@/components/ui/skeleton'; 
-import { User, Store, Image as ImageIconLucide, Save, UserCircle2, Loader2, Lock } from 'lucide-react'; 
+import { User, Store, Image as ImageIconLucide, Save, UserCircle2, Loader2, Lock, Crown } from 'lucide-react'; 
 import Navbar from '@/app/components/layout/Navbar'; 
 import Image from 'next/image';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SubscriptionStatus } from '@prisma/client';
 import Footer from '@/app/components/layout/Footer';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -67,11 +68,36 @@ interface UserData {
   stripeSubscriptionStatus?: SubscriptionStatus | null;
 }
 
+const SubscriptionActionCard = ({ onCheckout, isLoading }: { onCheckout: () => void, isLoading: boolean }) => (
+    <Card className="shadow-xl border-amber-400 border-2 bg-gradient-to-tr from-yellow-50 via-amber-50 to-white dark:from-slate-900 dark:via-amber-900/20 dark:to-slate-900">
+        <CardHeader className="flex flex-row items-center gap-4">
+            <div className="p-3 bg-amber-400/20 rounded-full">
+                <Crown className="h-8 w-8 text-amber-500" />
+            </div>
+            <div>
+                <CardTitle className="text-xl text-amber-900 dark:text-amber-300">
+                    Ative seu Catálogo Público!
+                </CardTitle>
+                <CardDescription className="dark:text-slate-400">
+                    Assine o plano "Meu Catálogo no Zaca" para exibir sua loja na página de vendedores.
+                </CardDescription>
+            </div>
+        </CardHeader>
+        <CardContent>
+            <Button className="w-full bg-amber-500 hover:bg-amber-600 text-amber-900 font-bold" onClick={onCheckout} disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Crown className="mr-2 h-5 w-5" />}
+                Assinar Agora (R$ 19,90/mês)
+            </Button>
+        </CardContent>
+    </Card>
+);
+
 export default function SettingsPage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
   
   const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null); 
   const [sellerBannerImageUrlState, setSellerBannerImageUrlState] = useState<string | null>(null); 
@@ -91,40 +117,65 @@ export default function SettingsPage() {
   
   const hasActiveSubscription = userData?.stripeSubscriptionStatus === SubscriptionStatus.ACTIVE;
 
-  useEffect(() => {
+  const fetchUserData = useCallback(() => {
     if (status === 'authenticated' && session?.user?.id) {
-      setInitialDataLoading(true);
-      fetch('/api/user')
-        .then((res) => {
-          if (!res.ok) throw new Error('Falha ao buscar dados do usuário.');
-          return res.json();
-        })
-        .then((data: UserData) => {
-            setUserData(data);
-            form.reset({
-                name: data.name || '',
-                email: data.email || '',
-                whatsappLink: data.whatsappLink || '',
-                storeName: data.storeName || '',
-                profileDescription: data.profileDescription || '',
-                showInSellersPage: data.stripeSubscriptionStatus === SubscriptionStatus.ACTIVE && data.showInSellersPage || false,
-            });
-            setProfileImageUrl(data.image || null);
-            setSellerBannerImageUrlState(data.sellerBannerImageUrl || null);
-        })
-        .catch((err) => {
-          toast.error(err.message || 'Não foi possível carregar os dados do perfil.');
-        })
-        .finally(() => setInitialDataLoading(false));
-    } else if (status === 'unauthenticated') {
-      router.push('/auth/signin');
-    }
+        setInitialDataLoading(true);
+        fetch('/api/user')
+          .then((res) => {
+            if (!res.ok) throw new Error('Falha ao buscar dados do usuário.');
+            return res.json();
+          })
+          .then((data: UserData) => {
+              setUserData(data);
+              form.reset({
+                  name: data.name || '',
+                  email: data.email || '',
+                  whatsappLink: data.whatsappLink || '',
+                  storeName: data.storeName || '',
+                  profileDescription: data.profileDescription || '',
+                  showInSellersPage: data.stripeSubscriptionStatus === SubscriptionStatus.ACTIVE && data.showInSellersPage || false,
+              });
+              setProfileImageUrl(data.image || null);
+              setSellerBannerImageUrlState(data.sellerBannerImageUrl || null);
+          })
+          .catch((err) => {
+            toast.error(err.message || 'Não foi possível carregar os dados do perfil.');
+          })
+          .finally(() => setInitialDataLoading(false));
+      } else if (status === 'unauthenticated') {
+        router.push('/auth/signin');
+      }
   }, [session, status, form, router]);
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
+
+  const handleSubscriptionCheckout = async () => {
+    setIsCheckoutLoading(true);
+    try {
+        const response = await fetch('/api/stripe/checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                priceId: process.env.NEXT_PUBLIC_STRIPE_SUBSCRIPTION_PRICE_ID,
+                type: 'subscription'
+            })
+        });
+        const { url, error } = await response.json();
+        if (!response.ok || !url) {
+            throw new Error(error || "Não foi possível iniciar o checkout.");
+        }
+        window.location.href = url;
+    } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Ocorreu um erro desconhecido.");
+        setIsCheckoutLoading(false);
+    }
+  }
 
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
-
     const dataToUpdate: Partial<UserData> = { 
       name: values.name,
       whatsappLink: values.whatsappLink || null,
@@ -134,17 +185,14 @@ export default function SettingsPage() {
       sellerBannerImageUrl: sellerBannerImageUrlState,
       showInSellersPage: values.showInSellersPage,
     };
-
     try {
       const response = await fetch('/api/user', { 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToUpdate),
       });
-
       const responseData = await response.json();
       if (!response.ok) throw new Error(responseData.message || 'Falha ao atualizar perfil');
-      
       await update({ user: { ...session?.user, name: responseData.name, image: responseData.image } });
       toast.success('Seu perfil foi atualizado com sucesso!');
     } catch (error: any) {
@@ -301,12 +349,14 @@ export default function SettingsPage() {
                 <Card className="shadow-xl dark:bg-slate-800/70 border dark:border-slate-700/60">
                   <CardHeader>
                     <CardTitle className="text-xl flex items-center text-slate-800 dark:text-slate-100">
-                      <Store className="mr-2.5 h-5 w-5 text-zaca-magenta" /> Detalhes da Loja
+                      <Store className="mr-2.5 h-5 w-5 text-zaca-magenta" /> Detalhes e Visibilidade da Loja
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6 pt-3">
+                    {/* <<< CAMPOS ADICIONADOS AQUI >>> */}
                     <FormField control={form.control} name="storeName" render={({ field }) => (<FormItem><FormLabel>Nome da Loja</FormLabel><FormControl><Input placeholder="Ex: Paraíso dos Achadinhos" {...field} value={field.value ?? ''} className="dark:bg-slate-700" /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="profileDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da Loja</FormLabel><FormControl><Textarea placeholder="Conte sobre sua loja..." {...field} value={field.value ?? ''} rows={5} className="dark:bg-slate-700" /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="profileDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da Loja</FormLabel><FormControl><Textarea placeholder="Conte sobre sua loja..." {...field} value={field.value ?? ''} rows={4} className="dark:bg-slate-700" /></FormControl><FormMessage /></FormItem>)} />
+                    <Separator />
                     <FormField
                       control={form.control}
                       name="showInSellersPage"
@@ -342,6 +392,10 @@ export default function SettingsPage() {
                         </FormItem>
                       )}
                     />
+                    
+                    {!hasActiveSubscription && (
+                        <SubscriptionActionCard onCheckout={handleSubscriptionCheckout} isLoading={isCheckoutLoading} />
+                    )}
                   </CardContent>
                 </Card>
               </div>

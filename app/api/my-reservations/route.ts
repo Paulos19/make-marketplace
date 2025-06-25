@@ -3,40 +3,68 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
+export async function GET(request: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+        }
 
-  if (!session?.user?.id) {
-    return new NextResponse('Não autorizado', { status: 401 });
-  }
-
-  try {
-    const reservations = await prisma.reservation.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      include: {
-        product: {
-          include: {
-            // CORREÇÃO APLICADA AQUI
-            user: {
-              select: {
-                id: true,
-                name: true,
-                whatsappLink: true
-              },
+        // Busca as reservas do utilizador logado
+        const reservationsFromDb = await prisma.reservation.findMany({
+            where: {
+                userId: session.user.id,
+                isArchived: false, // Ignora reservas arquivadas
             },
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+            include: {
+                // Inclui o produto e os dados do vendedor associado a ele
+                product: {
+                    select: {
+                        id: true,
+                        name: true,
+                        images: true,
+                        price: true,
+                        user: { // O vendedor
+                            select: {
+                                name: true,
+                                whatsappLink: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
 
-    return NextResponse.json(reservations);
-  } catch (error) {
-    console.error('[MY_RESERVATIONS_GET]', error);
-    return new NextResponse('Internal error', { status: 500 });
-  }
+        // Transforma os dados para o formato que o frontend espera
+        const transformedReservations = reservationsFromDb.map(res => {
+            // Garante que o produto e os dados do vendedor existem
+            if (!res.product || !res.product.user) {
+                return null;
+            }
+            return {
+                id: res.id,
+                createdAt: res.createdAt.toISOString(),
+                product: {
+                    id: res.product.id,
+                    name: res.product.name,
+                    images: res.product.images,
+                    price: res.product.price,
+                },
+                // Anexa os dados do vendedor ao objeto principal da reserva
+                user: {
+                    name: res.product.user.name,
+                    whatsappLink: res.product.user.whatsappLink
+                }
+            };
+        }).filter(Boolean); // Remove quaisquer entradas nulas
+
+        return NextResponse.json(transformedReservations);
+
+    } catch (error) {
+        console.error('[MY_RESERVATIONS_GET_ERROR]', error);
+        return NextResponse.json({ error: 'Ocorreu um erro ao buscar suas reservas.' }, { status: 500 });
+    }
 }

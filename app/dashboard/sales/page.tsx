@@ -1,156 +1,208 @@
-// app/dashboard/sales/page.tsx
-"use client";
+'use client';
 
-import { useSession } from 'next-auth/react';
-import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, ShoppingBag, ArrowLeft, PackageCheck, XCircle, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { Loader2, Inbox, Trash2, AlertTriangle, User, Calendar, MessageSquare } from 'lucide-react';
+import { ReservationStatus } from '@prisma/client';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import Navbar from '@/app/components/layout/Navbar';
 
-interface Sale {
+type ProductInfo = {
   id: string;
-  quantity: number;
-  status: string;
+  name: string;
+  images: string[];
+};
+type UserInfo = {
+  name: string | null;
+  whatsappLink: string | null;
+};
+type ReservationWithDetails = {
+  id: string;
+  status: ReservationStatus;
   createdAt: string;
-  product: {
-    id: string;
-    name: string;
-    imageUrls: string[];
-  };
-  user: { // Comprador
-    id: string;
-    name: string | null;
-    email: string | null;
-  };
-}
+  product: ProductInfo;
+  user: UserInfo;
+};
 
-export default function MySalesPage() {
-  const { status } = useSession();
+export default function SalesPage() {
+  const { data: session, status: authStatus } = useSession();
   const router = useRouter();
-  const [sales, setSales] = useState<Sale[]>([]);
+  const [reservations, setReservations] = useState<ReservationWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [actionStates, setActionStates] = useState<Record<string, boolean>>({});
+  const [reservationToDelete, setReservationToDelete] = useState<ReservationWithDetails | null>(null);
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
+    if (authStatus === 'unauthenticated') router.push('/auth/signin');
+    if (authStatus === 'authenticated') {
+      fetch('/api/sales')
+        .then(res => res.json())
+        .then(data => setReservations(Array.isArray(data) ? data : []))
+        .catch(() => toast.error('Falha ao carregar o histórico de vendas.'))
+        .finally(() => setIsLoading(false));
     }
+  }, [authStatus, router]);
 
-    if (status === 'authenticated') {
-      const fetchSales = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-          const response = await fetch('/api/sales');
-          if (!response.ok) throw new Error('Falha ao buscar suas vendas');
-          const data = await response.json();
-          setSales(data);
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchSales();
-    }
-  }, [status, router]);
+  const setActionLoading = (id: string, state: boolean) => {
+    setActionStates(prev => ({ ...prev, [id]: state }));
+  }
 
-  const handleUpdateStatus = async (reservationId: string, newStatus: 'COMPLETED' | 'CANCELLED') => {
-    setUpdatingId(reservationId);
+  const handleUpdateStatus = async (reservationId: string, newStatus: ReservationStatus) => {
+    setActionLoading(reservationId, true);
     try {
       const response = await fetch(`/api/sales/${reservationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Falha ao atualizar o status da venda.');
-      }
-      
-      const updatedSale = await response.json();
-      setSales(prev => prev.map(s => s.id === reservationId ? { ...s, status: updatedSale.status } : s));
-      toast.success(`Venda ${newStatus === 'COMPLETED' ? 'confirmada' : 'cancelada'} com sucesso!`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar venda.');
+      const updatedReservation = await response.json();
+      if (!response.ok) throw new Error(updatedReservation.error || 'Falha ao atualizar o status.');
+      setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, status: updatedReservation.status } : r));
+      toast.success(`Reserva atualizada para "${newStatus.toString()}"!`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Ocorreu um erro.");
     } finally {
-      setUpdatingId(null);
+      setActionLoading(reservationId, false);
     }
   };
   
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'PENDING': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-700/30 dark:text-yellow-300">Pendente</Badge>;
-      case 'CONFIRMED': return <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-700/30 dark:text-blue-300">Confirmado</Badge>;
-      case 'COMPLETED': return <Badge className="bg-green-100 text-green-800 dark:bg-green-700/30 dark:text-green-300">Entregue</Badge>;
-      case 'CANCELLED': return <Badge variant="destructive">Cancelado</Badge>;
-      default: return <Badge variant="outline">{status}</Badge>;
+  const handleConfirmDelete = async () => {
+    if (!reservationToDelete) return;
+    setActionLoading(reservationToDelete.id, true);
+    try {
+        const response = await fetch(`/api/sales/${reservationToDelete.id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error((await response.json()).error || "Falha ao excluir.");
+        
+        toast.success("Registo de reserva excluído com sucesso.");
+        setReservations(prev => prev.filter(r => r.id !== reservationToDelete.id));
+        setReservationToDelete(null);
+    } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Ocorreu um erro.");
+    } finally {
+        setActionLoading(reservationToDelete.id, false);
     }
   };
 
+  const getStatusVariant = (status: ReservationStatus): "success" | "warning" | "destructive" | "secondary" => {
+    switch (status) {
+      case 'SOLD': return 'success';
+      case 'PENDING': return 'warning';
+      case 'CANCELED': return 'destructive';
+      default: return 'secondary';
+    }
+  };
+
+  if (isLoading || authStatus === 'loading') {
+    return (
+        <div className="flex justify-center items-center h-screen">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <Button variant="outline" onClick={() => router.push('/dashboard')} className="mb-6 sm:mb-0">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Painel
-          </Button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-center text-sky-700 dark:text-sky-500 flex-grow">Minhas Vendas</h1>
+    <>
+    <Navbar/>
+        <div className="m-4 md:m-8">
+            <CardHeader className="px-0">
+                <CardTitle className="text-2xl sm:text-3xl">Histórico de Vendas e Reservas</CardTitle>
+                <CardDescription>Gerencie o status de todas as reservas dos seus produtos.</CardDescription>
+            </CardHeader>
+        
+            {reservations.length === 0 ? (
+            <Card className="text-center py-16 text-muted-foreground border-dashed">
+                <Inbox className="mx-auto h-16 w-16" />
+                <h3 className="mt-4 text-xl font-semibold">Nenhuma reserva encontrada</h3>
+                <p className="mt-1 text-sm">Quando um cliente reservar um produto, ele aparecerá aqui.</p>
+            </Card>
+            ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {reservations.map((reservation) => (
+                <Card key={reservation.id} className="flex flex-col overflow-hidden">
+                    <CardHeader className="flex flex-row items-start gap-4 p-4">
+                        <Link href={`/products/${reservation.product.id}`} target="_blank" className="flex-shrink-0">
+                            <Image
+                            src={(reservation.product.images && reservation.product.images.length > 0) ? reservation.product.images[0] : '/img-placeholder.png'}
+                            alt={reservation.product.name}
+                            width={80}
+                            height={80}
+                            className="rounded-lg object-cover border aspect-square"
+                            />
+                        </Link>
+                        <div className="flex-grow">
+                            <Link href={`/products/${reservation.product.id}`} target="_blank" className="hover:underline">
+                                <CardTitle className="text-base font-semibold leading-tight">{reservation.product.name}</CardTitle>
+                            </Link>
+                            <div className="text-sm text-muted-foreground mt-2 space-y-1">
+                                <p className="flex items-center gap-2"><User className="h-4 w-4"/> {reservation.user.name || 'Cliente'}</p>
+                                <p className="flex items-center gap-2"><Calendar className="h-4 w-4"/> {new Date(reservation.createdAt).toLocaleDateString('pt-BR')}</p>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-4 flex-grow">
+                        <Select
+                            value={reservation.status}
+                            onValueChange={(newStatus: ReservationStatus) => handleUpdateStatus(reservation.id, newStatus)}
+                            disabled={actionStates[reservation.id]}
+                        >
+                            <SelectTrigger>
+                            <SelectValue>
+                                {actionStates[reservation.id] ? <Loader2 className="h-4 w-4 animate-spin"/> : <Badge variant={getStatusVariant(reservation.status)}>{reservation.status}</Badge>}
+                            </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                            <SelectItem value={ReservationStatus.PENDING}>Pendente</SelectItem>
+                            <SelectItem value={ReservationStatus.SOLD}>Vendido</SelectItem>
+                            <SelectItem value={ReservationStatus.CANCELED}>Cancelado</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </CardContent>
+                    <CardFooter className="bg-slate-50 dark:bg-slate-800/50 p-3 flex justify-between">
+                        {reservation.user.whatsappLink ? (
+                            <Button asChild variant="outline" size="sm">
+                                <a href={reservation.user.whatsappLink} target="_blank" rel="noopener noreferrer"><MessageSquare className="h-4 w-4 mr-2"/>Contatar</a>
+                            </Button>
+                        ) : <div />}
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setReservationToDelete(reservation)}>
+                           <Trash2 className="h-4 w-4"/>
+                        </Button>
+                    </CardFooter>
+                </Card>
+                ))}
+            </div>
+            )}
         </div>
 
-        {isLoading ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-lg" />)}
-          </div>
-        ) : error ? (
-          <Card className="text-center p-6 bg-red-50 dark:bg-red-900/20"><AlertTriangle className="mx-auto h-8 w-8 text-red-500 mb-2" />{error}</Card>
-        ) : sales.length === 0 ? (
-          <Card className="text-center p-10"><ShoppingBag className="mx-auto h-12 w-12 text-gray-400 mb-4" /><h3 className="text-xl font-semibold">Nenhuma venda encontrada</h3><p className="text-gray-500">Quando um cliente reservar um de seus produtos, a reserva aparecerá aqui.</p></Card>
-        ) : (
-          <div className="space-y-6">
-            {sales.map((sale) => (
-              <Card key={sale.id} className="overflow-hidden shadow-lg dark:bg-gray-800/80 border dark:border-gray-700/50">
-                <CardHeader className="p-4 flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 border-b dark:border-gray-700/50">
-                  <div className="relative w-20 h-20 flex-shrink-0">
-                    <Image src={sale.product.imageUrls[0] || '/placeholder-product.jpg'} alt={sale.product.name} fill className="object-cover rounded-md" />
-                  </div>
-                  <div className="flex-grow">
-                    <CardTitle className="text-lg font-semibold hover:text-sky-600 dark:hover:text-sky-400"><Link href={`/products/${sale.product.id}`} target="_blank">{sale.product.name}</Link></CardTitle>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Comprador: <strong>{sale.user.name || 'N/A'}</strong> ({sale.user.email})</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Quantidade: <strong>{sale.quantity}</strong></p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Reservado em: {new Date(sale.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  <div className="self-start sm:self-center">
-                    {getStatusBadge(sale.status)}
-                  </div>
-                </CardHeader>
-                <CardFooter className="p-4 flex flex-col sm:flex-row justify-end items-center gap-2">
-                  {updatingId === sale.id && <Loader2 className="h-5 w-5 animate-spin" />}
-                  {(sale.status === 'PENDING' || sale.status === 'CONFIRMED') && (
-                    <>
-                      <Button variant="outline" size="sm" onClick={() => handleUpdateStatus(sale.id, 'CANCELLED')} disabled={!!updatingId} className="w-full sm:w-auto border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700">
-                        <XCircle className="mr-2 h-4 w-4" /> Cancelar Pedido
-                      </Button>
-                      <Button size="sm" onClick={() => handleUpdateStatus(sale.id, 'COMPLETED')} disabled={!!updatingId} className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white">
-                        <PackageCheck className="mr-2 h-4 w-4" /> Confirmar Entrega
-                      </Button>
-                    </>
-                  )}
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+        {/* Diálogo de Confirmação de Exclusão */}
+        <Dialog open={!!reservationToDelete} onOpenChange={(isOpen) => !isOpen && setReservationToDelete(null)}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>Confirmar Exclusão</DialogTitle>
+                    <DialogDescription>
+                        Tem certeza que deseja excluir este registo de reserva? Esta ação não pode ser desfeita.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2 mt-4">
+                    <Button variant="outline" onClick={() => setReservationToDelete(null)} disabled={actionStates[reservationToDelete?.id || '']}>
+                        Cancelar
+                    </Button>
+                    <Button variant="destructive" onClick={handleConfirmDelete} disabled={actionStates[reservationToDelete?.id || '']}>
+                        {actionStates[reservationToDelete?.id || ''] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                        Confirmar Exclusão
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    </>
   );
 }

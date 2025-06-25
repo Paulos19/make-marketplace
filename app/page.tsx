@@ -1,12 +1,13 @@
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { Rocket, Sparkles } from 'lucide-react';
+import { Rocket } from 'lucide-react';
 import { HeroCarousel } from './components/home/HeroCarousel';
 import { ProductScrollArea } from './components/home/ProductScrollArea';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import { ModernProductSection } from './components/home/ModernProductSection';
 import { CategoryHighlights } from './components/home/CategoryHighlights';
+import { TopSellers } from './components/home/TopSellers';
 
 type ProductWithDetails = Prisma.ProductGetPayload<{
   include: { user: true; category: true };
@@ -19,42 +20,50 @@ export default async function HomePage() {
   const [
     banners,
     boostedProducts,
-    latestProducts,
     homepageSections,
     highlightedCategories,
+    topSellers,
   ] = await Promise.all([
-    // Banners gerenciados pelo admin
-    prisma.homePageBanner.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: 'desc' },
-    }),
-    // Produtos com o plano "Achadinho Turbo"
+    prisma.homePageBanner.findMany({ where: { isActive: true }, orderBy: { createdAt: 'desc' } }),
     prisma.product.findMany({
       where: { boostedUntil: { gte: new Date() }, isSold: false, isReserved: false },
       include: { user: true, category: true },
       orderBy: { boostedUntil: 'asc' },
       take: 10,
     }),
-    // Últimos produtos adicionados
-    prisma.product.findMany({
-        where: { isSold: false, isReserved: false },
-        include: { user: true, category: true },
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-    }),
-    // Seções customizadas pelo admin
-    prisma.homepageSection.findMany({
-      where: { isActive: true },
-      orderBy: { order: 'asc' },
-    }),
-    // Categorias para a nova seção de destaques
-    prisma.category.findMany({
-        where: { products: { some: {} } }, // Apenas categorias que têm produtos
-        take: 6,
-    })
+    prisma.homepageSection.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } }),
+    prisma.category.findMany({ where: { products: { some: {} } }, take: 5 }),
+    (async () => {
+        const sellers = await prisma.user.findMany({
+            where: {
+                role: 'SELLER',
+                showInSellersPage: true,
+                reviewsReceived: { some: {} },
+            },
+            include: { reviewsReceived: { select: { rating: true } } },
+        });
+
+        return sellers
+            .map(seller => {
+                const totalReviews = seller.reviewsReceived.length;
+                if (totalReviews === 0) return { ...seller, averageRating: 0, totalReviews: 0 };
+                const totalRating = seller.reviewsReceived.reduce((acc, review) => acc + review.rating, 0);
+                const averageRating = totalRating / totalReviews;
+                return {
+                    id: seller.id,
+                    name: seller.name,
+                    storeName: seller.storeName,
+                    image: seller.image,
+                    averageRating,
+                    totalReviews,
+                };
+            })
+            .filter(seller => seller.averageRating >= 4.5)
+            .sort((a, b) => b.averageRating - a.averageRating)
+            .slice(0, 5);
+    })(),
   ]);
 
-  // Monta as seções dinâmicas com seus respectivos produtos
   const allProductIds = homepageSections.flatMap((section) => section.productIds);
   const sectionProducts =
     allProductIds.length > 0
@@ -80,29 +89,24 @@ export default async function HomePage() {
 
           <div className="container mx-auto flex flex-col gap-12 sm:gap-16 py-12 sm:py-16">
             
-            {/* Seção de Produtos Turbinados */}
             {boostedProducts.length > 0 && (
-              <ProductScrollArea
-                title="Turbinados da Semana"
-                products={boostedProducts}
-                icon={<Rocket className="h-6 w-6 text-blue-500" />}
-              />
-            )}
-            
-            {/* Nova Seção de Categorias em Destaque */}
-            <CategoryHighlights categories={highlightedCategories} />
-            
-            {/* Seção de Últimos Achadinhos */}
-            {latestProducts.length > 0 && (
-                <ProductScrollArea
-                    title="Últimos Achadinhos"
-                    products={latestProducts}
-                    href="/products"
-                    icon={<Sparkles className="h-6 w-6 text-amber-500"/>}
-                />
+              <section className="rounded-xl bg-gradient-to-tr from-blue-900 via-slate-900 to-zaca-roxo p-1 shadow-2xl">
+                <div className="rounded-lg bg-slate-50 dark:bg-slate-900 p-6 sm:p-8">
+                    <ProductScrollArea
+                        title="Turbinados da Semana"
+                        products={boostedProducts}
+                        icon={<Rocket className="h-6 w-6 text-blue-400" />}
+                    />
+                </div>
+              </section>
             )}
 
-            {/* Seções Dinâmicas criadas pelo Admin */}
+            {topSellers.length > 0 && (
+                <TopSellers sellers={topSellers} />
+            )}
+
+            <CategoryHighlights categories={highlightedCategories} />
+            
             {sectionsWithProducts.map((section) => (
               <ModernProductSection key={section.id} {...section} />
             ))}
