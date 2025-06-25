@@ -116,10 +116,10 @@ export default async function HomePage() {
             {boostedProducts.length > 0 && (
               <>
                 {/* Versão Desktop */}
-                <section className="hidden md:block rounded-xl bg-gradient-to-tr from-blue-900 via-slate-900 to-zaca-roxo p-1 shadow-2xl">
+                <section className="hidden md:block rounded-xl bg-gradient-to-tr from-white p-1 shadow-2xl">
                   <div className="rounded-lg bg-slate-50 dark:bg-slate-900 p-6 sm:p-8">
                       <ProductScrollArea
-                          title="Turbinados da Semana"
+                          title="Turbinados do Zaca"
                           products={boostedProducts}
                           icon={<Rocket className="h-6 w-6 text-blue-400" />}
                       />
@@ -128,11 +128,11 @@ export default async function HomePage() {
 
                 {/* Versão Mobile */}
                 <section className="md:hidden">
-                    <div className="rounded-xl bg-gradient-to-tr from-blue-900 via-slate-900 to-zaca-roxo p-1 shadow-2xl">
+                    <div className="rounded-xl bg-gradient-to-tr from-white p-1 shadow-2xl">
                         <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-900">
                             <Rocket className="h-6 w-6 text-blue-400" />
                             <h2 className="text-2xl font-bold tracking-tight text-gray-800 dark:text-gray-100">
-                                Turbinados da Semana
+                                Turbinados do Zaca
                             </h2>
                         </div>
                     </div>
@@ -174,10 +174,10 @@ export default async function HomePage() {
                     </div>
                     <div className="text-center md:text-left">
                         <h2 className="text-4xl md:text-5xl font-extrabold text-zaca-roxo dark:text-zaca-lilas leading-tight">
-                            FAÇA PARTE DA NOSSA COMUNIDADE!
+                            CONECTE-SE COM SETE LAGOAS
                         </h2>
                         <p className="mt-4 text-lg text-muted-foreground">
-                            Cadastre-se para começar a vender seus produtos ou para encontrar os melhores achadinhos da sua região.
+                            Cadastre-se para começar a vender seus produtos ou descobrir os melhores achadinhos e serviços da cidade!
                         </p>
                         <div className="mt-8 flex flex-col sm:flex-row justify-center md:justify-start gap-4">
                             <Button asChild size="lg" className="bg-zaca-magenta hover:bg-zaca-magenta/90 text-white shadow-lg">

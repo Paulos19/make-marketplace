@@ -48,7 +48,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 {isBoosted && (
                     <Badge variant="secondary" className="absolute top-2 right-2 border-blue-400 bg-blue-900/50 text-blue-300">
                         <Rocket className="mr-1 h-3 w-3" />
-                        Turbinado
+                        Turbo
                     </Badge>
                 )}
                  <Badge variant="secondary" className={cn(

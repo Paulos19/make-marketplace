@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, MessageCircle, Loader2, Minus, Plus, Info, Share2, Tag } from 'lucide-react';
+import { Heart, MessageCircle, Loader2, Minus, Plus, Info, Share2, Tag, Send } from 'lucide-react';
 import type { Product, User, Category, ProductCondition } from '@prisma/client';
 
 // Mapeamento para exibir os nomes em português
@@ -200,7 +200,7 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
                 </div>
             </div>
             <Button variant="ghost" size="icon" onClick={handleShare} disabled={isSharing}>
-                {isSharing ? <Loader2 className="h-5 w-5 animate-spin"/> : <Share2 className="h-5 w-5"/>}
+                {isSharing ? <Loader2 className="h-5 w-5 animate-spin"/> : <Send className="h-7 w-7"/>}
             </Button>
           </CardContent>
         </Card>

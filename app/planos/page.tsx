@@ -34,7 +34,7 @@ const plans = [
         frequency: '/7 dias',
         description: 'Impulsione um produto para o topo da homepage por uma semana.',
         features: [
-            'Destaque na seção "Turbinados da Semana"',
+            'Destaque na seção "Turbinados do Zaca"',
             'Visibilidade máxima na página inicial',
             'Aumento de cliques e potenciais vendas',
             'Duração de 7 dias',
