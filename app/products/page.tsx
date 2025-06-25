@@ -170,8 +170,8 @@ const BoostedProductsBanner = ({ products, isLoading }: { products: ProductWithD
                         </CarouselItem>
                     ))}
                 </CarouselContent>
-                <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 hidden text-white md:inline-flex" />
-                <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 hidden text-white md:inline-flex" />
+                <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 hidden text-black md:inline-flex" />
+                <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 hidden text-black md:inline-flex" />
             </Carousel>
         </section>
     )
