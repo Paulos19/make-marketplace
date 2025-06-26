@@ -20,7 +20,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import ImageUpload from '@/app/components/ImageUpload'; 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton'; 
 import { User, Save, UserCircle2, Loader2 } from 'lucide-react'; 
 import Navbar from '@/app/components/layout/Navbar';
@@ -107,7 +107,7 @@ export default function AccountSettingsPage() {
       await update({ user: { ...session?.user, name: responseData.name, image: responseData.image } });
 
       toast.success('Seu perfil foi atualizado com sucesso, Zé!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(error.message || 'Ocorreu um erro ao atualizar o perfil.');
     } finally {
       setIsSubmitting(false);

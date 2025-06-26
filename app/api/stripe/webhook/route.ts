@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
   try {
     event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Webhook signature verification failed:`, error.message);
     return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 });
   }
@@ -65,14 +65,14 @@ export async function POST(req: Request) {
       }
       const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
       
-      const dataToUpdate: any = {
+      const dataToUpdate: Partial<User> = {
         stripeSubscriptionId: subscription.id,
         stripeCustomerId: subscription.customer as string,
         stripePriceId: subscription.items.data[0]?.price.id,
         stripeSubscriptionStatus: toPrismaSubscriptionStatus(subscription.status),
       };
-      if ((subscription as any).current_period_end) {
-        dataToUpdate.stripeCurrentPeriodEnd = new Date((subscription as any).current_period_end * 1000);
+      if ((subscription as unknown as { current_period_end: number }).current_period_end) {
+        dataToUpdate.stripeCurrentPeriodEnd = new Date((subscription as unknown as { current_period_end: number }).current_period_end * 1000);
       }
       
       await prisma.user.update({ where: { id: userId }, data: dataToUpdate });

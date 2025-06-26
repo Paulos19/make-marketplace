@@ -124,7 +124,7 @@ export async function POST(request: Request) {
         }
         newCategoryNames = parsedResponse;
 
-    } catch (e: any) {
+    } catch (e: Error) {
         console.error("Erro ao fazer o parse da resposta JSON da IA:", responseText, "Erro original:", e.message);
         const extracted = responseText.match(/"([^"]*)"/g);
         if (extracted) {

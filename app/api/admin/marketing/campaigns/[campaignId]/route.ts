@@ -33,7 +33,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     }
     
     const { targetAudience, ...emailContent } = validation.data;
-    const dataToUpdate: any = { ...emailContent };
+    const dataToUpdate: Partial<typeof updateCampaignSchema._type> = { ...emailContent };
     
     if (targetAudience) {
       dataToUpdate.targetAudienceJson = JSON.stringify(targetAudience);

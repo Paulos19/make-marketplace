@@ -4,6 +4,9 @@ import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 
 const resetPasswordSchema = z.object({
+  token: z.string().min(1, "O token é obrigatório."),
+  password: z.string().min(6, "A nova senha deve ter no mínimo 6 caracteres."),
+});
 
 export async function POST(request: Request) {
   try {
@@ -43,4 +46,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Senha redefinida com sucesso!" }, { status: 200 });
 
   } catch (error: any) {
+    console.error("Erro ao redefinir senha:", error);
+    // Retorna a mensagem de erro específica para o cliente (token inválido/expirado)
+    if (error.message.includes('Token')) {
+      return NextResponse.json({ message: error.message }, { status: 400 });
+    }
+    // Retorna uma mensagem genérica para outros erros
+    return NextResponse.json({ message: "Ocorreu um erro ao redefinir sua senha." }, { status: 500 });
+  }
 }

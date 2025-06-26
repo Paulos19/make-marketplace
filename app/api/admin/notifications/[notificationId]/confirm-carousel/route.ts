@@ -29,7 +29,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       throw new Error('Notificação ou metadados inválidos.');
     }
 
-    const metadata = notification.metadata as any;
+    const metadata = notification.metadata as { purchaseId?: string; productName?: string; productImage?: string; };
     const purchaseId = metadata.purchaseId;
     
     if (!purchaseId) {

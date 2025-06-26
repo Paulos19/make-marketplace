@@ -23,8 +23,8 @@ const registerUserSchema = z.object({
   }
 }).refine(data => data.password === data.confirmPassword, {
     message: "As senhas não coincidem, cumpadi!",
-    path: ["confirmPassword"], // O erro será associado ao campo de confirmação
-);
+    path: ["confirmPassword"],
+});
 
 
 export async function POST(request: Request) {

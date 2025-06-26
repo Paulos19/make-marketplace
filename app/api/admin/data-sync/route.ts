@@ -27,11 +27,11 @@ export async function GET() {
   }
 
   try {
-    const data: { [key: string]: any[] } = {}
+    const data: { [key: string]: unknown[] } = {}
     for (const modelName of modelNames) {
-      // @ts-ignore
+      // @ts-expect-error: Prisma client does not have dynamic model access in types
       if (prisma[modelName]) {
-        // @ts-ignore
+        // @ts-expect-error: Prisma client does not have dynamic model access in types
         const records = await prisma[modelName].findMany()
         data[modelName] = records
       }
@@ -90,16 +90,15 @@ export async function POST(request: Request) {
 
     await prisma.$transaction(async (tx) => {
       for (const modelName of deletionOrder) {
-        // @ts-ignore
+        // @ts-expect-error: Prisma client does not have dynamic model access in types
         if (tx[modelName]) {
-          // @ts-ignore
+          // @ts-expect-error: Prisma client does not have dynamic model access in types
           await tx[modelName].deleteMany({})
         }
       }
       for (const modelName of creationOrder) {
-        // @ts-ignore
         if (data[modelName] && Array.isArray(data[modelName]) && data[modelName].length > 0) {
-          const modelData = data[modelName].map((record: any) => {
+          const modelData = data[modelName].map((record: Record<string, unknown>) => {
             // Converte campos de data de string para objeto Date
             // Essencial para o Prisma aceitar os dados do JSON
             Object.keys(record).forEach((key) => {
@@ -113,7 +112,7 @@ export async function POST(request: Request) {
             return record
           })
 
-          // @ts-ignore
+          // @ts-expect-error: Prisma client does not have dynamic model access in types
           await tx[modelName].createMany({
             data: modelData,
             skipDuplicates: true,

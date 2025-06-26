@@ -7,8 +7,14 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
 interface RouteParams {
+  params: {
+    userId: string;
+  };
+}
 
 const changePasswordSchema = z.object({
+  newPassword: z.string().min(6, "A nova senha deve ter no mínimo 6 caracteres."),
+});
 
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
@@ -66,7 +72,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     });
 
     return NextResponse.json({ message: 'Usuário excluído com sucesso!' }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao excluir usuário:', error);
     if (error.code === 'P2025') { // Código de erro do Prisma para "registro não encontrado"
         return NextResponse.json({ message: 'Usuário não encontrado.' }, { status: 404 });

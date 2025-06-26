@@ -7,6 +7,10 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
 interface RouteParams {
+  params: {
+    productId: string;
+  };
+}
 
 const updateProductSchema = z.object({
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres.").optional(),
@@ -39,7 +43,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
 
     return NextResponse.json(updatedProduct, { status: 200 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao atualizar produto pelo admin:", error);
     return NextResponse.json({ message: 'Erro interno do servidor' }, { status: 500 });
   }
@@ -64,8 +68,9 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     revalidatePath('/products');
 
     return NextResponse.json({ message: 'Produto excluído com sucesso!' }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao excluir produto:", error);
+    // @ts-ignore
     if (error.code === 'P2025') { 
       return NextResponse.json({ message: 'Produto não encontrado.' }, { status: 404 });
     }

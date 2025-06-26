@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     // 5. Retornar sucesso
     return NextResponse.json({ message: 'Seu email foi verificado com sucesso! Pode entrar na festa, Zé!' }, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro durante a verificação de e-mail (API):', error);
     if (error.code === 'P2025') { // Erro do Prisma "Record to delete does not exist."
       return NextResponse.json({ message: 'Token de verificação já foi utilizado.' }, { status: 400 });

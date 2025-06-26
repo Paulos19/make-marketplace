@@ -58,7 +58,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     });
 
     return NextResponse.json({ message: 'Categoria excluída com sucesso' }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao excluir categoria:", error);
     
     if (error.code === 'P2003') {

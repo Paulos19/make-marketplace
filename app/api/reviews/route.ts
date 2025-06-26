@@ -5,6 +5,10 @@ import prisma from '@/lib/prisma';
 import { z } from 'zod';
 
 const reviewSchema = z.object({
+  rating: z.number().min(1).max(5),
+  comment: z.string().max(1000).optional(),
+  token: z.string(),
+});
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +25,9 @@ export async function POST(request: Request) {
 
     const { rating, comment, token } = validation.data;
 
+    // Utiliza uma transação para garantir a atomicidade das operações
     const newReview = await prisma.$transaction(async (tx) => {
+      // 1. Encontra a reserva usando o token
       const reservation = await tx.reservation.findUnique({
         where: { reviewToken: token },
         include: {
@@ -30,6 +36,7 @@ export async function POST(request: Request) {
         },
       });
 
+      // 2. Validações
       if (!reservation || reservation.userId !== session.user?.id) {
         throw new Error('Reserva inválida ou não pertence a você.');
       }
@@ -37,6 +44,7 @@ export async function POST(request: Request) {
         throw new Error('Esta reserva já foi avaliada.');
       }
 
+      // 3. Cria a nova avaliação
       // 3. Cria a nova avaliação
       const createdReview = await tx.review.create({
         data: {
@@ -48,6 +56,7 @@ export async function POST(request: Request) {
         },
       });
 
+      // 4. Invalida o token para prevenir múltiplas avaliações
       // 4. Invalida o token para prevenir múltiplas avaliações
       await tx.reservation.update({
         where: { id: reservation.id },
