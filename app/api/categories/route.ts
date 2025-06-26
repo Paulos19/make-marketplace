@@ -21,7 +21,8 @@ export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
 
   // Opcional: Adicionar verificação de admin/role se necessário para criar categorias
-  if (!session || !session.user) { // Simplificado para verificar apenas se está logado
+  // Opcional: Adicionar verificação de admin/role se necessário para criar categorias
+  if (!session || !session.user) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
@@ -33,7 +34,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'O nome da categoria é obrigatório.' }, { status: 400 });
     }
 
-    // Verifica se a categoria já existe (case-insensitive)
     const existingCategory = await prisma.category.findFirst({
       where: {
         name: {

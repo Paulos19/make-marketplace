@@ -1,13 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-// Define que os dados desta rota podem ser cacheados por até 60 segundos.
-// A revalidação instantânea após uma compra é feita pelo webhook.
-export const revalidate = 60; 
-
-/**
- * GET: Busca todos os produtos que estão atualmente impulsionados.
- */
+export const revalidate = 60;
 export async function GET() {
   try {
     const boostedProducts = await prisma.product.findMany({

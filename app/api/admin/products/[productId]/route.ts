@@ -7,18 +7,12 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
 interface RouteParams {
-  params: {
-    productId: string;
-  };
-}
 
-// Schema para a atualização de nome e categoria
 const updateProductSchema = z.object({
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres.").optional(),
   categoryId: z.string().optional(),
 });
 
-// PATCH: Atualiza nome e/ou categoria de um produto
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
@@ -39,7 +33,6 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       data: validation.data,
     });
 
-    // Revalida as páginas relevantes para mostrar os dados atualizados
     revalidatePath('/admin-dashboard/products');
     revalidatePath(`/products/${productId}`);
     revalidatePath('/');
@@ -53,7 +46,6 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 
-// DELETE: Exclui um produto específico
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
@@ -67,7 +59,6 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       where: { id: productId },
     });
     
-    // Revalida as páginas após a exclusão
     revalidatePath('/admin-dashboard/products');
     revalidatePath('/');
     revalidatePath('/products');

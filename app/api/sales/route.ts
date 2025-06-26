@@ -12,24 +12,6 @@ export async function GET(request: Request) {
         }
 
         const sales = await prisma.reservation.findMany({
-            where: {
-                product: {
-                    userId: session.user.id,
-                },
-                isArchived: false, // <<< CORREÇÃO: Busca apenas reservas não arquivadas
-            },
-            include: {
-                product: {
-                    select: { id: true, name: true, images: true },
-                },
-                user: {
-                    select: { name: true, whatsappLink: true },
-                },
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
 
         return NextResponse.json(sales);
 

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 
-// Schema para validar o corpo da requisição POST
 const confirmEmailSchema = z.object({
   token: z.string().min(1, { message: "Token de verificação é obrigatório." }),
 });
@@ -11,7 +10,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // 1. Validar a requisição
     const validation = confirmEmailSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
@@ -21,7 +19,6 @@ export async function POST(request: Request) {
     }
     const { token } = validation.data;
 
-    // 2. Encontrar o token no banco de dados
     const verificationToken = await prisma.verificationToken.findUnique({
       where: { token }, // Busca pelo token, que é único
     });
@@ -30,7 +27,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Este link de verificação é inválido ou já foi utilizado. Tente novamente, psit!' }, { status: 404 });
     }
 
-    // 3. Verificar se o token expirou
     if (new Date(verificationToken.expires) < new Date()) {
       // Deletar o token expirado para limpeza
       await prisma.verificationToken.delete({
@@ -39,12 +35,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Seu link de verificação expirou igual promessa de político! Solicite um novo, cumpadi.' }, { status: 400 });
     }
 
-    // 4. Usar uma transação para garantir atomicidade:
-    //    - Encontrar o usuário pelo identifier (email)
-    //    - Atualizar o usuário
-    //    - Deletar o token
     const user = await prisma.$transaction(async (tx) => {
-      // Encontra o usuário associado ao token
       const userToVerify = await tx.user.findUnique({
         where: { email: verificationToken.identifier },
       });

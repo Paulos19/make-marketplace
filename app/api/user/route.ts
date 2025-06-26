@@ -1,10 +1,9 @@
-// app/api/user/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
-import { revalidatePath } from 'next/cache'; // <<< 1. IMPORTAR revalidatePath
+import { revalidatePath } from 'next/cache';
 
 const updateUserSchema = z.object({
   name: z.string().min(2).max(50).optional().nullable(),
@@ -61,10 +60,7 @@ export async function PUT(req: NextRequest) {
         data: validation.data,
     });
     
-    // <<< 2. ADICIONAR REVALIDAÇÃO APÓS ATUALIZAR O USUÁRIO >>>
-    // Revalida a página principal de listagem de vendedores.
     revalidatePath('/sellers');
-    // Revalida a página de perfil específica do vendedor que foi atualizada.
     revalidatePath(`/seller/${updatedUser.id}`);
 
     return NextResponse.json(updatedUser, { status: 200 });

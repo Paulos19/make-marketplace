@@ -1,11 +1,10 @@
-// app/api/admin/homepage-sections/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
-import { revalidatePath } from 'next/cache'; // <<< 1. IMPORTADO
+import { revalidatePath } from 'next/cache';
 
 const sectionSchema = z.object({
   title: z.string().min(3, "O título é obrigatório."),
@@ -53,7 +52,7 @@ export async function POST(request: Request) {
       data: validation.data,
     });
     
-    revalidatePath('/'); // <<< 2. ADICIONADO: Revalida a homepage
+    revalidatePath('/');
 
     return NextResponse.json(newSection, { status: 201 });
   } catch (error) {

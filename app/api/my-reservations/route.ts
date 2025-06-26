@@ -10,7 +10,6 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
         }
 
-        // Busca as reservas do utilizador logado
         const reservationsFromDb = await prisma.reservation.findMany({
             where: {
                 userId: session.user.id,
@@ -38,7 +37,6 @@ export async function GET(request: Request) {
             },
         });
 
-        // Transforma os dados para o formato que o frontend espera
         const transformedReservations = reservationsFromDb.map(res => {
             // Garante que o produto e os dados do vendedor existem
             if (!res.product || !res.product.user) {

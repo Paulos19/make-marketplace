@@ -1,4 +1,3 @@
-// app/api/auth/register/route.ts
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
@@ -7,7 +6,6 @@ import { UserRole } from "@prisma/client";
 import { v4 as uuidv4 } from 'uuid';
 import { sendVerificationEmail } from "@/lib/resend";
 
-// <<< INÍCIO DA CORREÇÃO >>>
 const registerUserSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um email válido." }),
   name: z.string().min(2, { message: "O nome deve ter pelo menos 2 caracteres." }),
@@ -26,8 +24,7 @@ const registerUserSchema = z.object({
 }).refine(data => data.password === data.confirmPassword, {
     message: "As senhas não coincidem, cumpadi!",
     path: ["confirmPassword"], // O erro será associado ao campo de confirmação
-});
-// <<< FIM DA CORREÇÃO >>>
+);
 
 
 export async function POST(request: Request) {

@@ -7,16 +7,9 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
 interface RouteParams {
-  params: {
-    userId: string;
-  };
-}
 
 const changePasswordSchema = z.object({
-  newPassword: z.string().min(6, "A nova senha deve ter no mínimo 6 caracteres."),
-});
 
-// PATCH: Altera a senha de um usuário específico
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
@@ -33,7 +26,6 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
     const { newPassword } = validation.data;
 
-    // Criptografa a nova senha
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     await prisma.user.update({
@@ -48,7 +40,6 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 }
 
-// DELETE: Exclui um usuário específico
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
@@ -58,12 +49,10 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     const { userId } = params;
 
-    // Medida de segurança para impedir que o admin se autoexclua
     if (userId === session.user.id) {
       return NextResponse.json({ message: 'O administrador não pode se autoexcluir.' }, { status: 400 });
     }
 
-    // Verifica se o usuário a ser excluído existe
     const userToDelete = await prisma.user.findUnique({
         where: { id: userId },
     });
@@ -72,8 +61,6 @@ export async function DELETE(request: Request, { params }: RouteParams) {
         return NextResponse.json({ message: 'Usuário não encontrado.' }, { status: 404 });
     }
 
-    // Exclui o usuário. Graças a `onDelete: Cascade` no schema,
-    // os produtos, contas, sessões e reservas relacionadas também serão removidos.
     await prisma.user.delete({
       where: { id: userId },
     });

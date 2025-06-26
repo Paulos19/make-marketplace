@@ -8,7 +8,6 @@ interface RouteParams {
   params: { notificationId: string };
 }
 
-// PATCH: Marca uma notificação como lida
 export async function PATCH(request: Request, { params }: RouteParams) {
   const session = await getNotificationServerSession(notificationAuthOptions);
   if (session?.user?.role !== NotificationUserRole.ADMIN) {
@@ -27,7 +26,6 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 }
 
-// DELETE: Exclui uma notificação
 export async function DELETE(request: Request, { params }: RouteParams) {
   const session = await getNotificationServerSession(notificationAuthOptions);
   if (session?.user?.role !== NotificationUserRole.ADMIN) {

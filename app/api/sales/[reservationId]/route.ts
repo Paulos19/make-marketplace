@@ -7,7 +7,6 @@ import crypto from 'crypto';
 import { sendReviewRequestEmail } from '@/lib/resend';
 
 
-// Handler PATCH para atualizar o status de uma reserva
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { reservationId: string } }
@@ -29,9 +28,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Status inválido fornecido.' }, { status: 400 });
     }
 
-    // Utiliza uma transação para garantir a consistência dos dados
     const updatedReservation = await prisma.$transaction(async (tx) => {
-      // 1. Encontra a reserva e o produto associado
       const reservation = await tx.reservation.findFirst({
         where: { id: reservationId, product: { userId: session.user?.id } },
         include: { product: true },
@@ -47,7 +44,6 @@ export async function PATCH(
       
       const productUpdateData: { quantity?: number; isSold?: boolean; isReserved?: boolean; } = {};
 
-      // 2. Lógica de gestão de stock
       if (newStatus === ReservationStatus.SOLD && oldStatus !== ReservationStatus.SOLD) {
         const newQuantity = product.quantity - reservation.quantity;
         productUpdateData.quantity = newQuantity;
@@ -64,7 +60,6 @@ export async function PATCH(
         productUpdateData.isReserved = newStatus === ReservationStatus.PENDING;
       }
       
-      // 3. Atualiza o produto e a reserva
       await tx.product.update({
         where: { id: product.id },
         data: productUpdateData,
@@ -79,7 +74,6 @@ export async function PATCH(
         include: { user: true, product: true },
       });
       
-      // 4. Envia e-mail de avaliação se a venda for concluída
       if (newStatus === ReservationStatus.SOLD && reviewToken && finalUpdatedReservation.user.email) {
         const reviewLink = `${process.env.NEXT_PUBLIC_APP_URL}/review/${reviewToken}`;
         await sendReviewRequestEmail({
@@ -103,7 +97,6 @@ export async function PATCH(
 }
 
 
-// Handler DELETE para arquivar a reserva
 export async function DELETE(
     request: NextRequest,
     { params }: { params: { reservationId: string } }

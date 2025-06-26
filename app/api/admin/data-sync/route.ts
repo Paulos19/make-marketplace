@@ -46,7 +46,6 @@ export async function GET() {
   }
 }
 
-// POST para importar dados (versão corrigida e robusta)
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
   if (session?.user?.role !== 'ADMIN') {

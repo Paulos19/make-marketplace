@@ -6,13 +6,10 @@ import prisma from '@/lib/prisma';
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    
-    // Proteção: Somente usuários com a role 'ADMIN' podem prosseguir
     if (!session || session.user?.role !== 'ADMIN') {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
-    // Busca todos os usuários e seleciona os campos relevantes
     const users = await prisma.user.findMany({
       select: {
         id: true,

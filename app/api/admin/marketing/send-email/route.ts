@@ -1,4 +1,3 @@
-// app/api/admin/marketing/send-email/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -9,12 +8,8 @@ import { Resend } from 'resend';
 import MarketingEmail from '@/app/components/emails/MarketingEmail';
 import * as React from 'react';
 
-// 1. Inicialização do Cliente Resend
-// Certifique-se que RESEND_API_KEY está no seu arquivo .env.local
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// 2. Schema de Validação com Zod
-// Define a estrutura esperada do corpo da requisição, incluindo o campo de teste.
 const emailBuilderSchema = z.object({
   isTest: z.boolean().optional(), // Flag para identificar se é um envio de teste
   targetAudience: z.object({
@@ -29,7 +24,6 @@ const emailBuilderSchema = z.object({
   imageUrl: z.string().url("A URL da imagem do banner é obrigatória e deve ser válida."),
 });
 
-// 3. Função Principal da Rota (POST)
 export async function POST(request: Request) {
   try {
     // 4. Verificação de Segurança

@@ -4,9 +4,6 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 
-// <<< INÍCIO DA CORREÇÃO >>>
-// O schema foi atualizado para aceitar `null` nos campos opcionais,
-// tornando a API mais robusta contra diferentes tipos de dados do frontend.
 const shortenerSchema = z.object({
   originalUrl: z.string().url({ message: "URL original inválida." }),
   productId: z.string().cuid({ message: "ID do produto inválido." }).optional(),
@@ -14,7 +11,7 @@ const shortenerSchema = z.object({
   description: z.string().optional().nullable(),
   imageUrl: z.string().url().optional().nullable(),
 });
-// <<< FIM DA CORREÇÃO >>>
+
 
 const generateShortCode = async (): Promise<string> => {
     const code = Math.random().toString(36).substring(2, 8);
@@ -22,7 +19,6 @@ const generateShortCode = async (): Promise<string> => {
     return existing ? generateShortCode() : code;
 };
 
-// Handler POST para criar um novo link encurtado
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -33,7 +29,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validation = shortenerSchema.safeParse(body);
     if (!validation.success) {
-      // Este log ajuda a depurar, mostrando o erro de validação exato no servidor
       console.error('Validation Error:', validation.error.flatten());
       return NextResponse.json({ error: validation.error.errors[0].message }, { status: 400 });
     }
@@ -87,7 +82,6 @@ export async function POST(request: Request) {
   }
 }
 
-// Handler GET para buscar a lista de links do utilizador
 export async function GET(request: Request) {
     try {
         const session = await getServerSession(authOptions);

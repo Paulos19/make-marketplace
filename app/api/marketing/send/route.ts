@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { UserRole } from '@prisma/client';
 import { Resend } from 'resend';
-import  StandaloneMarketingEmail  from '@/app/components/emails/MarketingEmail'; // <<< USA O NOVO TEMPLATE
+import  StandaloneMarketingEmail  from '@/app/components/emails/MarketingEmail';
 import * as React from 'react';
 
 const resend = new Resend(process.env.RESEND_API_KEY);

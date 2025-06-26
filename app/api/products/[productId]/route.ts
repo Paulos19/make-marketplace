@@ -6,7 +6,6 @@ import { ProductCondition, UserRole } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-// Schema de validação para a edição, também com 'isService'
 const productUpdateSchema = z.object({
   name: z.string().min(3).optional(),
   description: z.string().min(10).optional(),
@@ -17,7 +16,7 @@ const productUpdateSchema = z.object({
   quantity: z.number().int().min(1).optional(),
   condition: z.nativeEnum(ProductCondition).optional(),
   onPromotion: z.boolean().optional(),
-  isService: z.boolean().optional(), // <-- CAMPO ADICIONADO AQUI
+  isService: z.boolean().optional(),
   isSold: z.boolean().optional(),
 });
 
@@ -38,13 +37,11 @@ export async function PATCH(
       return new NextResponse('ID do produto não encontrado', { status: 400 });
     }
     
-    // Valida o corpo da requisição com o schema de edição
     const validation = productUpdateSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json({ errors: validation.error.flatten() }, { status: 400 });
     }
     
-    // Garante que o usuário só possa editar seus próprios produtos (a menos que seja admin)
     const productToUpdate = await prisma.product.findUnique({
       where: { id: productId },
     });
@@ -64,7 +61,6 @@ export async function PATCH(
       data: validation.data,
     });
     
-    // Invalida o cache para que a alteração apareça imediatamente
     revalidatePath(`/products/${productId}`);
     revalidatePath(`/dashboard`);
 
@@ -75,7 +71,6 @@ export async function PATCH(
   }
 }
 
-// ... o restante do arquivo (funções GET e DELETE) permanece o mesmo
 export async function GET(
     req: Request,
     { params }: { params: { productId: string } }

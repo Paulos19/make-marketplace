@@ -92,20 +92,8 @@ export async function POST(req: Request) {
     try {
         stripeSession = await createCheckoutSession(stripeCustomerId);
     } catch (error: any) {
-        // <<< LÓGICA DE CORREÇÃO AUTOMÁTICA >>>
-        // Se o erro for "No such customer", cria um novo e tenta novamente.
-        if (error instanceof Stripe.errors.StripeInvalidRequestError && error.code === 'resource_missing') {
-            console.warn(`Cliente Stripe não encontrado ('${stripeCustomerId}'). A criar um novo cliente.`);
-            stripeCustomerId = await createStripeCustomer(user);
-            stripeSession = await createCheckoutSession(stripeCustomerId);
-        } else {
-            // Se for outro erro, lança-o para ser apanhado pelo bloco catch principal.
-            throw error;
-        }
-    }
 
     if (!stripeSession.url) {
-        console.error("FALHA INESPERADA: A sessão do Stripe foi criada mas não retornou uma URL.", stripeSession);
         return new NextResponse('Falha ao obter URL da sessão do Stripe.', { status: 500 });
     }
 

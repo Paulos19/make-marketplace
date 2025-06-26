@@ -1,4 +1,3 @@
-// app/api/admin/theme/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -6,7 +5,6 @@ import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 
-// Schema para validar os dados do tema
 const themeSchema = z.object({
   zaca_roxo: z.string().regex(/^\d{1,3}\s\d{1,3}%\s\d{1,3}%$/, "Formato HSL inválido").optional().or(z.literal("")),
   zaca_azul: z.string().regex(/^\d{1,3}\s\d{1,3}%\s\d{1,3}%$/, "Formato HSL inválido").optional().or(z.literal("")),
@@ -26,8 +24,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: validation.error.errors[0].message }, { status: 400 });
     }
     
-    // Usamos 'upsert' para criar as configurações se não existirem, ou atualizá-las.
-    // Usaremos um ID fixo para garantir que sempre haja apenas uma linha de configurações.
     const settingsId = "global_theme_settings";
 
     const updatedSettings = await prisma.themeSettings.upsert({

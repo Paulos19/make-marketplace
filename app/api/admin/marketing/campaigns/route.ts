@@ -1,4 +1,3 @@
-// app/api/admin/marketing/campaigns/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -6,7 +5,6 @@ import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 
-// Schema para validação dos dados de uma campanha
 const campaignSchema = z.object({
   subject: z.string().min(1, "O assunto é obrigatório."),
   headline: z.string().min(1, "O título é obrigatório."),
@@ -20,7 +18,6 @@ const campaignSchema = z.object({
   }),
 });
 
-// GET: Busca todas as campanhas salvas
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== UserRole.ADMIN) {
@@ -38,7 +35,6 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Cria um novo rascunho de campanha
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== UserRole.ADMIN) {

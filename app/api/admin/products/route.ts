@@ -1,11 +1,9 @@
-// app/api/admin/products/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 
-// GET: Lista todos os produtos da plataforma para o admin
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);

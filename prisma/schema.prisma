@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ENUMs para papéis de usuário, status de reserva, e os novos status de assinatura/compra
 enum UserRole {
   USER
   SELLER
@@ -40,14 +36,13 @@ enum PurchaseType {
 }
 
 enum ProductCondition {
-  NEW // Novo
-  GOOD_CONDITION // Em boas condições
-  USED // Usado
-  REFURBISHED // Recondicionado
-  OTHER // Outro
+  NEW
+  GOOD_CONDITION
+  USED
+  REFURBISHED
+  OTHER
 }
 
-// Modelo para Usuários, Vendedores e Administradores
 model User {
   id                       String              @id @default(cuid())
   name                     String?
@@ -82,7 +77,6 @@ model User {
   @@map("User")
 }
 
-// Modelo para contas de provedores OAuth (NextAuth)
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -102,7 +96,6 @@ model Account {
   @@map("Account")
 }
 
-// Modelo para sessões de usuário (NextAuth)
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -113,7 +106,6 @@ model Session {
   @@map("Session")
 }
 
-// Modelo para tokens de verificação (email, reset de senha)
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -123,7 +115,6 @@ model VerificationToken {
   @@map("VerificationToken")
 }
 
-// Modelo de Produtos
 model Product {
   id            String   @id @default(cuid())
   name          String
@@ -138,7 +129,6 @@ model Product {
   quantity      Int      @default(1)
   onPromotion   Boolean  @default(false)
 
-  // <<< NOVO CAMPO ADICIONADO >>>
   condition ProductCondition @default(NEW)
 
   createdAt    DateTime  @default(now())
@@ -158,19 +148,17 @@ model Product {
   @@map("Product")
 }
 
-// Modelo para rastrear compras de impulsionamentos avulsos
 model Purchase {
   id                    String       @id @default(cuid())
   type                  PurchaseType
-  status                String       @default("PAID") // Pode ser PENDING, PAID, FAILED
-  submissionStatus      String       @default("AVAILABLE") // Usado para o Carrossel: AVAILABLE, PENDING_APPROVAL, USED
+  status                String       @default("PAID")
+  submissionStatus      String       @default("AVAILABLE")
   stripePaymentIntentId String       @unique
   createdAt             DateTime     @default(now())
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Opcional: liga a compra a um produto específico (útil para o 'Achadinho Turbo')
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
 
@@ -179,7 +167,6 @@ model Purchase {
   @@map("Purchase")
 }
 
-// Modelo de Categorias de Produtos
 model Category {
   id       String    @id @default(cuid())
   name     String    @unique
@@ -188,7 +175,6 @@ model Category {
   @@map("Category")
 }
 
-// Modelo de Reservas de Produtos
 model Reservation {
   id          String            @id @default(cuid())
   userId      String
@@ -208,7 +194,6 @@ model Reservation {
   @@map("Reservation")
 }
 
-// Modelo para Avaliações de Compras
 model Review {
   id            String      @id @default(cuid())
   rating        Int
@@ -225,7 +210,6 @@ model Review {
   @@map("Review")
 }
 
-// Modelo para Configurações do Tema
 model ThemeSettings {
   id            String   @id @default(cuid())
   zaca_roxo     String?
@@ -239,7 +223,6 @@ model ThemeSettings {
   @@map("ThemeSettings")
 }
 
-// Modelo para Inscrições na Newsletter
 model NewsletterSubscription {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -248,7 +231,6 @@ model NewsletterSubscription {
   @@map("NewsletterSubscription")
 }
 
-// Modelo para Banners da Página Inicial
 model HomePageBanner {
   id        String   @id @default(cuid())
   title     String
@@ -261,7 +243,6 @@ model HomePageBanner {
   @@map("HomePageBanner")
 }
 
-// Modelo para Seções Customizadas da Página Inicial
 model HomepageSection {
   id              String   @id @default(cuid())
   title           String
@@ -276,7 +257,6 @@ model HomepageSection {
   @@map("HomepageSection")
 }
 
-// Modelo para Campanhas de Marketing
 model MarketingCampaign {
   id                 String    @id @default(cuid())
   status             String    @default("DRAFT")
@@ -294,7 +274,6 @@ model MarketingCampaign {
   @@map("MarketingCampaign")
 }
 
-// Modelo para Encurtador de Links
 model ShortLink {
   id          String   @id @default(cuid())
   shortCode   String   @unique
@@ -308,14 +287,12 @@ model ShortLink {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // O productId agora é opcional, permitindo links para a página do vendedor
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("ShortLink")
 }
 
-// Modelo para Notificações do Administrador
 model AdminNotification {
   id        String   @id @default(cuid())
   message   String

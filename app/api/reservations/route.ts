@@ -1,4 +1,3 @@
-// app/api/reservations/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import prisma from '@/lib/prisma';
@@ -6,7 +5,6 @@ import { z } from 'zod';
 import { authOptions } from '../auth/[...nextauth]/route'; 
 import { sendReservationNotificationEmail } from '@/lib/resend';
 
-// GET: Busca as reservas do comprador logado (sem alterações)
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -35,12 +33,10 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Cria uma nova reserva e uma notificação para o admin
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     
-    // Verificação de segurança robusta para o objeto de sessão
     if (!session || !session.user || !session.user.id || !session.user.name || !session.user.email) {
       return NextResponse.json({ message: 'Autenticação necessária ou dados do usuário ausentes na sessão.' }, { status: 401 });
     }
@@ -60,9 +56,7 @@ export async function POST(request: Request) {
     const { productId, quantity: reservedQuantity } = validation.data;
     const clientId = session.user.id;
 
-    // A transação garante que todas as operações sejam bem-sucedidas ou nenhuma delas
     const result = await prisma.$transaction(async (tx) => {
-      // Busca o produto e seu vendedor
       const product = await tx.product.findUnique({
         where: { id: productId },
         include: { user: true }
@@ -72,9 +66,6 @@ export async function POST(request: Request) {
       if (!product.user || !product.user.email) throw new Error('Vendedor do produto não encontrado ou sem email.');
       if (product.quantity < reservedQuantity) throw new Error('Estoque insuficiente para a quantidade solicitada.');
 
-      // <<< INÍCIO DA CORREÇÃO >>>
-      // Adicionada uma verificação para garantir que o usuário cliente (comprador) existe no DB
-      // antes de tentar criar uma reserva para ele.
       const clientUser = await tx.user.findUnique({
         where: { id: clientId }
       });
@@ -82,9 +73,8 @@ export async function POST(request: Request) {
       if (!clientUser) {
         throw new Error(`Falha de autenticação: O usuário com ID ${clientId} não foi encontrado no banco de dados.`);
       }
-      // <<< FIM DA CORREÇÃO >>>
+      
 
-      // Cria a reserva
       const reservation = await tx.reservation.create({
         data: {
           userId: clientId,

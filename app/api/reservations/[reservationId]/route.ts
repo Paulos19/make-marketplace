@@ -6,12 +6,10 @@ import { ReservationStatus, UserRole } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-// Schema para validar os dados da atualização de reserva (PATCH)
 const reservationUpdateSchema = z.object({
   status: z.nativeEnum(ReservationStatus),
 });
 
-// --- Rota PATCH: Atualiza o status de uma reserva (Vendedor) ---
 export async function PATCH(
   req: Request,
   { params }: { params: { reservationId: string } }
@@ -19,7 +17,6 @@ export async function PATCH(
   try {
     const session = await getServerSession(authOptions);
     
-    // Consome o corpo da requisição ANTES de usar os 'params'
     const body = await req.json();
     const { reservationId } = params;
     
@@ -47,7 +44,6 @@ export async function PATCH(
       return NextResponse.json({ message: 'Reserva não encontrada' }, { status: 404 });
     }
 
-    // Apenas o vendedor do produto pode atualizar o status
     if (reservationToUpdate.product.userId !== session.user.id) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 403 });
     }
@@ -56,7 +52,6 @@ export async function PATCH(
       where: { id: reservationId },
       data: {
         status: status,
-        // Se o status for 'SOLD' (Vendido), atualiza o produto também
         product: status === ReservationStatus.SOLD ? {
           update: {
             isSold: true,
@@ -65,7 +60,6 @@ export async function PATCH(
       },
     });
     
-    // Invalida o cache das páginas relevantes
     revalidatePath(`/dashboard/sales`);
     revalidatePath(`/products/${reservationToUpdate.productId}`);
 
@@ -78,14 +72,13 @@ export async function PATCH(
   }
 }
 
-// --- Rota DELETE: Cancela uma reserva (Comprador) ---
 export async function DELETE(
   req: Request,
   { params }: { params: { reservationId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    const { reservationId } = params; // Acessa os params após o await da sessão
+    const { reservationId } = params;
 
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Não autenticado' }, { status: 401 });
@@ -107,29 +100,24 @@ export async function DELETE(
       return NextResponse.json({ message: 'Reserva não encontrada' }, { status: 404 });
     }
 
-    // Apenas o utilizador que fez a reserva pode cancelá-la
     if (reservation.userId !== session.user.id) {
       return NextResponse.json({ message: 'Ação não permitida. Você não é o dono desta reserva.' }, { status: 403 });
     }
 
-    // Usa uma transação para garantir que a reserva seja excluída E o produto seja atualizado
     await prisma.$transaction([
-      // 1. Exclui a reserva
       prisma.reservation.delete({
         where: { id: reservationId },
       }),
-      // 2. Marca o produto como não mais reservado
       prisma.product.update({
         where: { id: reservation.productId },
         data: { isReserved: false },
       }),
     ]);
     
-    // Invalida o cache das páginas relevantes
     revalidatePath(`/my-reservations`);
     revalidatePath(`/products/${reservation.productId}`);
 
-    return new NextResponse(null, { status: 204 }); // Retorna sucesso sem conteúdo
+    return new NextResponse(null, { status: 204 });
 
   } catch (error) {
     console.error('[RESERVATION_DELETE]', error);

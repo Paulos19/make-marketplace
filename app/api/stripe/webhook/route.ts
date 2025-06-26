@@ -58,7 +58,6 @@ export async function POST(req: Request) {
     const planName = firstItem.description || 'Plano Personalizado';
     const price = firstItem.price?.unit_amount ? (firstItem.price.unit_amount / 100).toFixed(2) : '0.00';
 
-    // Lógica para Assinaturas
     if (session.mode === 'subscription') {
       if (!session.subscription) {
         console.error('Webhook Error: Subscription ID not found for subscription mode.', { sessionId: session.id });
@@ -84,7 +83,6 @@ export async function POST(req: Request) {
 
       await sendStripePurchaseConfirmationEmail({ to: user.email, userName: user.name, planName, price: `R$ ${price} /mês`, isSubscription: true });
     
-    // Lógica para Pagamentos Únicos (Avulsos)
     } else if (session.mode === 'payment') {
       const productId = metadata?.productId;
       const purchaseType = metadata?.purchaseType as PurchaseType;

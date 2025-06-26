@@ -26,9 +26,7 @@ export async function POST(request: Request) {
     }
     const { productId, purchaseId } = validation.data;
 
-    // Inicia uma transação para garantir consistência
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Verifica se a compra é válida e pertence ao usuário
       const purchase = await tx.purchase.findFirst({
         where: {
           id: purchaseId,
@@ -42,27 +40,24 @@ export async function POST(request: Request) {
         throw new Error('Compra inválida, não encontrada ou já utilizada.');
       }
 
-      // 2. Busca os detalhes do produto para a notificação, incluindo o preço
       const product = await tx.product.findUnique({
         where: { id: productId },
-        select: { name: true, images: true, price: true }, // Preço adicionado
+        select: { name: true, images: true, price: true },
       });
 
       if (!product) {
         throw new Error('Produto selecionado não encontrado.');
       }
 
-      // 3. Cria os metadados para a notificação
       const message = `${session.user?.name} solicitou a divulgação do produto "${product.name}" no Carrossel na Praça.`;
       const metadata = {
         productId: productId,
         productName: product.name,
         productImage: product.images[0] || null,
-        productPrice: product.price, // Preço adicionado aos metadados
+        productPrice: product.price,
         purchaseId: purchase.id,
       };
 
-      // 4. Cria a notificação para o admin
       await tx.adminNotification.create({
         data: {
           message,
@@ -72,7 +67,6 @@ export async function POST(request: Request) {
         },
       });
 
-      // 5. Atualiza o status da compra para 'PENDING_APPROVAL'
       await tx.purchase.update({
         where: { id: purchase.id },
         data: { submissionStatus: 'PENDING_APPROVAL' },

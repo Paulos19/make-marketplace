@@ -1,10 +1,9 @@
-// app/api/homepage-sections/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // 1. Busca todas as seções ativas, ordenadas pelo campo 'order'
+    
     const sections = await prisma.homepageSection.findMany({
       where: { isActive: true },
       orderBy: { order: 'asc' },

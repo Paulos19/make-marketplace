@@ -1,4 +1,3 @@
-// app/api/admin/marketing/campaigns/[campaignId]/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -6,7 +5,6 @@ import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { z } from 'zod';
 
-// Schema para validação (opcional para PUT, pois nem todos os campos podem ser enviados)
 const updateCampaignSchema = z.object({
   subject: z.string().min(1).optional(),
   headline: z.string().min(1).optional(),
@@ -21,7 +19,6 @@ interface RouteParams {
   params: { campaignId: string };
 }
 
-// PUT: Atualiza um rascunho de campanha
 export async function PUT(request: Request, { params }: RouteParams) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== UserRole.ADMIN) {
@@ -54,7 +51,6 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 }
 
-// DELETE: Exclui uma campanha
 export async function DELETE(request: Request, { params }: RouteParams) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== UserRole.ADMIN) {

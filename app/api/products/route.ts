@@ -22,7 +22,6 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    // Verificações de segurança mais detalhadas
     if (!session || !session.user) {
       return NextResponse.json({ message: 'Sessão não encontrada. Por favor, faça login novamente.' }, { status: 401 });
     }
@@ -54,13 +53,11 @@ export async function POST(req: Request) {
     return NextResponse.json(product);
   } catch (error) {
     console.error('[PRODUCTS_POST]', error);
-    // Adiciona um log de erro mais detalhado
     const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.';
     return NextResponse.json({ message: 'Erro Interno do Servidor', error: errorMessage }, { status: 500 });
   }
 }
 
-// A função GET permanece a mesma...
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get('userId');
@@ -119,3 +116,4 @@ export async function GET(req: Request) {
     return new NextResponse('Internal Error', { status: 500 });
   }
 }
+

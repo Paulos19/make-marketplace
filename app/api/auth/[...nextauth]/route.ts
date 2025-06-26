@@ -1,4 +1,3 @@
-// app/api/auth/[...nextauth]/route.ts
 import NextAuth, { NextAuthOptions, User as NextAuthUser } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
@@ -8,13 +7,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { UserRole } from "@prisma/client";
 
-// Interface para estender o usuário da sessão e do token JWT
 interface CustomUser extends NextAuthUser {
   id: string;
-  role?: UserRole | string; // UserRole é o enum do Prisma
+  role?: UserRole | string;
   whatsappLink?: string | null;
   storeName?: string | null;
-  // Outros campos de vendedor que você quer na sessão/token
 }
 
 export const authOptions: NextAuthOptions = {
@@ -56,15 +53,14 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Credenciais inválidas.");
         }
 
-        // Retorna o objeto usuário para ser usado nos callbacks
         return {
           id: user.id,
           name: user.name,
           email: user.email,
           image: user.image,
-          role: user.role, // Role vem do banco
-          whatsappLink: user.whatsappLink, // Campo direto do User
-          storeName: user.storeName,     // Campo direto do User
+          role: user.role,
+          whatsappLink: user.whatsappLink,
+          storeName: user.storeName,
         };
       },
     }),
@@ -75,7 +71,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       const userEmail = user.email;
-      if (!userEmail) return false; // Impede o login se não houver email
+      if (!userEmail) return false;
 
       const isAdminEmail = userEmail === process.env.EMAIL_ADMIN_USER;
 
@@ -85,9 +81,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (isAdminEmail) {
-          // Se é o email do admin
           if (dbUser) {
-            // Se o usuário admin já existe e sua role não é ADMIN, atualiza
             if (dbUser.role !== UserRole.ADMIN) {
               dbUser = await prisma.user.update({
                 where: { id: dbUser.id },
@@ -95,12 +89,6 @@ export const authOptions: NextAuthOptions = {
               });
             }
           } else if (account?.provider !== "credentials") {
-            // Se é o email do admin se registrando pela primeira vez via OAuth/Email
-            // O adapter já criou o usuário (provavelmente com role USER).
-            // Precisamos encontrar esse usuário recém-criado e atualizar sua role.
-            // Esta parte é um pouco mais complexa devido à ordem de execução.
-            // A atualização da role para ADMIN é mais garantida no callback jwt.
-            // Mas, para o registro inicial, podemos tentar aqui.
             const newUserByAdapter = await prisma.user.findUnique({ where: {email: userEmail }});
             if (newUserByAdapter && newUserByAdapter.role !== UserRole.ADMIN) {
                  dbUser = await prisma.user.update({
@@ -109,14 +97,11 @@ export const authOptions: NextAuthOptions = {
                  });
             }
           }
-          // Atualiza o objeto 'user' que será passado para o callback 'jwt'
           if (dbUser) user.role = dbUser.role;
 
         } else if (dbUser) {
-          // Para usuários não-admin existentes, a role deles (USER ou SELLER) é mantida.
-           user.role = dbUser.role; // Garante que a role do DB seja usada no JWT
+           user.role = dbUser.role;
         }
-        // Se for um novo usuário não-admin via OAuth/Email, o adapter o cria com role USER (default).
 
       } catch (error) {
         console.error("Erro no callback signIn ao verificar/atualizar role:", error);
@@ -126,20 +111,18 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, user, trigger, session: sessionUpdateData }) {
-      if (user) { // Na primeira vez (login/registro), 'user' (do provider/authorize) está disponível
+      if (user) {
         token.id = user.id;
-        token.role = user.role; // A role já deve ter sido definida/corrigida no signIn
+        token.role = user.role;
         token.name = user.name;
         token.picture = user.image;
 
-        // Busca os dados mais recentes do banco para garantir consistência
-        // especialmente para campos como whatsappLink e storeName que podem não vir do 'user' inicial
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
         });
 
         if (dbUser) {
-          token.role = dbUser.role; // Garante que a role do DB é a autoridade final
+          token.role = dbUser.role;
           if (dbUser.role === UserRole.SELLER || dbUser.role === UserRole.ADMIN) {
             token.whatsappLink = dbUser.whatsappLink;
             token.storeName = dbUser.storeName;

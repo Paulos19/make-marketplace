@@ -1,9 +1,7 @@
-// app/api/contact/route.ts
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendContactFormEmail } from '@/lib/resend';
 
-// Schema para validar os dados do formulário
 const contactFormSchema = z.object({
   name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres."),
   email: z.string().email("Por favor, insira um e-mail válido."),
@@ -21,7 +19,6 @@ export async function POST(request: Request) {
 
     const { name, email, message } = validation.data;
 
-    // Envia o e-mail para o administrador
     await sendContactFormEmail({
       fromName: name,
       fromEmail: email,

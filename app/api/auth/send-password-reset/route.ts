@@ -1,4 +1,3 @@
-// app/api/auth/send-password-reset/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
@@ -23,20 +22,14 @@ export async function POST(request: Request) {
       where: { email },
     });
 
-    // IMPORTANTE: Por segurança, não informamos ao cliente se o email foi encontrado ou não.
-    // Isso previne ataques de enumeração de emails.
     if (user) {
-      // 1. Gera um token único e seguro
       const resetToken = `${uuidv4()}${uuidv4()}`.replace(/-/g, '');
       const tokenExpires = new Date(Date.now() + 3600 * 1000); // Token válido por 1 hora
 
-      // 2. Invalida tokens de redefinição anteriores para este email
       await prisma.verificationToken.deleteMany({
         where: { identifier: email },
       });
 
-      // 3. Salva o novo token no banco, associado ao email do usuário
-      // Reutilizaremos a tabela VerificationToken para isso
       await prisma.verificationToken.create({
         data: {
           identifier: email,
@@ -45,7 +38,6 @@ export async function POST(request: Request) {
         },
       });
 
-      // 4. Envia o email com o link de redefinição
       await sendPasswordResetEmail({ email, token: resetToken });
     }
     

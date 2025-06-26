@@ -1,11 +1,9 @@
-// app/api/auth/send-verification-email/route.ts
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma'; // [cite: paulos19/make-marketplace/make-marketplace-46963943dd3832bf14e677f937979a4894fd9404/lib/prisma.ts]
+import prisma from '@/lib/prisma';
 import nodemailer from 'nodemailer';
 import { v4 as uuidv4 } from 'uuid'; // Para gerar tokens únicos
 import { z } from 'zod';
 
-// Schema de validação para o corpo da requisição
 const sendVerificationEmailSchema = z.object({
   email: z.string().email({ message: "Por favor, forneça um email válido." }),
 });
@@ -14,7 +12,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Validar o corpo da requisição
     const validation = sendVerificationEmailSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
@@ -30,9 +27,6 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      // Para segurança, não informamos explicitamente se o email não existe.
-      // Apenas retornamos sucesso para evitar enumeração de usuários.
-      // No entanto, em alguns fluxos, você pode querer dar um feedback mais direto.
       console.log(`Tentativa de envio de verificação para email não cadastrado: ${email}`);
       return NextResponse.json({ message: 'Se uma conta com este email existir, um link de verificação foi enviado.' }, { status: 200 });
     }
@@ -41,7 +35,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ message: 'Este email já foi verificado, cumpadi!' }, { status: 400 });
     }
 
-    // Gerar um token único e de tempo limitado
     const verificationTokenValue = uuidv4() + uuidv4(); // Token mais longo
     const expires = new Date(Date.now() + 3600 * 1000 * 24); // Token válido por 24 horas
 
@@ -66,21 +59,6 @@ export async function POST(request: Request) {
       },
     });
     
-    // Se o upsert não funcionar como esperado com 'identifier' (dependendo da sua constraint única exata),
-    // uma abordagem mais robusta para o schema padrão do NextAuth (@@unique([identifier, token])) seria:
-    // 1. Deletar tokens existentes para o identifier
-    // await prisma.verificationToken.deleteMany({ where: { identifier: email } });
-    // 2. Criar o novo token
-    // await prisma.verificationToken.create({
-    //   data: {
-    //     identifier: email,
-    //     token: verificationTokenValue,
-    //     expires,
-    //   },
-    // });
-
-
-    // Configuração do Nodemailer Transporter
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_SERVER_HOST,
       port: parseInt(process.env.EMAIL_SERVER_PORT || '587'),
