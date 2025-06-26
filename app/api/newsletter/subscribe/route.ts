@@ -1,8 +1,11 @@
+// app/api/newsletter/subscribe/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 
 const subscribeSchema = z.object({
+  email: z.string().email({ message: "Por favor, insira um e-mail válido." }),
+});
 
 export async function POST(request: Request) {
   try {
