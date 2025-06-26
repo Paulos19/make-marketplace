@@ -66,7 +66,7 @@ export default function DashboardLayout({
             {isSidebarCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
           </Button>
         </div>
-        <div className="flex-grow overflow-y-auto">
+        <div className="flex-grow overflow-y-auto overflow-y-hidden">
           <SidebarNav isCollapsed={isSidebarCollapsed} />
         </div>
         <div className={cn("border-t p-4", isSidebarCollapsed && "p-2")}>
