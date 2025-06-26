@@ -41,7 +41,7 @@ export default async function RootLayout({
   `
 
   return (
-    <html lang="pt-BR" suppressHydrationWarning className="overflow-hidden">
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <style>{customStyles}</style>
       </head>
@@ -50,7 +50,7 @@ export default async function RootLayout({
       */}
       <body
         className={cn(
-          'min-h-screen bg-background font-sans antialiased overflow-hidden',
+          'min-h-screen bg-background font-sans antialiased',
           inter.variable,
         )}
       >
