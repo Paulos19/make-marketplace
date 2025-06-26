@@ -1,3 +1,4 @@
+// app/api/auth/confirm-email/route.ts
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Seu link de verificação expirou igual promessa de político! Solicite um novo, cumpadi.' }, { status: 400 });
     }
 
-    const user = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       const userToVerify = await tx.user.findUnique({
         where: { email: verificationToken.identifier },
       });
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
       }
 
       // Atualiza o status do usuário para verificado
-      const updatedUser = await tx.user.update({
+      await tx.user.update({
         where: { email: verificationToken.identifier },
         data: { emailVerified: new Date() },
       });
@@ -56,8 +57,6 @@ export async function POST(request: Request) {
       await tx.verificationToken.delete({
         where: { token: verificationToken.token },
       });
-
-      return updatedUser;
     });
 
     // 5. Retornar sucesso
@@ -65,9 +64,10 @@ export async function POST(request: Request) {
 
   } catch (error: unknown) {
     console.error('Erro durante a verificação de e-mail (API):', error);
+    // @ts-expect-error
     if (error.code === 'P2025') { // Erro do Prisma "Record to delete does not exist."
       return NextResponse.json({ message: 'Token de verificação já foi utilizado.' }, { status: 400 });
     }
-    return NextResponse.json({ message: error.message || 'Erro interno do servidor ao verificar e-mail. Ai, pastor!' }, { status: 500 });
+    return NextResponse.json({ message: error instanceof Error ? error.message : 'Erro interno do servidor ao verificar e-mail. Ai, pastor!' }, { status: 500 });
   }
 }

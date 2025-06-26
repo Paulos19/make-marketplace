@@ -1,3 +1,4 @@
+// app/api/admin/carousel-request/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
     }
     const { productId, purchaseId } = validation.data;
 
-    const result = await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       const purchase = await tx.purchase.findFirst({
         where: {
           id: purchaseId,
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ message: 'Solicitação de divulgação enviada para aprovação do admin!' }, { status: 201 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao criar solicitação de carrossel:", error);
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Erro interno do servidor' }, { status: 500 });
   }

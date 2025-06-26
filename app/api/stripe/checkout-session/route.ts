@@ -88,20 +88,21 @@ export async function POST(req: Request) {
         });
     }
 
-    let stripeSession;
-    try {
-        stripeSession = await createCheckoutSession(stripeCustomerId);
-    } catch (error: any) {
-
+    const stripeSession = await createCheckoutSession(stripeCustomerId);
+    
     if (!stripeSession.url) {
         return new NextResponse('Falha ao obter URL da sessão do Stripe.', { status: 500 });
     }
 
     return NextResponse.json({ url: stripeSession.url });
 
-  } catch (error: any) {
-    console.error("Erro ao criar sessão de checkout do Stripe:", error.raw?.message || error.message);
-    const errorMessage = error.raw?.message || 'Erro interno ao criar sessão';
+  } catch (error: unknown) {
+    const errorMessage = (error instanceof Error && 'raw' in error) 
+      // @ts-expect-error
+      ? error.raw?.message 
+      : (error instanceof Error ? error.message : 'Erro interno ao criar sessão');
+    
+    console.error("Erro ao criar sessão de checkout do Stripe:", errorMessage);
     return new NextResponse(errorMessage, { status: 500 });
   }
 }

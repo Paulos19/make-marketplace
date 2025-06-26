@@ -50,7 +50,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (session?.user?.role !== UserRole.ADMIN) {
@@ -70,7 +70,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     return NextResponse.json({ message: 'Produto excluído com sucesso!' }, { status: 200 });
   } catch (error: unknown) {
     console.error("Erro ao excluir produto:", error);
-    // @ts-ignore
+    // @ts-expect-error - O 'code' pode não existir no tipo 'unknown'
     if (error.code === 'P2025') { 
       return NextResponse.json({ message: 'Produto não encontrado.' }, { status: 404 });
     }

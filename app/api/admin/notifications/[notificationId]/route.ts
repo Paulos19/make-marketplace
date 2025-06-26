@@ -1,3 +1,4 @@
+// app/api/admin/notifications/[notificationId]/route.ts
 import { NextResponse as NotificationNextResponse } from 'next/server';
 import { getServerSession as getNotificationServerSession } from 'next-auth/next';
 import { authOptions as notificationAuthOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -8,7 +9,7 @@ interface RouteParams {
   params: { notificationId: string };
 }
 
-export async function PATCH(request: Request, { params }: RouteParams) {
+export async function PATCH(_request: Request, { params }: RouteParams) {
   const session = await getNotificationServerSession(notificationAuthOptions);
   if (session?.user?.role !== NotificationUserRole.ADMIN) {
     return NotificationNextResponse.json({ message: 'Acesso negado' }, { status: 403 });
@@ -26,7 +27,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParams) {
   const session = await getNotificationServerSession(notificationAuthOptions);
   if (session?.user?.role !== NotificationUserRole.ADMIN) {
     return NotificationNextResponse.json({ message: 'Acesso negado' }, { status: 403 });

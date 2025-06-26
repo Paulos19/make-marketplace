@@ -1,3 +1,4 @@
+// app/api/admin/homepage-sections/[sectionId]/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
@@ -48,7 +49,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 }
 
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParams) {
   const session = await getServerSession(authOptions);
   if (session?.user?.role !== UserRole.ADMIN) {
     return NextResponse.json({ message: 'Acesso negado' }, { status: 403 });
