@@ -9,12 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from "@/components/ui/skeleton";
+// Ícone Rocket importado para o novo botão
 import { PlusCircle, Edit3, AlertTriangle, Loader2, LinkIcon, Trash2, Crown, Rocket, Zap, Send, Clock, Wrench, Tag, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { SubscriptionStatus, PurchaseType, Product } from '@prisma/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 
 // --- Tipos de Dados ---
@@ -36,7 +38,7 @@ interface UserStatusData {
   availableCarouselPurchases: PurchaseInfo[];
 }
 
-// --- Funções Auxiliares e Sub-Componentes ---
+// --- Funções Auxiliares e Sub-Componentes (sem alterações) ---
 
 function getTimeRemaining(endDate: string | Date | null): string {
     if (!endDate) return "Sem data de expiração";
@@ -65,7 +67,6 @@ const CarouselRequestCard = ({ purchases, onSubmission }: { purchases: PurchaseI
     useEffect(() => {
         if(session?.user?.id) {
             setIsFetchingProducts(true);
-            // Busca apenas produtos físicos para o carrossel
             fetch(`/api/products?userId=${session.user.id}&isService=false`)
                 .then(res => res.json())
                 .then(data => setProducts(data.products || []))
@@ -245,8 +246,36 @@ export default function DashboardPage() {
     const [productError, setProductError] = useState<string | null>(null);
     const [productToDelete, setProductToDelete] = useState<Product | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [boostingProductId, setBoostingProductId] = useState<string | null>(null);
     
     const userId = useMemo(() => session?.user?.id, [session]);
+
+    const handleBoostCheckout = async (productId: string) => {
+        if (!process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID) {
+            toast.error("Erro de configuração: Plano Turbo não encontrado.");
+            return;
+        }
+        setBoostingProductId(productId);
+        try {
+            const response = await fetch('/api/stripe/checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    priceId: process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID,
+                    type: 'payment',
+                    productId: productId,
+                })
+            });
+            const { url, error } = await response.json();
+            if (!response.ok || !url) {
+                throw new Error(error || "Não foi possível iniciar o checkout.");
+            }
+            window.location.href = url;
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Ocorreu um erro desconhecido.");
+            setBoostingProductId(null);
+        }
+    };
   
     useEffect(() => {
       if (status === 'unauthenticated') {
@@ -323,38 +352,66 @@ export default function DashboardPage() {
                   <Card className="text-center p-10"><ShoppingBag className="mx-auto h-12 w-12 text-gray-400" /><h3 className="mt-4 text-xl">Nenhum item cadastrado.</h3><p className="text-sm text-muted-foreground">Adicione seu primeiro produto ou serviço para começar a vender!</p></Card>
                   ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {products.map((product) => (
-                      <Card key={product.id} className="flex flex-col overflow-hidden group">
-                          <CardHeader className="p-0 border-b relative">
-                            <Badge 
-                              className={cn(
-                                  "absolute top-2 left-2 z-10",
-                                  product.isService ? "bg-sky-500" : "bg-amber-500"
-                              )}
-                            >
-                              {product.isService ? <Wrench className="mr-1.5 h-3 w-3"/> : <Tag className="mr-1.5 h-3 w-3"/>}
-                              {product.isService ? 'Serviço' : 'Produto'}
-                            </Badge>
+                      {products.map((product) => {
+                          const isBoosted = product.boostedUntil && new Date(product.boostedUntil) > new Date();
+                          const isBoostingCurrent = boostingProductId === product.id;
 
-                            <div className="aspect-square w-full">
-                              <Image src={(product.images && product.images.length > 0) ? product.images[0] : '/img-placeholder.png'} alt={product.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
-                            </div>
-                          </CardHeader>
-                          <CardContent className="p-4 flex-grow">
-                              <CardTitle className="text-lg truncate">{product.name}</CardTitle>
-                          </CardContent>
-                          <CardFooter className="p-4 border-t bg-slate-50 dark:bg-slate-800/50">
-                          <div className="grid grid-cols-2 gap-2 w-full">
-                              <Button asChild variant="outline" size="sm" className="w-full">
-                                  <Link href={`/dashboard/edit-product/${product.id}`}><Edit3 className="mr-2 h-4 w-4" /> Editar</Link>
-                              </Button>
-                              <Button variant="destructive" size="sm" className="w-full" onClick={() => openDeleteDialog(product)}>
-                                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                              </Button>
-                          </div>
-                          </CardFooter>
-                      </Card>
-                      ))}
+                          return (
+                              <Card key={product.id} className="flex flex-col overflow-hidden group">
+                                  <CardHeader className="p-0 border-b relative">
+                                    <Badge 
+                                      className={cn(
+                                          "absolute top-2 left-2 z-10",
+                                          product.isService ? "bg-sky-500" : "bg-amber-500"
+                                      )}
+                                    >
+                                      {product.isService ? <Wrench className="mr-1.5 h-3 w-3"/> : <Tag className="mr-1.5 h-3 w-3"/>}
+                                      {product.isService ? 'Serviço' : 'Produto'}
+                                    </Badge>
+
+                                    {isBoosted && (
+                                        <Badge variant="secondary" className="absolute top-2 right-2 z-10 bg-blue-500 text-white border-blue-600">
+                                            <Rocket className="mr-1.5 h-3 w-3"/> Turbinado
+                                        </Badge>
+                                    )}
+
+                                    <div className="aspect-square w-full">
+                                      <Image src={(product.images && product.images.length > 0) ? product.images[0] : '/img-placeholder.png'} alt={product.name} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                                    </div>
+                                  </CardHeader>
+                                  <CardContent className="p-4 flex-grow">
+                                      <CardTitle className="text-lg truncate">{product.name}</CardTitle>
+                                  </CardContent>
+                                  <CardFooter className="p-4 border-t bg-slate-50 dark:bg-slate-800/50 flex flex-col items-stretch gap-2">
+                                      <div className="grid grid-cols-2 gap-2 w-full">
+                                          <Button asChild variant="outline" size="sm" className="w-full">
+                                              <Link href={`/dashboard/edit-product/${product.id}`}><Edit3 className="mr-2 h-4 w-4" /> Editar</Link>
+                                          </Button>
+                                          <Button variant="destructive" size="sm" className="w-full" onClick={() => openDeleteDialog(product)}>
+                                              <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                                          </Button>
+                                      </div>
+                                      
+                                      {/* CORREÇÃO: Removido !product.isService para habilitar para todos os tipos */}
+                                      {!isBoosted && (
+                                          <Button 
+                                                variant="default" 
+                                                size="sm" 
+                                                className="w-full text-white font-bold bg-gradient-to-r from-blue-500 to-sky-400 hover:from-blue-600 hover:to-sky-500 transition-all duration-300 transform hover:scale-105 shadow-lg mt-2 group"
+                                                onClick={() => handleBoostCheckout(product.id)}
+                                                disabled={isBoostingCurrent}
+                                          >
+                                                {isBoostingCurrent 
+                                                    ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> 
+                                                    : <Rocket className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"/>
+                                                }
+                                                Turbinar
+                                          </Button>
+                                      )}
+                                  </CardFooter>
+                              </Card>
+                          );
+                      })}
                   </div>
               )}
         </section>
@@ -378,4 +435,4 @@ export default function DashboardPage() {
         </Dialog>
       </div>
     );
-  }
+}

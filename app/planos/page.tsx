@@ -28,7 +28,7 @@ const plans = [
     {
         name: 'Achadinho Turbo',
         priceId: process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID,
-        price: 'R$ 9,90',
+        price: 'R$ 4,90',
         frequency: '/7 dias',
         description: 'Impulsione um produto ou serviço para o topo da homepage por uma semana.',
         features: [
