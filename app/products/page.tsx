@@ -9,7 +9,7 @@ import { Prisma } from '@prisma/client'
 import { ChevronRight, ChevronLeft, PackageOpen, Rocket, Eye, Heart } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
+import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel' // Importa CarouselApi
 import Autoplay from 'embla-carousel-autoplay'
 import { Badge } from '@/components/ui/badge'
 import { ProductCard, ProductCardSkeleton } from './components/ProductCard'
@@ -112,34 +112,42 @@ const ProductScrollArea = ({ products }: { products: ProductWithDetails[] }) => 
 
 // --- Componente do Novo Banner de Produtos Turbinados ---
 const BoostedProductsBanner = ({ products, isLoading }: { products: ProductWithDetails[], isLoading: boolean }) => {
+    const [api, setApi] = useState<CarouselApi>()
+    const [current, setCurrent] = useState(0)
+
+    useEffect(() => {
+        if (!api) return
+        setCurrent(api.selectedScrollSnap())
+        api.on("select", () => {
+            setCurrent(api.selectedScrollSnap())
+        })
+    }, [api])
+
     const formatCurrency = (value: number) => {
       return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
     
-    // Garante que apenas produtos com imagens apareçam no banner
     const productsWithImages = useMemo(() => products.filter(p => p.images && p.images.length > 0), [products]);
 
     if (isLoading) {
         return (
-            <section className="relative h-[60vh] w-full bg-slate-200 dark:bg-slate-800 md:h-[75vh]">
-                <div className="flex h-full w-full items-center justify-center">
-                    <Skeleton className="h-full w-full" />
-                </div>
-            </section>
+            <div className="container mx-auto px-4 pt-4 md:px-0 md:pt-0 md:max-w-none">
+                <Skeleton className="relative h-[50vh] w-full rounded-xl bg-slate-200 dark:bg-slate-800 md:h-[75vh] md:rounded-none" />
+            </div>
         )
     }
 
     if (productsWithImages.length === 0) {
-        return null; // Não renderiza nada se não houver produtos turbinados com imagem
+        return null; 
     }
 
     return (
-        <section className="w-full">
-            <Carousel plugins={[Autoplay({ delay: 7000, stopOnInteraction: true })]} opts={{ loop: true }} className="w-full">
+        <div className="container mx-auto px-4 pt-4 md:max-w-none md:px-0 md:pt-0">
+            <Carousel setApi={setApi} plugins={[Autoplay({ delay: 7000, stopOnInteraction: true })]} opts={{ loop: true }} className="w-full relative">
                 <CarouselContent>
                     {productsWithImages.map((product) => (
                         <CarouselItem key={product.id}>
-                            <div className="group relative h-[60vh] w-full overflow-hidden md:h-[100vh]">
+                            <div className="group relative h-[40vh] w-full overflow-hidden rounded-xl md:h-[90vh] md:rounded-none">
                                 <Image
                                     src={product.images[0]}
                                     alt={product.name}
@@ -170,12 +178,33 @@ const BoostedProductsBanner = ({ products, isLoading }: { products: ProductWithD
                         </CarouselItem>
                     ))}
                 </CarouselContent>
-                <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 hidden text-black md:inline-flex" />
-                <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 hidden text-black md:inline-flex" />
+                {productsWithImages.length > 1 && (
+                  <>
+                    <button onClick={() => api?.scrollPrev()} className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/30 rounded-full text-white hover:bg-black/50 transition-colors md:left-4">
+                      <ChevronLeft className="h-6 w-6"/>
+                    </button>
+                    <button onClick={() => api?.scrollNext()} className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/30 rounded-full text-white hover:bg-black/50 transition-colors md:right-4">
+                      <ChevronRight className="h-6 w-6"/>
+                    </button>
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+                        {productsWithImages.map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => api?.scrollTo(index)}
+                                className={cn(
+                                    "h-2 w-2 rounded-full transition-all duration-300",
+                                    current === index ? "w-6 bg-white" : "bg-white/50"
+                                )}
+                            />
+                        ))}
+                    </div>
+                  </>
+                )}
             </Carousel>
-        </section>
+        </div>
     )
 }
+
 
 // --- Componentes de Seção ---
 const CategorySection = ({ category }: { category: CategoryWithProducts }) => (

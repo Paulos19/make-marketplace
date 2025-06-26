@@ -15,7 +15,6 @@ import Footer from '@/app/components/layout/Footer';
 import type { Product } from '@prisma/client';
 import { cn } from '@/lib/utils';
 
-// <<< INÍCIO DA CORREÇÃO: VERIFICAÇÃO DA CHAVE DO STRIPE >>>
 // Garante que a chave publicável do Stripe está definida no ambiente.
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 if (!stripePublishableKey) {
@@ -23,7 +22,6 @@ if (!stripePublishableKey) {
 }
 // Carrega a instância do Stripe de forma assíncrona, agora com a chave validada.
 const stripePromise = loadStripe(stripePublishableKey);
-// <<< FIM DA CORREÇÃO >>>
 
 
 const plans = [
@@ -32,7 +30,7 @@ const plans = [
         priceId: process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID,
         price: 'R$ 9,90',
         frequency: '/7 dias',
-        description: 'Impulsione um produto para o topo da homepage por uma semana.',
+        description: 'Impulsione um produto ou serviço para o topo da homepage por uma semana.',
         features: [
             'Destaque na seção "Turbinados do Zaca"',
             'Visibilidade máxima na página inicial',
@@ -90,10 +88,12 @@ export default function PlanosPage() {
 
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.id) {
+            // <<< CORREÇÃO APLICADA AQUI >>>
+            // Removemos o filtro `&isService=false` para buscar tanto produtos quanto serviços.
             fetch(`/api/products?userId=${session.user.id}`)
                 .then(res => res.json())
-                .then(data => setProducts(Array.isArray(data) ? data : []))
-                .catch(() => toast.error("Falha ao carregar seus produtos."));
+                .then(data => setProducts(Array.isArray(data.products) ? data.products : []))
+                .catch(() => toast.error("Falha ao carregar seus produtos e serviços."))
         }
     }, [status, session]);
 
@@ -110,8 +110,8 @@ export default function PlanosPage() {
 
         setIsLoading(priceId);
 
-        if (type === 'payment' && !productId && priceId === process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID) {
-            toast.error("Você precisa selecionar um produto para turbinar.");
+        if (type === 'payment' && !productId && (priceId === process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID || priceId === process.env.NEXT_PUBLIC_STRIPE_CAROUSEL_PRICE_ID)) {
+            toast.error("Você precisa selecionar um item para impulsionar.");
             setIsLoading(null);
             return;
         }
@@ -176,10 +176,10 @@ export default function PlanosPage() {
                                         </ul>
                                     </CardContent>
                                     <CardFooter>
-                                        {plan.type === 'payment' && plan.name === 'Achadinho Turbo' ? (
+                                        {plan.type === 'payment' && (plan.name === 'Achadinho Turbo' || plan.name === 'Carrossel na Praça') ? (
                                             <DialogTrigger asChild>
                                                 <Button className="w-full" disabled={isLoading === plan.priceId} size="lg">
-                                                    {isLoading === plan.priceId ? <Loader2 className="h-5 w-5 animate-spin"/> : <Rocket className="mr-2 h-5 w-5"/>}
+                                                    {isLoading === plan.priceId ? <Loader2 className="h-5 w-5 animate-spin"/> : <plan.icon className="mr-2 h-5 w-5"/>}
                                                     {plan.buttonText}
                                                 </Button>
                                             </DialogTrigger>
@@ -198,14 +198,14 @@ export default function PlanosPage() {
                             <DialogHeader>
                                 <DialogTitle>Turbinar um Achadinho</DialogTitle>
                                 <DialogDescription>
-                                    Selecione qual dos seus produtos você quer impulsionar para o topo da homepage.
+                                    Selecione qual dos seus produtos ou serviços você quer impulsionar para o topo da homepage.
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="py-4">
                                 {products.length > 0 ? (
                                     <Select onValueChange={setSelectedProductId} value={selectedProductId}>
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Escolha um produto..." />
+                                            <SelectValue placeholder="Escolha um item..." />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
@@ -214,7 +214,7 @@ export default function PlanosPage() {
                                 ) : (
                                     <div className="text-center text-sm text-muted-foreground p-4 border rounded-md">
                                         <Info className="mx-auto h-6 w-6 mb-2"/>
-                                        Você precisa ter pelo menos um produto cadastrado para poder turbiná-lo.
+                                        Você precisa ter pelo menos um produto ou serviço cadastrado para poder turbiná-lo.
                                     </div>
                                 )}
                             </div>
