@@ -98,13 +98,13 @@ export default function MyReservationsPage() {
 
       const updatedReservation = await response.json();
       setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, ...updatedReservation } : r));
-      toast('Reserva confirmada com sucesso!');
+      toast.success('Reserva confirmada com sucesso!');
       // Opcional: Adicionar um toast de sucesso
 
     } catch (err) {
       console.error('Erro ao confirmar reserva:', err);
       setError(err instanceof Error ? err.message : 'Erro desconhecido ao confirmar reserva');
-      toast(`Erro ao confirmar reserva: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+      toast.error(`Erro ao confirmar reserva: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
     }
   };
 
@@ -125,12 +125,12 @@ export default function MyReservationsPage() {
         throw new Error(errorData.message || 'Não foi possível excluir a reserva.');
       }
       setReservations(prev => prev.filter(res => res.id !== reservationId));
-      toast(`Reserva de ${productName} excluída com sucesso!`);
+      toast.success(`Reserva de ${productName} excluída com sucesso!`);
     } catch (err) {
       console.error('Erro ao excluir reserva:', err);
       // Mantenha o setError para exibir o erro na UI se desejar
       setError(err instanceof Error ? err.message : 'Erro desconhecido ao excluir reserva'); 
-      toast(`Erro ao excluir reserva: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+      toast.error(`Erro ao excluir reserva: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
     }
   };
 
