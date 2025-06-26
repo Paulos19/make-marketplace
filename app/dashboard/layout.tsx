@@ -39,11 +39,13 @@ export default function DashboardLayout({
       : <UserCircle2 />;
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50 dark:bg-slate-950">
+    // Removido: h-screen e overflow-hidden. O container agora se adapta ao conteúdo.
+    <div className="flex w-full bg-slate-50 dark:bg-slate-950">
       {/* Sidebar para Desktop (retrátil) */}
       <aside
+        // CORREÇÃO: A sidebar agora tem altura da tela e é fixa.
         className={cn(
-          'hidden lg:flex flex-col border-r bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out',
+          'hidden lg:flex flex-col border-r bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out h-screen sticky top-0',
           isSidebarCollapsed ? 'w-20' : 'w-64'
         )}
       >
@@ -77,9 +79,10 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header para Mobile */}
-        <header className="flex h-16 items-center justify-between border-b bg-white dark:bg-slate-900 px-4 lg:hidden">
+      {/* Container Principal do Conteúdo */}
+      <div className="flex flex-1 flex-col">
+        {/* Header para Mobile (com z-index para ficar sobre o conteúdo) */}
+        <header className="flex h-16 items-center justify-between border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-4 lg:hidden sticky top-0 z-40">
           <Link href="/">
             <Image src="/zacalogo.png" alt="Zacaplace Logo" width={130} height={35} />
           </Link>
@@ -106,8 +109,8 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* Conteúdo Principal da Página com scroll independente */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        {/* Conteúdo Principal da Página (não precisa mais de overflow) */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
         </main>
       </div>
