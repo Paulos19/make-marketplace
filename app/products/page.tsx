@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -9,13 +10,12 @@ import { Prisma } from '@prisma/client'
 import { ChevronRight, ChevronLeft, PackageOpen, Rocket, Eye, Heart } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel' // Importa CarouselApi
-import Autoplay from 'embla-carousel-autoplay'
 import { Badge } from '@/components/ui/badge'
 import { ProductCard, ProductCardSkeleton } from './components/ProductCard'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
+import { Separator } from '@/components/ui/separator'
 
 // Tipagens para garantir que os dados incluam as relações necessárias
 type ProductWithDetails = Prisma.ProductGetPayload<{
@@ -110,100 +110,72 @@ const ProductScrollArea = ({ products }: { products: ProductWithDetails[] }) => 
     )
 }
 
-// --- Componente do Novo Banner de Produtos Turbinados ---
-const BoostedProductsBanner = ({ products, isLoading }: { products: ProductWithDetails[], isLoading: boolean }) => {
-    const [api, setApi] = useState<CarouselApi>()
-    const [current, setCurrent] = useState(0)
+// --- NOVO COMPONENTE: Grid de Produtos Turbinados ---
+const BoostedProductsGrid = ({ products, isLoading }: { products: ProductWithDetails[], isLoading: boolean }) => {
+  const containerVariants = {
+      hidden: { opacity: 0 },
+      visible: {
+          opacity: 1,
+          transition: { staggerChildren: 0.08 } // Efeito de cascata sutil
+      }
+  };
 
-    useEffect(() => {
-        if (!api) return
-        setCurrent(api.selectedScrollSnap())
-        api.on("select", () => {
-            setCurrent(api.selectedScrollSnap())
-        })
-    }, [api])
+  const itemVariants = {
+      hidden: { y: 20, opacity: 0 },
+      visible: {
+          y: 0,
+          opacity: 1,
+          transition: {
+              duration: 0.5
+          }
+      }
+  };
 
-    const formatCurrency = (value: number) => {
-      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-    };
-    
-    const productsWithImages = useMemo(() => products.filter(p => p.images && p.images.length > 0), [products]);
+  if (isLoading) {
+      return (
+          <div className="container mx-auto py-12 px-4 md:px-6 lg:px-8">
+              <Skeleton className="h-12 w-1/2 mx-auto mb-10" />
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                  {[...Array(5)].map((_, i) => <ProductCardSkeleton key={i} />)}
+              </div>
+          </div>
+      );
+  }
 
-    if (isLoading) {
-        return (
-            <div className="container mx-auto px-4 pt-4 md:px-0 md:pt-0 md:max-w-none">
-                <Skeleton className="relative h-[50vh] w-full rounded-xl bg-slate-200 dark:bg-slate-800 md:h-[75vh] md:rounded-none" />
-            </div>
-        )
-    }
+  if (products.length === 0) {
+      return null;
+  }
 
-    if (productsWithImages.length === 0) {
-        return null; 
-    }
-
-    return (
-        <div className="container mx-auto px-4 pt-4 md:max-w-none md:px-0 md:pt-0">
-            <Carousel setApi={setApi} plugins={[Autoplay({ delay: 7000, stopOnInteraction: true })]} opts={{ loop: true }} className="w-full relative">
-                <CarouselContent>
-                    {productsWithImages.map((product) => (
-                        <CarouselItem key={product.id}>
-                            <div className="group relative h-[40vh] w-full overflow-hidden rounded-xl md:h-[90vh] md:rounded-none">
-                                <Image
-                                    src={product.images[0]}
-                                    alt={product.name}
-                                    fill
-                                    className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
-                                    priority
-                                />
-                                <div className="absolute inset-0 bg-black/60 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
-                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white">
-                                    <div className="container mx-auto flex flex-col items-center gap-4 p-4">
-                                        <Badge variant="secondary" className="border-blue-400 bg-blue-900/50 py-2 px-4 text-sm font-semibold text-blue-300 backdrop-blur-sm">
-                                            <Rocket className="mr-2 h-5 w-5" />
-                                            Achadinho Turbinado
-                                        </Badge>
-                                        <h1 className="text-4xl font-extrabold tracking-tight drop-shadow-lg md:text-6xl">{product.name}</h1>
-                                        <p className="text-2xl font-bold text-primary drop-shadow-md">{formatCurrency(product.price)}</p>
-                                        <div className="mt-4 flex flex-wrap justify-center gap-3">
-                                            <Button asChild size="lg">
-                                                <Link href={`/products/${product.id}`}><Eye className="mr-2 h-5 w-5" />Ver Detalhes</Link>
-                                            </Button>
-                                            <Button asChild size="lg" variant="outline" className="border-white/50 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20">
-                                                <Link href={`/products/${product.id}?action=reserve`}><Heart className="mr-2 h-5 w-5" />Reservar Agora</Link>
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </CarouselItem>
-                    ))}
-                </CarouselContent>
-                {productsWithImages.length > 1 && (
-                  <>
-                    <button onClick={() => api?.scrollPrev()} className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/30 rounded-full text-white hover:bg-black/50 transition-colors md:left-4">
-                      <ChevronLeft className="h-6 w-6"/>
-                    </button>
-                    <button onClick={() => api?.scrollNext()} className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/30 rounded-full text-white hover:bg-black/50 transition-colors md:right-4">
-                      <ChevronRight className="h-6 w-6"/>
-                    </button>
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2">
-                        {productsWithImages.map((_, index) => (
-                            <button
-                                key={index}
-                                onClick={() => api?.scrollTo(index)}
-                                className={cn(
-                                    "h-2 w-2 rounded-full transition-all duration-300",
-                                    current === index ? "w-6 bg-white" : "bg-white/50"
-                                )}
-                            />
-                        ))}
-                    </div>
-                  </>
-                )}
-            </Carousel>
-        </div>
-    )
-}
+  return (
+      <section className="container mx-auto py-12 px-4 md:px-6 lg:px-8">
+          <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="text-center mb-10"
+          >
+              <h2 className="text-3xl md:text-4xl font-bangers tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-500 to-cyan-400 flex items-center justify-center gap-3">
+                  <Rocket className="h-8 w-8 text-blue-400" />
+                  Turbinados do Zaca
+              </h2>
+              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Uma seleção especial de produtos com visibilidade máxima na plataforma. Não perca, psit!</p>
+          </motion.div>
+          <motion.div
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.1 }}
+          >
+              {products.map((product) => (
+                  <motion.div key={product.id} variants={itemVariants}>
+                      <ProductCard product={transformForCard(product)} />
+                  </motion.div>
+              ))}
+          </motion.div>
+      </section>
+  );
+};
 
 
 // --- Componentes de Seção ---
@@ -356,7 +328,12 @@ export default function ProductsPage() {
     <>
     <Navbar/>
     <main>
-      <BoostedProductsBanner products={boostedProducts} isLoading={isLoading} />
+      {/* Componente antigo foi substituído pelo novo grid */}
+      <BoostedProductsGrid products={boostedProducts} isLoading={isLoading} />
+      
+      {/* Adiciona um separador se houver produtos turbinados */}
+      {boostedProducts.length > 0 && <Separator className="my-12 container" />}
+      
       {isLoading && (
         <div className="container mx-auto py-12">
           <div className="space-y-12">
