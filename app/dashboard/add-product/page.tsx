@@ -1,6 +1,5 @@
 import prisma from "@/lib/prisma";
-import { ProductForm } from "./components/ProductForm"; // O formulário será um componente separado
-import Navbar from "@/app/components/layout/Navbar";
+import { ProductForm } from "./components/ProductForm";
 
 // Função para buscar as categorias no servidor
 async function getCategories() {
@@ -18,13 +17,10 @@ async function getCategories() {
 }
 
 export default async function AddProductPage() {
-  // Busca os dados no servidor antes de renderizar a página
   const categories = await getCategories();
 
   return (
-    <>
-    <Navbar/>
-    <div className="container mx-auto max-w-4xl py-8 px-4">
+    <div className="max-w-4xl mx-auto">
       <header className="mb-8 text-center">
         <h1 className="text-4xl sm:text-5xl font-bangers tracking-wider text-zaca-roxo dark:text-zaca-lilas filter drop-shadow-sm">
           Adicionar um Novo Achadinho
@@ -34,9 +30,7 @@ export default async function AddProductPage() {
         </p>
       </header>
 
-      {/* Renderiza o formulário como um Client Component, passando os dados iniciais */}
       <ProductForm availableCategories={categories} />
     </div>
-    </>
   );
 }

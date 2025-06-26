@@ -16,7 +16,6 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Copy, Trash2, Link as LinkIcon, Loader2, PlusCircle, AlertTriangle, ExternalLink } from 'lucide-react'
-import Navbar from '@/app/components/layout/Navbar'
 
 // Tipo para os dados dos links, agora incluindo a URL da imagem
 type ShortLink = {
@@ -26,7 +25,7 @@ type ShortLink = {
   clicks: number
   createdAt: string
   title?: string | null
-  imageUrl?: string | null // <-- Imagem adicionada
+  imageUrl?: string | null
 }
 
 // Schema de validação para o formulário de criação manual
@@ -112,9 +111,7 @@ export default function LinkShortenerPage() {
   }
 
   return (
-    <>
-    <Navbar/>
-      <div className="m-4 md:m-8 space-y-8">
+    <div className="space-y-8">
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center gap-2">
@@ -244,7 +241,6 @@ export default function LinkShortenerPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
       <Dialog open={!!linkToDelete} onOpenChange={(isOpen) => !isOpen && setLinkToDelete(null)}>
         <DialogContent>
@@ -263,6 +259,6 @@ export default function LinkShortenerPage() {
             </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   )
 }

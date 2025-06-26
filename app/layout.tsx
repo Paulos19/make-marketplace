@@ -41,7 +41,7 @@ export default async function RootLayout({
   `
 
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning className="overflow-hidden">
       <head>
         <style>{customStyles}</style>
       </head>
@@ -50,14 +50,12 @@ export default async function RootLayout({
       */}
       <body
         className={cn(
-          'min-h-screen bg-background font-sans antialiased',
+          'min-h-screen bg-background font-sans antialiased overflow-hidden',
           inter.variable,
         )}
       >
         <AuthProvider>
-          <div className="flex min-h-screen flex-col">
-            <main className="flex-grow">{children}</main>
-          </div>
+          {children}
           <Toaster />
         </AuthProvider>
       </body>

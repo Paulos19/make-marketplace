@@ -24,12 +24,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; 
 import { Skeleton } from '@/components/ui/skeleton'; 
 import { User, Store, Image as ImageIconLucide, Save, UserCircle2, Loader2, Lock, Crown } from 'lucide-react'; 
-import Navbar from '@/app/components/layout/Navbar'; 
 import Image from 'next/image';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SubscriptionStatus } from '@prisma/client';
-import Footer from '@/app/components/layout/Footer';
 import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
@@ -213,10 +211,7 @@ export default function SettingsPage() {
 
   if (initialDataLoading || status === 'loading') {
     return (
-      <div className='flex flex-col min-h-screen'>
-        <Navbar />
-        <main className="flex-grow">
-          <div className="container mx-auto py-12 px-4 max-w-4xl animate-pulse">
+        <div className="max-w-4xl animate-pulse">
             <header className="mb-10 text-center">
               <Skeleton className="h-12 w-3/4 mx-auto rounded-lg bg-slate-200 dark:bg-slate-700" />
               <Skeleton className="h-5 w-1/2 mx-auto mt-4 rounded-lg bg-slate-200 dark:bg-slate-700" />
@@ -258,10 +253,7 @@ export default function SettingsPage() {
               </div>
               <div className="md:col-span-3 flex justify-end"><Skeleton className="h-12 w-48 rounded-md bg-slate-300 dark:bg-slate-600" /></div>
             </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
+        </div>
     );
   }
   
@@ -270,152 +262,145 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className='flex flex-col min-h-screen'>
-      <Navbar />
-      <main className="flex-grow">
-        <div className="container mx-auto py-12 px-4 max-w-4xl">
-          <header className="mb-10 text-center">
+    <div className="max-w-4xl mx-auto">
+        <header className="mb-10 text-center">
             <h1 className="text-4xl sm:text-5xl font-bangers tracking-wider text-zaca-roxo dark:text-zaca-lilas">
-              Configurações do Vendedor
+            Configurações do Vendedor
             </h1>
             <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">
-              Ajuste as informações da sua loja e perfil.
+            Ajuste as informações da sua loja e perfil.
             </p>
-          </header>
+        </header>
 
-          <Form {...form}>
+        <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-              <div className="md:col-span-1 space-y-8">
+            <div className="md:col-span-1 space-y-8">
                 <Card className="shadow-xl dark:bg-slate-800/70 border dark:border-slate-700/60">
-                  <CardHeader>
+                <CardHeader>
                     <CardTitle className="text-xl flex items-center text-slate-800 dark:text-slate-100">
-                      <UserCircle2 className="mr-2.5 h-5 w-5 text-zaca-azul" /> Foto de Perfil
+                    <UserCircle2 className="mr-2.5 h-5 w-5 text-zaca-azul" /> Foto de Perfil
                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-col items-center space-y-5 pt-3">
+                </CardHeader>
+                <CardContent className="flex flex-col items-center space-y-5 pt-3">
                     <Avatar className="h-40 w-40 border-4 border-zaca-lilas/50 shadow-lg text-4xl">
-                      <AvatarImage src={profileImageUrl || undefined} alt={form.getValues('name') || userData.name || 'Avatar'} />
-                      <AvatarFallback className="bg-slate-200 dark:bg-slate-700">{getAvatarFallbackText()}</AvatarFallback>
+                    <AvatarImage src={profileImageUrl || undefined} alt={form.getValues('name') || userData.name || 'Avatar'} />
+                    <AvatarFallback className="bg-slate-200 dark:bg-slate-700">{getAvatarFallbackText()}</AvatarFallback>
                     </Avatar>
                     <ImageUpload
-                      onUploadComplete={(urls) => urls.length > 0 && setProfileImageUrl(urls[0])}
-                      userId={userData.id}
-                      maxFiles={1}
-                      storagePath={`profile_pictures/`}
-                      currentFiles={profileImageUrl ? [profileImageUrl] : []}
-                      onRemoveFile={() => setProfileImageUrl(null)}
+                    onUploadComplete={(urls) => urls.length > 0 && setProfileImageUrl(urls[0])}
+                    userId={userData.id}
+                    maxFiles={1}
+                    storagePath={`profile_pictures/`}
+                    currentFiles={profileImageUrl ? [profileImageUrl] : []}
+                    onRemoveFile={() => setProfileImageUrl(null)}
                     />
-                  </CardContent>
+                </CardContent>
                 </Card>
 
                 <Card className="shadow-xl dark:bg-slate-800/70 border dark:border-slate-700/60">
-                  <CardHeader>
+                <CardHeader>
                     <CardTitle className="text-xl flex items-center text-slate-800 dark:text-slate-100">
-                      <ImageIconLucide className="mr-2.5 h-5 w-5 text-zaca-magenta" /> Banner da Loja
+                    <ImageIconLucide className="mr-2.5 h-5 w-5 text-zaca-magenta" /> Banner da Loja
                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-5 pt-3">
+                </CardHeader>
+                <CardContent className="space-y-5 pt-3">
                     {sellerBannerImageUrlState && (
-                      <div className="aspect-video w-full relative rounded-md overflow-hidden border dark:border-slate-700">
-                         <Image src={sellerBannerImageUrlState} alt="Banner da loja" layout="fill" objectFit="cover" />
-                      </div>
+                    <div className="aspect-video w-full relative rounded-md overflow-hidden border dark:border-slate-700">
+                        <Image src={sellerBannerImageUrlState} alt="Banner da loja" layout="fill" objectFit="cover" />
+                    </div>
                     )}
                     <ImageUpload
-                      onUploadComplete={(urls) => urls.length > 0 && setSellerBannerImageUrlState(urls[0])}
-                      userId={userData.id}
-                      maxFiles={1}
-                      storagePath={`seller_banners/`}
-                      currentFiles={sellerBannerImageUrlState ? [sellerBannerImageUrlState] : []}
-                      onRemoveFile={() => setSellerBannerImageUrlState(null)}
+                    onUploadComplete={(urls) => urls.length > 0 && setSellerBannerImageUrlState(urls[0])}
+                    userId={userData.id}
+                    maxFiles={1}
+                    storagePath={`seller_banners/`}
+                    currentFiles={sellerBannerImageUrlState ? [sellerBannerImageUrlState] : []}
+                    onRemoveFile={() => setSellerBannerImageUrlState(null)}
                     />
-                  </CardContent>
+                </CardContent>
                 </Card>
-              </div>
+            </div>
 
-              <div className="md:col-span-2 space-y-8">
+            <div className="md:col-span-2 space-y-8">
                 <Card className="shadow-xl dark:bg-slate-800/70 border dark:border-slate-700/60">
-                  <CardHeader>
+                <CardHeader>
                     <CardTitle className="text-xl flex items-center text-slate-800 dark:text-slate-100">
-                      <User className="mr-2.5 h-5 w-5 text-zaca-azul" /> Seus Dados
+                    <User className="mr-2.5 h-5 w-5 text-zaca-azul" /> Seus Dados
                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6 pt-3">
+                </CardHeader>
+                <CardContent className="space-y-6 pt-3">
                     <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Seu Nome</FormLabel><FormControl><Input placeholder="Zacarias da Silva" {...field} value={field.value ?? ''} className="dark:bg-slate-700" /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="zaca@trapalhoes.com" {...field} disabled className="disabled:opacity-70" /></FormControl><FormDescription className="text-xs">Seu email não pode ser alterado.</FormDescription><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="whatsappLink" render={({ field }) => (<FormItem><FormLabel>Link do WhatsApp</FormLabel><FormControl><Input placeholder="https://wa.me/55..." {...field} value={field.value ?? ''} className="dark:bg-slate-700" /></FormControl><FormDescription className="text-xs">Formato: https://wa.me/SEUNUMEROCOMCODIGOPAIS</FormDescription><FormMessage /></FormItem>)} />
-                  </CardContent>
+                </CardContent>
                 </Card>
 
                 <Card className="shadow-xl dark:bg-slate-800/70 border dark:border-slate-700/60">
-                  <CardHeader>
+                <CardHeader>
                     <CardTitle className="text-xl flex items-center text-slate-800 dark:text-slate-100">
-                      <Store className="mr-2.5 h-5 w-5 text-zaca-magenta" /> Detalhes e Visibilidade da Loja
+                    <Store className="mr-2.5 h-5 w-5 text-zaca-magenta" /> Detalhes e Visibilidade da Loja
                     </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6 pt-3">
-                    {/* <<< CAMPOS ADICIONADOS AQUI >>> */}
+                </CardHeader>
+                <CardContent className="space-y-6 pt-3">
                     <FormField control={form.control} name="storeName" render={({ field }) => (<FormItem><FormLabel>Nome da Loja</FormLabel><FormControl><Input placeholder="Ex: Paraíso dos Achadinhos" {...field} value={field.value ?? ''} className="dark:bg-slate-700" /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="profileDescription" render={({ field }) => (<FormItem><FormLabel>Descrição da Loja</FormLabel><FormControl><Textarea placeholder="Conte sobre sua loja..." {...field} value={field.value ?? ''} rows={4} className="dark:bg-slate-700" /></FormControl><FormMessage /></FormItem>)} />
                     <Separator />
                     <FormField
-                      control={form.control}
-                      name="showInSellersPage"
-                      render={({ field }) => (
+                    control={form.control}
+                    name="showInSellersPage"
+                    render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 dark:border-slate-700">
-                          <div className="space-y-0.5">
+                        <div className="space-y-0.5">
                             <FormLabel className="text-base dark:text-slate-200">Exibir na Página de Vendedores</FormLabel>
                             <FormDescription className="dark:text-slate-400 text-xs">Ative para que sua loja apareça na página pública.</FormDescription>
-                          </div>
-                          <TooltipProvider delayDuration={100}>
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <div className="flex items-center">
-                                          <FormControl>
-                                              <Switch
-                                                  checked={field.value}
-                                                  onCheckedChange={field.onChange}
-                                                  disabled={!hasActiveSubscription || isSubmitting}
-                                                  aria-readonly={!hasActiveSubscription}
-                                              />
-                                          </FormControl>
-                                      </div>
-                                  </TooltipTrigger>
-                                  {!hasActiveSubscription && (
-                                      <TooltipContent>
-                                          <p className="flex items-center gap-2">
-                                              <Lock className="h-4 w-4" /> Assine o plano "Meu Catálogo" para habilitar.
-                                          </p>
-                                      </TooltipContent>
-                                  )}
-                              </Tooltip>
-                          </TooltipProvider>
+                        </div>
+                        <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="flex items-center">
+                                        <FormControl>
+                                            <Switch
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                                disabled={!hasActiveSubscription || isSubmitting}
+                                                aria-readonly={!hasActiveSubscription}
+                                            />
+                                        </FormControl>
+                                    </div>
+                                </TooltipTrigger>
+                                {!hasActiveSubscription && (
+                                    <TooltipContent>
+                                        <p className="flex items-center gap-2">
+                                            <Lock className="h-4 w-4" /> Assine o plano "Meu Catálogo" para habilitar.
+                                        </p>
+                                    </TooltipContent>
+                                )}
+                            </Tooltip>
+                        </TooltipProvider>
                         </FormItem>
-                      )}
+                    )}
                     />
                     
                     {!hasActiveSubscription && (
                         <SubscriptionActionCard onCheckout={handleSubscriptionCheckout} isLoading={isCheckoutLoading} />
                     )}
-                  </CardContent>
+                </CardContent>
                 </Card>
-              </div>
+            </div>
             
-              <div className="md:col-span-3 flex justify-end">
+            <div className="md:col-span-3 flex justify-end">
                 <Button 
-                  type="submit" 
-                  disabled={isSubmitting} 
-                  size="lg"
-                  className="bg-zaca-azul hover:bg-zaca-azul/90 text-white shadow-md"
+                type="submit" 
+                disabled={isSubmitting} 
+                size="lg"
+                className="bg-zaca-azul hover:bg-zaca-azul/90 text-white shadow-md"
                 >
-                  {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-                  Salvar Alterações
+                {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                Salvar Alterações
                 </Button>
-              </div>
+            </div>
             </form>
-          </Form>
-        </div>
-      </main>
-      <Footer />
+        </Form>
     </div>
   );
 }

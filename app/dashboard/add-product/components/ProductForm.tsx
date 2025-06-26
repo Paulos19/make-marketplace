@@ -74,14 +74,15 @@ const formSchema = z.object({
 });
 
 
+// CORREÇÃO 1: A interface agora aceita `availableCategories`
 interface ProductFormProps {
-  initialData?: Product | null
+  initialData?: Product | null;
+  availableCategories: Category[];
 }
 
-export const ProductForm = ({ initialData }: ProductFormProps) => {
+// CORREÇÃO 2: O componente recebe `availableCategories` como prop
+export const ProductForm = ({ initialData, availableCategories }: ProductFormProps) => {
   const router = useRouter()
-  const [categories, setCategories] = useState<Category[]>([])
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -104,21 +105,7 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
   const isService = form.watch('isService');
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      setIsLoadingCategories(true);
-      try {
-        const res = await fetch('/api/categories')
-        if (!res.ok) throw new Error("Falha ao buscar categorias.");
-        const data = await res.json()
-        setCategories(data)
-      } catch (error) {
-        toast.error("Não foi possível carregar as categorias.");
-      } finally {
-        setIsLoadingCategories(false);
-      }
-    }
-    fetchCategories()
-
+    // A busca de categorias foi removida daqui, pois os dados agora vêm por props.
     if (initialData) {
       form.reset({
         ...initialData,
@@ -158,11 +145,8 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
       const itemType = values.isService ? 'Serviço' : 'Produto';
       toast.success(`${itemType} ${initialData ? 'atualizado' : 'criado'} com sucesso!`);
       
-      if (values.isService) {
-        router.push('/services');
-      } else {
-        router.push('/dashboard');
-      }
+      // Redireciona para a página correta após o sucesso
+      router.push(initialData ? '/dashboard' : (values.isService ? '/services' : '/products'));
       router.refresh();
 
     } catch (error) {
@@ -223,14 +207,15 @@ export const ProductForm = ({ initialData }: ProductFormProps) => {
                  <FormField control={form.control} name="categoryId" render={({ field }) => ( 
                     <FormItem>
                         <FormLabel>Categoria</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingCategories}>
+                        {/* CORREÇÃO 3: Usa `availableCategories` diretamente e remove o estado de loading */}
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder={isLoadingCategories ? "A carregar..." : "Selecione uma categoria"} />
+                                    <SelectValue placeholder={availableCategories.length === 0 ? "Nenhuma categoria encontrada" : "Selecione uma categoria"} />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
+                                {availableCategories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
                             </SelectContent>
                         </Select>
                         <FormMessage />
