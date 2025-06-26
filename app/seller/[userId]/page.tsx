@@ -3,7 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Star, MessageCircle, ChevronLeft, ChevronRight, Ban, Share2, Loader2 } from 'lucide-react'
+import { Star, MessageCircle, ChevronLeft, ChevronRight, Ban, Share2, Loader2, Send } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ProductCard, ProductCardSkeleton } from '@/app/products/components/ProductCard'
@@ -244,7 +244,7 @@ export default function SellerPage() {
                         </Button>
                     )}
                     <Button variant="outline" onClick={handleShareSellerPage} disabled={isSharing}>
-                        {isSharing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Share2 className='h-4 w-4'/>}
+                        {isSharing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className='h-4 w-4'/>}
                         <span className="hidden sm:inline ml-2">Compartilhar Loja</span>
                     </Button>
                 </div>
