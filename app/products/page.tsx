@@ -112,31 +112,50 @@ const ProductScrollArea = ({ products }: { products: ProductWithDetails[] }) => 
 
 // --- NOVO COMPONENTE: Grid de Produtos Turbinados ---
 const BoostedProductsGrid = ({ products, isLoading }: { products: ProductWithDetails[], isLoading: boolean }) => {
-  const containerVariants = {
-      hidden: { opacity: 0 },
-      visible: {
-          opacity: 1,
-          transition: { staggerChildren: 0.08 } // Efeito de cascata sutil
-      }
-  };
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const itemVariants = {
-      hidden: { y: 20, opacity: 0 },
-      visible: {
-          y: 0,
-          opacity: 1,
-          transition: {
-              duration: 0.5
-          }
-      }
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      const hasOverflow = el.scrollWidth > el.clientWidth;
+      setCanScrollLeft(el.scrollLeft > 0);
+      setCanScrollRight(hasOverflow && el.scrollLeft < el.scrollWidth - el.clientWidth);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      handleScroll();
+      el.addEventListener('scroll', handleScroll, { passive: true });
+      window.addEventListener('resize', handleScroll);
+      return () => {
+        el.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('resize', handleScroll);
+      };
+    }
+  }, [products, handleScroll]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      const scrollAmount = el.clientWidth * 0.8;
+      el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    }
   };
 
   if (isLoading) {
       return (
           <div className="container mx-auto py-12 px-4 md:px-6 lg:px-8">
               <Skeleton className="h-12 w-1/2 mx-auto mb-10" />
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                  {[...Array(5)].map((_, i) => <ProductCardSkeleton key={i} />)}
+              <div className="flex gap-4 overflow-x-hidden pb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="w-48 flex-shrink-0 md:w-56">
+                      <ProductCardSkeleton />
+                    </div>
+                  ))}
               </div>
           </div>
       );
@@ -160,19 +179,52 @@ const BoostedProductsGrid = ({ products, isLoading }: { products: ProductWithDet
               </h2>
               <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Uma seleção especial de produtos com visibilidade máxima na plataforma. Não perca, psit!</p>
           </motion.div>
-          <motion.div
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6"
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.1 }}
-          >
+          
+          <div className="relative">
+            <div
+              ref={scrollContainerRef}
+              className="flex gap-4 overflow-x-auto pb-4 no-scrollbar"
+            >
               {products.map((product) => (
-                  <motion.div key={product.id} variants={itemVariants}>
-                      <ProductCard product={transformForCard(product)} />
-                  </motion.div>
+                <motion.div 
+                  key={product.id} 
+                  className="w-48 flex-shrink-0 md:w-56"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <ProductCard product={transformForCard(product)} />
+                </motion.div>
               ))}
-          </motion.div>
+            </div>
+            
+            {/* Navigation */}
+            {(canScrollLeft || canScrollRight) && (
+              <div className="mt-4 flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => scroll('left')}
+                  disabled={!canScrollLeft}
+                  className="rounded-full disabled:opacity-50"
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => scroll('right')}
+                  disabled={!canScrollRight}
+                  className="rounded-full disabled:opacity-50"
+                  aria-label="Scroll right"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
+            )}
+          </div>
       </section>
   );
 };
