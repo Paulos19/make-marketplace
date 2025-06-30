@@ -17,6 +17,7 @@ type ProductCardProps = {
     boostedUntil: Date | null;
     onPromotion: boolean;
     originalPrice: number | null;
+    priceType: string | null;
   }
 }
 
@@ -66,10 +67,16 @@ export function ProductCard({ product }: ProductCardProps) {
             <CardFooter className="p-4 pt-0">
                 <div className="flex w-full items-end justify-between">
                     <div>
-                        {product.onPromotion && product.originalPrice && (
-                            <p className="text-xs text-red-500 line-through">{formatCurrency(product.originalPrice)}</p>
+                        {product.priceType === 'ON_BUDGET' ? (
+                            <p className="font-bold text-lg text-primary">Orçamento a combinar</p>
+                        ) : (
+                            <>
+                                {product.onPromotion && product.originalPrice && (
+                                    <p className="text-xs text-red-500 line-through">{formatCurrency(product.originalPrice)}</p>
+                                )}
+                                <p className="font-bold text-lg text-primary">{formatCurrency(product.price)}</p>
+                            </>
                         )}
-                        <p className="font-bold text-lg text-primary">{formatCurrency(product.price)}</p>
                     </div>
                 </div>
             </CardFooter>

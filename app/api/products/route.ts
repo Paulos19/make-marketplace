@@ -94,6 +94,8 @@ export async function GET(req: Request) {
     orderBy.createdAt = 'desc';
   }
 
+  console.log('Final WHERE clause:', where);
+
   try {
     const [products, total] = await Promise.all([
       prisma.product.findMany({
@@ -105,6 +107,8 @@ export async function GET(req: Request) {
       }),
       prisma.product.count({ where }),
     ]);
+
+    console.log('Number of products found by Prisma:', products.length);
 
     return NextResponse.json({
       products,

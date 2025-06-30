@@ -2,7 +2,8 @@
     {
       "origin": [
         "http://localhost:3000",
-        "https://www.zacaplace.com.br"
+        "https://www.zacaplace.com.br",
+        "*"
       ],
       "method": [
         "GET",

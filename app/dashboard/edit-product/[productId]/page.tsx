@@ -29,6 +29,7 @@ async function getCategories() {
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
   const session = await getServerSession(authOptions);
+  const { productId } = await params;
 
   if (!session?.user) {
     redirect('/auth/signin');
@@ -38,7 +39,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
   const [product, categories] = await Promise.all([
     prisma.product.findUnique({
       where: {
-        id: params.productId,
+        id: productId,
       },
     }),
     getCategories()

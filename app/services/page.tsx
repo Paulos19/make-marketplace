@@ -42,7 +42,7 @@ export default async function ServicesPage() {
               Serviços Manuais na Praça
             </h1>
             <p className="mt-4 text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Encontre os melhores profissionais e serviços da região, de manicure a aulas particulares!
+              Encontre os melhores profissionais e serviços de Sete Lagoas!
             </p>
           </header>
 

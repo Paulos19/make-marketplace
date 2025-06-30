@@ -41,7 +41,7 @@ export default async function SellersPage() {
           Nossos Vendedores
         </h1>
         <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-          Conheça os vendedores incríveis que fazem parte da nossa comunidade.
+          Conheça os vendedores incríveis que fazem parte do Zacaplace.
         </p>
       </div>
 

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN     "priceType" TEXT NOT NULL DEFAULT 'FIXED',
+ALTER COLUMN "price" DROP NOT NULL;

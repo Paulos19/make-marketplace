@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/zacaplace-mobile
 /.pnp
 .pnp.*
 .yarn/*

@@ -17,7 +17,7 @@ import { ProductCard } from './products/components/ProductCard';
 
 type ProductWithDetails = Prisma.ProductGetPayload<{
   include: { user: true; category: true };
-}>;
+}> & { isService: boolean; };
 type SectionWithProducts = Prisma.HomepageSectionGetPayload<{}> & {
   products: ProductWithDetails[];
 };
@@ -39,6 +39,8 @@ export default async function HomePage() {
     homepageSections,
     highlightedCategories,
     topSellers,
+    newProducts,
+    newServices,
   ] = await Promise.all([
     prisma.homePageBanner.findMany({ where: { isActive: true }, orderBy: { createdAt: 'desc' } }),
     prisma.product.findMany({
@@ -83,6 +85,18 @@ export default async function HomePage() {
             .sort((a, b) => b.averageRating - a.averageRating)
             .slice(0, 5);
     })(),
+    prisma.product.findMany({
+      where: { isService: false, isSold: false, isReserved: false },
+      include: { user: true, category: true },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    }),
+    prisma.product.findMany({
+      where: { isService: true, isSold: false, isReserved: false },
+      include: { user: true, category: true },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    }),
   ]);
 
   const allProductIds = homepageSections.flatMap((section) => section.productIds);
@@ -91,7 +105,6 @@ export default async function HomePage() {
       ? await prisma.product.findMany({
           where: { 
             id: { in: allProductIds },
-            isService: false, // <-- FILTRO ADICIONADO AQUI
           },
           include: { user: true, category: true },
         })
@@ -148,6 +161,22 @@ export default async function HomePage() {
             )}
 
             <CategoryHighlights categories={highlightedCategories} />
+
+            {newProducts.length > 0 && (
+              <ProductScrollArea
+                title="Novos Achadinhos"
+                products={newProducts}
+                href="/products"
+              />
+            )}
+
+            {newServices.length > 0 && (
+              <ProductScrollArea
+                title="Serviços em Destaque"
+                products={newServices}
+                href="/services"
+              />
+            )}
             
             {sectionsWithProducts.map((section) => (
               <ModernProductSection key={section.id} {...section} />

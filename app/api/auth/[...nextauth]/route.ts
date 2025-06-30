@@ -32,6 +32,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Senha", type: "password" },
       },
       async authorize(credentials) {
+        console.log('Credenciais recebidas:', credentials); // Adicionado para depuração
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email e senha são obrigatórios.");
         }

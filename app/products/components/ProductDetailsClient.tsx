@@ -26,6 +26,7 @@ const conditionLabels: Record<ProductCondition, string> = {
 type ProductWithDetails = Product & {
   user: Partial<User>;
   category: Category | null;
+  priceType: string | null;
 };
 
 interface ProductDetailsClientProps {
@@ -162,7 +163,11 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">{product.name}</h1>
           
           <div className="mt-3">
-            {isOnSale ? (
+            {product.priceType === 'ON_BUDGET' ? (
+              <div className="text-3xl font-bold text-primary">
+                Orçamento a combinar
+              </div>
+            ) : isOnSale ? (
                 <div className='flex items-baseline gap-3'>
                     <span className="text-2xl text-muted-foreground line-through">{formatPrice(product.originalPrice!)}</span>
                     <span className="text-4xl font-bold text-primary">{formatPrice(product.price)}</span>

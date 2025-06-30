@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { decode } from 'next-auth/jwt'; // Import decode for JWT
 
 const updateUserSchema = z.object({
   name: z.string().min(2).max(50).optional().nullable(),
@@ -17,15 +18,38 @@ const updateUserSchema = z.object({
 
 // GET: Busca os dados do usuário logado
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const authorizationHeader = req.headers.get('authorization');
+  let userId = null;
 
-  if (!session || !session.user?.email) {
-    return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+  if (authorizationHeader && authorizationHeader.startsWith('Bearer ')) {
+    const token = authorizationHeader.substring(7);
+    try {
+      const decoded = await decode({
+        token: token,
+        secret: authOptions.secret!,
+      });
+      if (decoded && decoded.id) {
+        userId = decoded.id;
+      }
+    } catch (error) {
+      console.error('Erro ao decodificar token:', error);
+      return NextResponse.json({ message: 'Token inválido' }, { status: 401 });
+    }
+  }
+
+  if (!userId) {
+    // Fallback to session for web requests, or if no token provided
+    const session = await getServerSession(authOptions);
+    if (session && session.user?.id) {
+      userId = session.user.id;
+    } else {
+      return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+    }
   }
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: userId },
     });
 
     if (!user) {

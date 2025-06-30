@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
@@ -10,17 +10,19 @@ export const revalidate = 0;
  * Busca o status atual da assinatura e das compras ativas
  * do usuário logado, incluindo as datas de expiração.
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
+  const userId = session.user.id;
+
   try {
     // Busca dados da assinatura diretamente do usuário, incluindo a data de término
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId }, // Usar userId do token
       select: {
         stripeSubscriptionStatus: true,
         stripeCurrentPeriodEnd: true, // <<< Data de término da assinatura
@@ -30,7 +32,7 @@ export async function GET(request: Request) {
     // Busca produtos com boost ativo
     const boostedProducts = await prisma.product.findMany({
         where: {
-            userId: session.user.id,
+            userId: userId, // Usar userId
             boostedUntil: {
                 gte: new Date(),
             },
@@ -45,7 +47,7 @@ export async function GET(request: Request) {
     // Busca compras de carrossel disponíveis para uso
     const availableCarouselPurchases = await prisma.purchase.findMany({
         where: {
-            userId: session.user.id,
+            userId: userId, // Usar userId
             type: PurchaseType.CARROSSEL_PRACA,
             submissionStatus: "AVAILABLE"
         },

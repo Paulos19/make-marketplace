@@ -119,7 +119,8 @@ model Product {
   id            String   @id @default(cuid())
   name          String
   description   String
-  price         Float
+  price         Float?
+  priceType     String   @default("FIXED")
   originalPrice Float?
   images        String[]
   isFeatured    Boolean  @default(false)

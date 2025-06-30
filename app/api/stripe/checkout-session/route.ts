@@ -48,7 +48,17 @@ export async function POST(req: Request) {
     }
 
     let stripeCustomerId = user.stripeCustomerId;
-    if (!stripeCustomerId) {
+    if (stripeCustomerId) {
+        try {
+            // Attempt to retrieve the customer from Stripe
+            await stripe.customers.retrieve(stripeCustomerId);
+        } catch (error) {
+            // If retrieval fails (e.g., customer not found), create a new one
+            console.warn(`Stripe customer ${stripeCustomerId} not found or invalid. Creating a new customer.`);
+            stripeCustomerId = await createStripeCustomer(user);
+        }
+    } else {
+        // If no stripeCustomerId in DB, create a new one
         stripeCustomerId = await createStripeCustomer(user);
     }
 

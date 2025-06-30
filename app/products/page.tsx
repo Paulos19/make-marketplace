@@ -199,31 +199,6 @@ const BoostedProductsGrid = ({ products, isLoading }: { products: ProductWithDet
               ))}
             </div>
             
-            {/* Navigation */}
-            {(canScrollLeft || canScrollRight) && (
-              <div className="mt-4 flex items-center justify-between">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => scroll('left')}
-                  disabled={!canScrollLeft}
-                  className="rounded-full disabled:opacity-50"
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => scroll('right')}
-                  disabled={!canScrollRight}
-                  className="rounded-full disabled:opacity-50"
-                  aria-label="Scroll right"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-              </div>
-            )}
           </div>
       </section>
   );

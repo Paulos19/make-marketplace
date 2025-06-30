@@ -146,7 +146,7 @@ export default function PlanosPage() {
                             Planos de UP para sua Loja
                         </h1>
                         <p className="mt-4 text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-                            Dê um gás nas suas vendas com nossos planos de destaque. Mais visibilidade, mais clientes!
+                            Dê um gás nas suas vendas em Sete Lagoas com nossos planos de destaque. Mais visibilidade, mais clientes!
                         </p>
                     </header>
                     

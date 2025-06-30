@@ -33,6 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Separator } from '@/components/ui/separator'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const conditionLabels: Record<ProductCondition, string> = {
   NEW: 'Novo',
@@ -45,7 +46,8 @@ const conditionLabels: Record<ProductCondition, string> = {
 const formSchema = z.object({
   name: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres.'),
   description: z.string().min(10, 'A descrição deve ter pelo menos 10 caracteres.'),
-  price: z.coerce.number().min(0.01, 'O preço deve ser maior que zero.'),
+  price: z.coerce.number().optional(),
+  priceType: z.enum(['FIXED', 'ON_BUDGET']).default('FIXED'),
   onPromotion: z.boolean().default(false),
   originalPrice: z.coerce.number().optional().nullable(),
   images: z.array(z.string()).min(1, 'Pelo menos uma imagem é necessária.'),
@@ -56,6 +58,17 @@ const formSchema = z.object({
   }),
   isService: z.boolean().default(false),
 }).refine((data) => {
+    if (data.isService && data.priceType === 'FIXED' && (!data.price || data.price <= 0)) {
+        return false;
+    }
+    if (!data.isService && (!data.price || data.price <= 0)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "O preço é obrigatório para este tipo de anúncio.",
+    path: ["price"],
+}).refine((data) => {
     if (data.onPromotion && (!data.originalPrice || data.originalPrice <= 0)) {
         return false;
     }
@@ -64,7 +77,7 @@ const formSchema = z.object({
     message: "O preço original é obrigatório para promoções.",
     path: ["originalPrice"],
 }).refine((data) => {
-    if (data.onPromotion && data.originalPrice && data.price >= data.originalPrice) {
+    if (data.onPromotion && data.originalPrice && data.price && data.price >= data.originalPrice) {
         return false;
     }
     return true;
@@ -87,10 +100,11 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema) as Resolver<z.infer<typeof formSchema>>,
-    defaultValues: initialData || {
+    defaultValues: {
       name: '',
       description: '',
       price: 0,
+      priceType: 'FIXED',
       originalPrice: null,
       images: [],
       categoryId: '',
@@ -105,15 +119,16 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
   const isService = form.watch('isService');
 
   useEffect(() => {
-    // A busca de categorias foi removida daqui, pois os dados agora vêm por props.
     if (initialData) {
-      form.reset({
+      const valuesToSet = {
         ...initialData,
-        price: Number(initialData.price),
+        price: initialData.price ? Number(initialData.price) : undefined,
+        priceType: (initialData.priceType as 'FIXED' | 'ON_BUDGET') || 'FIXED',
         originalPrice: initialData.originalPrice ? Number(initialData.originalPrice) : null,
         quantity: Number(initialData.quantity),
         isService: !!initialData.isService,
-      })
+      };
+      form.reset(valuesToSet);
     }
   }, [initialData, form])
 
@@ -122,6 +137,7 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
     try {
       const dataToSend = {
           ...values,
+          price: values.priceType === 'ON_BUDGET' ? null : values.price,
           originalPrice: values.onPromotion ? values.originalPrice : null,
           quantity: values.isService ? 1 : values.quantity,
           condition: values.isService ? ProductCondition.OTHER : values.condition,
@@ -224,18 +240,54 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
 
                 <Separator />
 
-                 <FormField control={form.control} name="onPromotion" render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                            <FormLabel>Colocar em Promoção?</FormLabel>
-                            <FormDescription>Ative para definir um preço promocional.</FormDescription>
-                        </div>
-                        <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                    </FormItem>
-                )} />
+                 <AnimatePresence>
+                {isService ? (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }}>
+                        <FormField control={form.control} name="priceType" render={({ field }) => (
+                            <FormItem className="space-y-3">
+                                <FormLabel>Como você quer definir o preço?</FormLabel>
+                                <FormControl>
+                                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <FormControl><RadioGroupItem value="FIXED" /></FormControl>
+                                            <FormLabel className="font-normal">Preço Fixo</FormLabel>
+                                        </FormItem>
+                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                            <FormControl><RadioGroupItem value="ON_BUDGET" /></FormControl>
+                                            <FormLabel className="font-normal">Orçamento a combinar</FormLabel>
+                                        </FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    </motion.div>
+                ) : (
+                    <>
+                        <Separator />
+                        <FormField control={form.control} name="onPromotion" render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                <div className="space-y-0.5">
+                                    <FormLabel>Colocar em Promoção?</FormLabel>
+                                    <FormDescription>Ative para definir um preço promocional.</FormDescription>
+                                </div>
+                                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                            </FormItem>
+                        )} />
+                    </>
+                )}
+                </AnimatePresence>
 
                 <AnimatePresence>
-                {onPromotion && (
+                {(form.watch('priceType') === 'FIXED' && !onPromotion) && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }}>
+                        <FormField control={form.control} name="price" render={({ field }) => ( <FormItem><FormLabel>Preço Padrão (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="19,90" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    </motion.div>
+                )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                {onPromotion && !isService && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden">
                         <Card className="bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800">
                             <CardHeader><CardTitle className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300"><Tag className="h-5 w-5"/> Preço Promocional</CardTitle></CardHeader>
@@ -247,10 +299,6 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
                     </motion.div>
                 )}
                 </AnimatePresence>
-
-                {!onPromotion && (
-                    <FormField control={form.control} name="price" render={({ field }) => ( <FormItem><FormLabel>Preço Padrão (R$)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="19,90" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                )}
             </CardContent>
         </Card>
 
