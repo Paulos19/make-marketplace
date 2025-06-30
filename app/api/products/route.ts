@@ -79,6 +79,7 @@ export async function POST(req: Request) {
     });
 
     revalidatePath('/');
+    revalidatePath('/services');
 
     return NextResponse.json(product);
   } catch (error) {

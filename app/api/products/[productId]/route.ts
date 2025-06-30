@@ -86,6 +86,9 @@ export async function PATCH(req: Request, { params }: { params: { productId: str
       },
     });
 
+    revalidatePath('/');
+    revalidatePath('/services');
+
     return NextResponse.json(updatedProduct, { status: 200 });
   } catch (error) {
     console.error('[PRODUCT_UPDATE_PUT]', error);
