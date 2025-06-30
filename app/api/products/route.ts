@@ -8,7 +8,8 @@ import { ProductCondition, UserRole } from '@prisma/client';
 const productSchema = z.object({
   name: z.string().min(3),
   description: z.string().min(10),
-  price: z.number().min(0.01),
+  price: z.number().optional().nullable(),
+  priceType: z.enum(['FIXED', 'ON_BUDGET']).default('FIXED'),
   originalPrice: z.number().optional().nullable(),
   images: z.array(z.string()).min(1),
   categoryId: z.string(),
@@ -16,6 +17,33 @@ const productSchema = z.object({
   condition: z.nativeEnum(ProductCondition),
   onPromotion: z.boolean().optional(),
   isService: z.boolean().optional(),
+}).refine((data) => {
+    if (data.isService && data.priceType === 'FIXED' && (!data.price || data.price <= 0)) {
+        return false;
+    }
+    if (!data.isService && (!data.price || data.price <= 0)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "O preço é obrigatório para este tipo de anúncio.",
+    path: ["price"],
+}).refine((data) => {
+    if (data.onPromotion && (!data.originalPrice || data.originalPrice <= 0)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "O preço original é obrigatório para promoções.",
+    path: ["originalPrice"],
+}).refine((data) => {
+    if (data.onPromotion && data.originalPrice && data.price && data.price >= data.originalPrice) {
+        return false;
+    }
+    return true;
+}, {
+    message: "O preço promocional deve ser menor que o original.",
+    path: ["price"],
 });
 
 export async function POST(req: Request) {
