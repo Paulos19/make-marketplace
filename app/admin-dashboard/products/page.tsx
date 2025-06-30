@@ -79,7 +79,11 @@ export default async function AdminProductsPage() {
                   </TableCell>
                   <TableCell>{product.user?.name ?? 'N/A'}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    R$ {product.price.toFixed(2)}
+                    {product.isService && product.priceType === 'ON_BUDGET' ? (
+                      'A combinar'
+                    ) : (
+                      `R$ ${product.price?.toFixed(2) || '0.00'}`
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <ProductActions product={product} categories={categories} />

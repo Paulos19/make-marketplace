@@ -78,6 +78,8 @@ export async function POST(req: Request) {
       },
     });
 
+    revalidatePath('/');
+
     return NextResponse.json(product);
   } catch (error) {
     console.error('[PRODUCTS_POST]', error);
