@@ -177,7 +177,7 @@ const BoostedProductsGrid = ({ products, isLoading }: { products: ProductWithDet
                   <Rocket className="h-8 w-8 text-blue-400" />
                   Turbinados do Zaca
               </h2>
-              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Uma seleção especial de produtos com visibilidade máxima na plataforma. Não perca, psit!</p>
+              <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Uma seleção turbinada de produtos e serviços, psit!</p>
           </motion.div>
           
           <div className="relative">
