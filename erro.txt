@@ -1,6 +1,39 @@
-'product.price' is possibly 'null'.ts(18047)
-(parameter) product: ProductWithDetails
-
-Argument of type 'number | null' is not assignable to parameter of type 'number'.
-  Type 'null' is not assignable to type 'number'.ts(2345)
-(parameter) product: ProductWithDetails
+Final WHERE clause: {
+  isSold: false,
+  isReserved: false,
+  userId: 'cmdxmltq70000fe6869ysiff8'
+}
+Number of products found by Prisma: 0
+ GET /api/products?userId=cmdxmltq70000fe6869ysiff8 200 in 353ms
+ GET /api/user/status 200 in 383ms
+Final WHERE clause: {
+  isSold: false,
+  isReserved: false,
+  userId: 'cmdxmltq70000fe6869ysiff8'
+}
+Number of products found by Prisma: 0
+ GET /api/products?userId=cmdxmltq70000fe6869ysiff8 200 in 354ms
+ GET /api/user/status 200 in 430ms
+ GET /dashboard 200 in 415ms
+ GET /favicon.ico?favicon.3b94330f.ico 200 in 317ms
+ GET /api/auth/session 200 in 293ms
+Final WHERE clause: {
+  isSold: false,
+  isReserved: false,
+  userId: 'cmdxmltq70000fe6869ysiff8'
+}
+Number of products found by Prisma: 0
+ GET /api/products?userId=cmdxmltq70000fe6869ysiff8 200 in 324ms
+ GET /api/user/status 200 in 327ms
+ GET /api/user/status 200 in 274ms
+ GET /dashboard/add-product 200 in 273ms
+[PRODUCTS_POST] ReferenceError: revalidatePath is not defined
+    at POST (file://C%3A/Users/paulo/Desktop/Arquivos/ProjetosGit/make-store-marketplace/app/api/products/route.ts:81:4)
+  79 |     });
+  80 |
+> 81 |     revalidatePath('/');
+     |    ^
+  82 |     revalidatePath('/services');
+  83 |
+  84 |     return NextResponse.json(product);
+ POST /api/products 500 in 740ms

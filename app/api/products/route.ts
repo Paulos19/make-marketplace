@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { ProductCondition, UserRole } from '@prisma/client';
+import { revalidatePath } from 'next/cache';
 
 const productSchema = z.object({
   name: z.string().min(3),
