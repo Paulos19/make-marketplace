@@ -1,0 +1,6 @@
+'product.price' is possibly 'null'.ts(18047)
+(parameter) product: ProductWithDetails
+
+Argument of type 'number | null' is not assignable to parameter of type 'number'.
+  Type 'null' is not assignable to type 'number'.ts(2345)
+(parameter) product: ProductWithDetails

@@ -108,13 +108,13 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
   const formatPrice = (price: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
   
   const whatsappMessage = encodeURIComponent(
-    `Oiê psit! Tudo bem? 👋\n\nVi seu produto no Zacaplace e fiquei interessado neste achadinho:\n\n*Produto:* ${product.name}\n*Quantidade:* ${quantity}\n*Preço Total:* ${formatPrice(product.price * quantity)}\n\nQueria ver como faço pra gente fechar o negócio. É um estouro, psit! Aguardo seu retorno, abração!
+    `Oiê psit! Tudo bem? 👋\n\nVi seu produto no Zacaplace e fiquei interessado neste achadinho:\n\n*Produto:* ${product.name}\n*Quantidade:* ${quantity}\n*Preço Total:* ${product.price !== null ? formatPrice(product.price * quantity) : 'a combinar'}\n\nQueria ver como faço pra gente fechar o negócio. É um estouro, psit! Aguardo seu retorno, abração!
     `
   );
   
   const whatsappUrl = `https://wa.me/${product.user.whatsappLink?.replace(/\D/g, '')}?text=${whatsappMessage}`;
   
-  const isOnSale = product.onPromotion && product.originalPrice && product.originalPrice > product.price;
+  const isOnSale = product.onPromotion && product.originalPrice && product.price !== null && product.originalPrice > product.price;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
@@ -164,7 +164,7 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">{product.name}</h1>
           
           <div className="mt-3">
-            {product.priceType === 'ON_BUDGET' ? (
+            {product.priceType === 'ON_BUDGET' || product.price === null ? (
               <div className="text-3xl font-bold text-primary">
                 Orçamento a combinar
               </div>
