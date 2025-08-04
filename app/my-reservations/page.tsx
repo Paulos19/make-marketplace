@@ -45,7 +45,7 @@ function ReservationCard({ reservation, onDelete }: { reservation: ReservationWi
 
   // Gera a mensagem personalizada para o WhatsApp
   const whatsappMessage = encodeURIComponent(
-    `Ô psit! Beleza, cumpadi? 👋\n\nSalvei seu produto *"${reservation.product.name}"* na minha lista do Zacaplace e queria ver como faço pra gente fechar o negócio. O preço é ${formatPrice(reservation.product.price)}, certo?!\n\n Aguardo seu retorno!`
+    `Ô psit! Beleza, cumpadi? \n\nSalvei seu produto *"${reservation.product.name}"* na minha lista do Zacaplace e queria ver como faço pra gente fechar o negócio. O preço é ${formatPrice(reservation.product.price)}, certo?!\n\n Aguardo seu retorno!`
   );
 
   const whatsappUrl = `https://wa.me/${reservation.user.whatsappLink?.replace(/\D/g, '')}?text=${whatsappMessage}`;
