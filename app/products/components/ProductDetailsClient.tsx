@@ -108,7 +108,8 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
   const formatPrice = (price: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
   
   const whatsappMessage = encodeURIComponent(
-    `Ô psit! Beleza, cumpadi? 👋\n\nVi seu produto no Zacaplace e fiquei interessado neste achadinho:\n\n*Produto:* ${product.name}\n*Quantidade:* ${quantity}\n*Preço Total:* ${formatPrice(product.price * quantity)}\n\nQueria ver como faço pra gente fechar o negócio. É um estouro, psit! Aguardo seu retorno, abração!`
+    `Oiê psit! Tudo bem? 👋\n\nVi seu produto no Zacaplace e fiquei interessado neste achadinho:\n\n*Produto:* ${product.name}\n*Quantidade:* ${quantity}\n*Preço Total:* ${formatPrice(product.price * quantity)}\n\nQueria ver como faço pra gente fechar o negócio. É um estouro, psit! Aguardo seu retorno, abração!
+    `
   );
   
   const whatsappUrl = `https://wa.me/${product.user.whatsappLink?.replace(/\D/g, '')}?text=${whatsappMessage}`;
