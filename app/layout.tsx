@@ -4,6 +4,7 @@ import AuthProvider from './components/AuthProvider'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 import { cn } from '@/lib/utils'
+import Script from 'next/script'
 
 // Configurar a fonte Inter com pesos diferentes e uma variável CSS
 const inter = Inter({
@@ -54,6 +55,20 @@ export default async function RootLayout({
           inter.variable,
         )}
       >
+        {/* Adiciona as tags do Google Analytics aqui */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-TQNG48DTBF"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-TQNG48DTBF');
+          `}
+        </Script>
+        
         <AuthProvider>
           {children}
           <Toaster />
