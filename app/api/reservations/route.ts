@@ -3,35 +3,36 @@ import { getServerSession } from 'next-auth/next';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { authOptions } from '../auth/[...nextauth]/route'; 
-import { sendReservationNotificationEmail } from '@/lib/resend';
+import { Resend } from 'resend';
 
-export async function GET(request: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user?.id) {
-      return NextResponse.json({ message: 'Não autenticado' }, { status: 401 });
-    }
-    const reservations = await prisma.reservation.findMany({
-      where: { userId: session.user.id },
-      include: {
-        product: { 
-          select: { 
-            id: true, 
-            name: true, 
-            images: true, 
-            price: true, 
-            user: { select: { id: true, name: true, whatsappLink: true } } 
-          } 
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    return NextResponse.json(reservations, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching reservations:", error);
-    return NextResponse.json({ message: 'Não foi possível buscar as reservas' }, { status: 500 });
+// Supondo que você tenha um componente de e-mail para notificação.
+// Se não tiver, esta parte pode ser adaptada ou removida.
+// import { ReservationNotificationEmail } from '@/app/components/emails/ReservationNotificationEmail';
+
+// Inicializa o Resend se a chave estiver disponível
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
+// Função para enviar e-mail (adapte para o seu componente de e-mail)
+async function sendReservationNotificationEmail(params: {
+  sellerEmail: string;
+  sellerName: string | null;
+  clientName: string | null;
+  productName: string;
+  quantity: number;
+}) {
+  if (!resend) {
+    console.log("Chave RESEND_API_KEY não configurada. E-mail de notificação não enviado.");
+    return;
   }
+  // Adapte o conteúdo do e-mail conforme necessário
+  await resend.emails.send({
+    from: 'Zacaplace <naoresponda@zacaplace.com.br>',
+    to: params.sellerEmail,
+    subject: `Nova reserva do produto: ${params.productName}`,
+    html: `<p>Olá, ${params.sellerName || 'vendedor'}!</p><p>Você recebeu uma nova reserva de ${params.clientName} para o produto "${params.productName}" (Quantidade: ${params.quantity}).</p><p>Acesse seu painel para mais detalhes.</p>`,
+  });
 }
+
 
 export async function POST(request: Request) {
   try {
@@ -54,66 +55,84 @@ export async function POST(request: Request) {
     }
 
     const { productId, quantity: reservedQuantity } = validation.data;
-    const clientId = session.user.id;
+    const buyerId = session.user.id;
 
     const result = await prisma.$transaction(async (tx) => {
       const product = await tx.product.findUnique({
         where: { id: productId },
-        include: { user: true }
+        include: { 
+            user: { // Inclui os dados do vendedor (dono do produto)
+                select: {
+                    id: true,
+                    name: true,
+                    storeName: true,
+                    email: true,
+                    whatsappLink: true
+                }
+            } 
+        }
       });
 
       if (!product) throw new Error('Produto não encontrado.');
       if (!product.user || !product.user.email) throw new Error('Vendedor do produto não encontrado ou sem email.');
       if (product.quantity < reservedQuantity) throw new Error('Estoque insuficiente para a quantidade solicitada.');
 
-      const clientUser = await tx.user.findUnique({
-        where: { id: clientId }
+      // O comprador é o usuário da sessão atual
+      const buyer = await tx.user.findUnique({
+        where: { id: buyerId }
       });
 
-      if (!clientUser) {
-        throw new Error(`Falha de autenticação: O usuário com ID ${clientId} não foi encontrado no banco de dados.`);
+      if (!buyer) {
+        throw new Error(`Falha de autenticação: O usuário com ID ${buyerId} não foi encontrado.`);
       }
       
-
       const reservation = await tx.reservation.create({
         data: {
-          userId: clientId,
+          userId: buyerId,
           productId,
           quantity: reservedQuantity,
           status: 'PENDING',
         },
       });
       
-      // Cria a notificação para o admin
-      const adminMessage = `${product.user?.name}, chegou uma nova reserva do "${product.name}" (Qtd: ${reservedQuantity}) por ${session.user?.name}, no Zacaplace. Psit...! Corre lá, dá uma bizoiada, uai!`;
+      // --- CORREÇÃO APLICADA AQUI ---
+      // Cria a notificação para o admin com o METADATA preenchido corretamente
+      const adminMessage = `${product.user.storeName || product.user.name}, chegou uma nova reserva do "${product.name}" (Qtd: ${reservedQuantity}) por ${buyer.name}, no Zacaplace.`;
+      
       await tx.adminNotification.create({
           data: {
               message: adminMessage,
+              type: 'RESERVATION',
               reservationId: reservation.id,
               sellerId: product.userId,
               sellerWhatsappLink: product.user.whatsappLink,
+              // O campo metadata agora é preenchido com todos os detalhes
+              metadata: {
+                  productId: product.id,
+                  productName: product.name,
+                  productImage: product.images[0] || null,
+                  quantity: reservedQuantity,
+                  buyerName: buyer.name,
+              }
           }
       });
 
-      return { reservation, productOwner: product.user, productName: product.name };
+      return { reservation, productOwner: product.user, productName: product.name, buyerName: buyer.name };
     });
 
-    // Envia e-mail de notificação para o vendedor
+    // Envia e-mail de notificação para o vendedor (se configurado)
     await sendReservationNotificationEmail({
       sellerEmail: result.productOwner.email!,
-      sellerName: result.productOwner.name,
-      clientName: session.user.name,
-      clientContact: session.user.email,
+      sellerName: result.productOwner.storeName || result.productOwner.name,
+      clientName: result.buyerName,
       productName: result.productName,
       quantity: reservedQuantity,
-      productId: productId,
     });
     
     return NextResponse.json(result.reservation, { status: 201 });
 
   } catch (error: any) {
     console.error("Reservation creation error:", error);
-    // Retorna a mensagem de erro específica para o frontend
     return NextResponse.json({ error: error.message || 'Não foi possível criar a reserva' }, { status: 500 });
   }
 }

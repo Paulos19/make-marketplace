@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, MessageCircle, Loader2, Minus, Plus, Info, Share2, Tag, Send, ShoppingCart } from 'lucide-react';
+import { Heart, MessageCircle, Loader2, Minus, Plus, Info, Share2, Send } from 'lucide-react';
 import type { Product, User, Category, ProductCondition } from '@prisma/client';
 
 // Mapeamento para exibir os nomes em português
@@ -28,7 +28,7 @@ type ProductWithDetails = Product & {
   user: Partial<User> & { 
     customRedirectUrl?: string | null;
     whatsappLink?: string | null;
-    email?: string | null; // Adicionado para verificação
+    email?: string | null;
   };
   category: Category | null;
   priceType: string | null;
@@ -44,22 +44,51 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(product.images[0] || '/img-placeholder.png');
   const [quantity, setQuantity] = useState(1);
-  const [isReserving, setIsReserving] = useState(false);
+  const [isFavoriting, setIsFavoriting] = useState(false); // Estado para favoritar
+  const [isReserving, setIsReserving] = useState(false); // Estado para reservar/contatar
   const [isSharing, setIsSharing] = useState(false);
 
-  // --- LÓGICA PARA O VENDEDOR PREMIUM ---
+  // Lógica para Vendedor Premium (inalterada)
   const isPremiumSeller = product.user.email === process.env.NEXT_PUBLIC_EMAIL_PREMIUM;
-  
-  // Define o link final: usa o link específico do produto, senão o link geral do vendedor.
   const premiumRedirectUrl = product.productUrl || product.user.customRedirectUrl;
 
-  const handleReserve = async () => {
+  // --- NOVA FUNÇÃO: Adicionar aos Favoritos ---
+  const handleAddToFavorites = async () => {
     if (!session) {
       router.push('/auth/signin?callbackUrl=/products/' + product.id);
       return;
     }
+    setIsFavoriting(true);
+    try {
+      // Chama a nova API de favoritos que você irá criar
+      const response = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Falha ao salvar o produto nos favoritos.');
+      }
+      toast.success('Achadinho salvo na sua lista de favoritos!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Ocorreu um erro.');
+    } finally {
+      setIsFavoriting(false);
+    }
+  };
+
+  // --- NOVA FUNÇÃO: Contatar Vendedor (que agora cria a reserva) ---
+  const handleContactSeller = async () => {
+    if (!session) {
+      router.push('/auth/signin?callbackUrl=/products/' + product.id);
+      return;
+    }
+
     setIsReserving(true);
     try {
+      // 1. Cria a reserva que aparecerá para o vendedor
       const response = await fetch('/api/reservations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -68,11 +97,21 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
           quantity: quantity,
         }),
       });
+
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Falha ao salvar o produto.');
+        throw new Error(data.error || 'Não foi possível criar a reserva antes de contatar.');
       }
-      toast.success('Achadinho salvo! Veja em "Meus Achadinhos Salvos".');
+      
+      toast.success('Reserva criada! Redirecionando para o vendedor...');
+
+      // 2. Se a reserva foi criada, abre o link do WhatsApp
+      const whatsappMessage = encodeURIComponent(
+        `Oiê psit! Tudo bem? \n\nVi seu produto no Zacaplace e reservei este achadinho:\n\n*Produto:* ${product.name}\n*Quantidade:* ${quantity}\n*Preço Total:* ${product.price !== null ? formatPrice(product.price * quantity) : 'a combinar'}\n\nQueria ver como faço pra gente fechar o negócio. É um estouro, psit! Aguardo seu retorno, abração!`
+      );
+      const whatsappUrl = `https://wa.me/${product.user.whatsappLink?.replace(/\D/g, '')}?text=${whatsappMessage}`;
+      window.open(whatsappUrl, '_blank');
+
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Ocorreu um erro.');
     } finally {
@@ -80,9 +119,10 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
     }
   };
 
+  // Função de compartilhamento (inalterada)
   const handleShare = async () => {
     if (!session) {
-      toast.info("Você precisa de estar logado para criar um link de partilha.");
+      toast.info("Você precisa estar logado para criar um link de partilha.");
       router.push('/auth/signin?callbackUrl=/products/' + product.id);
       return;
     }
@@ -100,16 +140,11 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
                 imageUrl: product.images[0] || null,
             }),
         });
-
         const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || 'Não foi possível criar o link.');
-        }
-
+        if (!response.ok) throw new Error(data.error || 'Não foi possível criar o link.');
         const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL}/s/${data.shortCode}`;
         navigator.clipboard.writeText(shortUrl);
         toast.success("Link encurtado copiado para a área de transferência!");
-
     } catch (error) {
         toast.error(error instanceof Error ? error.message : "Ocorreu um erro.");
     } finally {
@@ -119,17 +154,11 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
 
   const formatPrice = (price: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
   
-  const whatsappMessage = encodeURIComponent(
-    `Oiê psit! Tudo bem? \n\nVi seu produto no Zacaplace e fiquei interessado neste achadinho:\n\n*Produto:* ${product.name}\n*Quantidade:* ${quantity}\n*Preço Total:* ${product.price !== null ? formatPrice(product.price * quantity) : 'a combinar'}\n\nQueria ver como faço pra gente fechar o negócio. É um estouro, psit! Aguardo seu retorno, abração!`
-  );
-  
-  const whatsappUrl = `https://wa.me/${product.user.whatsappLink?.replace(/\D/g, '')}?text=${whatsappMessage}`;
-  
   const isOnSale = product.onPromotion && product.originalPrice && product.price !== null && product.originalPrice > product.price;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-      {/* Coluna da Galeria de Imagens */}
+      {/* Coluna da Galeria de Imagens (inalterada) */}
       <div className="space-y-4">
         <div className="aspect-square w-full overflow-hidden rounded-lg border bg-white shadow-sm relative">
           <Image
@@ -164,7 +193,7 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
         </div>
       </div>
 
-      {/* Coluna de Detalhes e Ações */}
+      {/* Coluna de Detalhes e Ações (inalterada, exceto pelos botões) */}
       <div className="space-y-6">
         <div>
           {product.category && (
@@ -173,24 +202,18 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
             </Link>
           )}
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">{product.name}</h1>
-          
           <div className="mt-3">
             {product.priceType === 'ON_BUDGET' || product.price === null ? (
-              <div className="text-3xl font-bold text-primary">
-                Orçamento a combinar
-              </div>
+              <div className="text-3xl font-bold text-primary">Orçamento a combinar</div>
             ) : isOnSale ? (
                 <div className='flex items-baseline gap-3'>
                     <span className="text-2xl text-muted-foreground line-through">{formatPrice(product.originalPrice!)}</span>
                     <span className="text-4xl font-bold text-primary">{formatPrice(product.price)}</span>
                 </div>
             ) : (
-                <div className="text-3xl font-bold text-primary">
-                    {formatPrice(product.price)}
-                </div>
+                <div className="text-3xl font-bold text-primary">{formatPrice(product.price)}</div>
             )}
           </div>
-
           <div className="mt-4 flex items-center gap-4">
             {product.condition && (
                 <Badge variant="outline">Condição: {conditionLabels[product.condition]}</Badge>
@@ -235,7 +258,6 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
         {/* --- LÓGICA DO BOTÃO ATUALIZADA --- */}
         <div className="grid grid-cols-1 gap-4">
           {isPremiumSeller ? (
-            // Botão para o Vendedor Premium
             <Button asChild size="lg" className="w-full text-lg py-6 bg-zaca-vermelho hover:bg-zaca-vermelho/90 text-white">
               <Link href={premiumRedirectUrl || '#'} target="_blank" rel="noopener noreferrer">
                 <Send className="mr-2 h-5 w-5" />
@@ -243,25 +265,23 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
               </Link>
             </Button>
           ) : (
-            // Botões para Vendedores Comuns
+            // Botões para Vendedores Comuns com a nova lógica
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Button size="lg" variant="outline" onClick={handleReserve} disabled={isReserving}>
-                {isReserving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Heart className="mr-2 h-4 w-4"/>}
+              <Button size="lg" variant="outline" onClick={handleAddToFavorites} disabled={isFavoriting}>
+                {isFavoriting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Heart className="mr-2 h-4 w-4"/>}
                 Salvar na minha lista
               </Button>
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                  <Button size="lg" className="w-full bg-green-500 hover:bg-green-600">
-                      <MessageCircle className="mr-2 h-4 w-4"/>
-                      Contatar Vendedor
-                  </Button>
-              </a>
+              <Button size="lg" className="w-full bg-green-500 hover:bg-green-600" onClick={handleContactSeller} disabled={isReserving}>
+                  {isReserving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <MessageCircle className="mr-2 h-4 w-4"/>}
+                  Contatar Vendedor
+              </Button>
             </div>
           )}
         </div>
 
         <div className='text-sm text-muted-foreground flex items-center gap-2'>
             <Info className='h-4 w-4' />
-            <span>Salvar um item adiciona-o à sua lista para facilitar o contacto com o vendedor.</span>
+            <span>Salvar um item cria um favorito. Contatar o vendedor cria uma reserva.</span>
         </div>
       </div>
     </div>

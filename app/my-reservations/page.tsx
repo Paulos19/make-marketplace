@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, Inbox, HeartCrack, Trash2 } from 'lucide-react';
+import { Loader2, HeartCrack, Trash2, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/app/components/layout/Navbar';
@@ -19,44 +19,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { AlertTriangle } from 'lucide-react';
 
-// Tipos de dados
+// --- NOVOS TIPOS DE DADOS PARA FAVORITOS ---
 type ProductInfo = {
   id: string;
   name: string;
   images: string[];
-  price: number;
+  price: number | null; // Preço pode ser nulo
+  priceType: string | null;
 };
-type UserInfo = {
-  name: string | null;
-  whatsappLink: string | null;
-};
-type ReservationWithDetails = {
-  id: string;
+
+type FavoriteWithDetails = {
+  id: string; // ID do favorito
   createdAt: string;
   product: ProductInfo;
-  user: UserInfo; // Este objeto contém os dados do VENDEDOR
 };
 
-// Componente para um único card de reserva
-function ReservationCard({ reservation, onDelete }: { reservation: ReservationWithDetails, onDelete: () => void }) {
+// --- NOVO COMPONENTE DE CARD PARA FAVORITOS ---
+function FavoriteCard({ favorite, onDelete }: { favorite: FavoriteWithDetails, onDelete: () => void }) {
   const formatPrice = (price: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
-  // Gera a mensagem personalizada para o WhatsApp
-  const whatsappMessage = encodeURIComponent(
-    `Ô psit! Beleza, cumpadi? \n\nSalvei seu produto *"${reservation.product.name}"* na minha lista do Zacaplace e queria ver como faço pra gente fechar o negócio. O preço é ${formatPrice(reservation.product.price)}, certo?!\n\n Aguardo seu retorno!`
-  );
-
-  const whatsappUrl = `https://wa.me/${reservation.user.whatsappLink?.replace(/\D/g, '')}?text=${whatsappMessage}`;
-
   return (
-    <Card className="flex flex-col overflow-hidden">
-        <Link href={`/products/${reservation.product.id}`}>
+    <Card className="flex flex-col overflow-hidden shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+        <Link href={`/products/${favorite.product.id}`}>
             <div className="aspect-video w-full relative">
                 <Image
-                    src={(reservation.product.images && reservation.product.images.length > 0) ? reservation.product.images[0] : '/img-placeholder.png'}
-                    alt={reservation.product.name}
+                    src={(favorite.product.images && favorite.product.images.length > 0) ? favorite.product.images[0] : '/img-placeholder.png'}
+                    alt={favorite.product.name}
                     fill
                     className="object-cover"
                 />
@@ -64,18 +53,24 @@ function ReservationCard({ reservation, onDelete }: { reservation: ReservationWi
         </Link>
         <CardContent className="p-4 flex-grow flex flex-col">
         <h3 className="font-semibold text-lg leading-tight truncate flex-grow">
-            {reservation.product.name}
+            <Link href={`/products/${favorite.product.id}`} className="hover:underline">
+              {favorite.product.name}
+            </Link>
         </h3>
-        <p className="text-xl font-bold text-primary mt-2">
-            {formatPrice(reservation.product.price)}
-        </p>
+        {favorite.product.priceType === 'ON_BUDGET' || favorite.product.price === null ? (
+            <p className="text-xl font-bold text-primary mt-2">A combinar</p>
+        ) : (
+            <p className="text-xl font-bold text-primary mt-2">
+                {formatPrice(favorite.product.price)}
+            </p>
+        )}
         <p className="text-xs text-muted-foreground mt-1">
-            Salvo em: {new Date(reservation.createdAt).toLocaleDateString('pt-BR')}
+            Salvo em: {new Date(favorite.createdAt).toLocaleDateString('pt-BR')}
         </p>
         </CardContent>
         <CardFooter className="p-4 border-t bg-slate-50 dark:bg-slate-800/50 grid grid-cols-2 gap-2">
-            <Button asChild className="w-full bg-green-500 hover:bg-green-600" disabled={!reservation.user?.whatsappLink}>
-                <a href={whatsappUrl} target='_blank' rel='noopener noreferrer'>Contactar Vendedor</a>
+            <Button asChild className="w-full">
+                <Link href={`/products/${favorite.product.id}`}>Ver Produto</Link>
             </Button>
             <Button variant="outline" className="w-full" onClick={onDelete}>
                 <Trash2 className="mr-2 h-4 w-4"/> Remover
@@ -86,40 +81,45 @@ function ReservationCard({ reservation, onDelete }: { reservation: ReservationWi
 }
 
 
-export default function MyReservationsPage() {
+export default function MyFavoritesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [reservations, setReservations] = useState<ReservationWithDetails[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [reservationToDelete, setReservationToDelete] = useState<ReservationWithDetails | null>(null);
+  const [favoriteToDelete, setFavoriteToDelete] = useState<FavoriteWithDetails | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/auth/signin?callbackUrl=/my-reservations');
+      router.push('/auth/signin?callbackUrl=/my-favorites'); // Rota atualizada
     }
     if (status === 'authenticated') {
-      fetch('/api/my-reservations')
-        .then(res => res.json())
-        .then(data => setReservations(Array.isArray(data) ? data : []))
-        .catch(() => toast.error('Falha ao carregar suas reservas.'))
+      // --- ATUALIZADO PARA CHAMAR A NOVA API DE FAVORITOS ---
+      fetch('/api/my-favorites') // Substitua pela sua rota real se for diferente
+        .then(res => {
+          if (!res.ok) throw new Error('Falha ao carregar seus favoritos.');
+          return res.json();
+        })
+        .then(data => setFavorites(Array.isArray(data) ? data : []))
+        .catch((err) => toast.error(err.message))
         .finally(() => setIsLoading(false));
     }
   }, [status, router]);
   
   const handleConfirmDelete = async () => {
-    if (!reservationToDelete) return;
+    if (!favoriteToDelete) return;
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/reservations/${reservationToDelete.id}`, {
+      // --- ATUALIZADO PARA CHAMAR A API DE DELETAR FAVORITO ---
+      const response = await fetch(`/api/favorites/${favoriteToDelete.id}`, { // Substitua pela sua rota real
         method: 'DELETE',
       });
       if (!response.ok) {
         throw new Error('Falha ao remover item da lista.');
       }
-      toast.success('Item removido da sua lista!');
-      setReservations(prev => prev.filter(r => r.id !== reservationToDelete.id));
-      setReservationToDelete(null);
+      toast.success('Item removido dos seus favoritos!');
+      setFavorites(prev => prev.filter(f => f.id !== favoriteToDelete.id));
+      setFavoriteToDelete(null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Ocorreu um erro.');
     } finally {
@@ -142,13 +142,13 @@ export default function MyReservationsPage() {
         <main className="flex-grow">
           <div className="container mx-auto px-4 py-12 sm:py-16">
             <header className="mb-12">
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Meus Achadinhos Salvos</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Meus Achadinhos Favoritos</h1>
               <p className="mt-2 text-muted-foreground">
-                Aqui estão os produtos que você salvou. Contacte o vendedor para combinar a compra!
+                Aqui estão os produtos que você salvou para ver depois.
               </p>
             </header>
 
-            {reservations.length === 0 ? (
+            {favorites.length === 0 ? (
               <Card className="text-center py-16 text-muted-foreground border-dashed">
                 <HeartCrack className="mx-auto h-16 w-16" />
                 <h3 className="mt-4 text-xl font-semibold">Nenhum achadinho salvo</h3>
@@ -159,11 +159,11 @@ export default function MyReservationsPage() {
               </Card>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {reservations.map((reservation) => (
-                  <ReservationCard 
-                    key={reservation.id}
-                    reservation={reservation}
-                    onDelete={() => setReservationToDelete(reservation)}
+                {favorites.map((favorite) => (
+                  <FavoriteCard 
+                    key={favorite.id}
+                    favorite={favorite}
+                    onDelete={() => setFavoriteToDelete(favorite)}
                   />
                 ))}
               </div>
@@ -173,16 +173,16 @@ export default function MyReservationsPage() {
         <Footer/>
       </div>
 
-      <Dialog open={!!reservationToDelete} onOpenChange={(isOpen) => !isOpen && setReservationToDelete(null)}>
+      <Dialog open={!!favoriteToDelete} onOpenChange={(isOpen) => !isOpen && setFavoriteToDelete(null)}>
         <DialogContent>
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive"/>Confirmar Remoção</DialogTitle>
                 <DialogDescription>
-                    Tem certeza que deseja remover "<strong>{reservationToDelete?.product.name}</strong>" da sua lista de salvos?
+                    Tem certeza que deseja remover "<strong>{favoriteToDelete?.product.name}</strong>" da sua lista de favoritos?
                 </DialogDescription>
             </DialogHeader>
             <DialogFooter className="gap-2 mt-4">
-                <Button variant="outline" onClick={() => setReservationToDelete(null)} disabled={isDeleting}>Cancelar</Button>
+                <Button variant="outline" onClick={() => setFavoriteToDelete(null)} disabled={isDeleting}>Cancelar</Button>
                 <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
                     {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
                     Confirmar
