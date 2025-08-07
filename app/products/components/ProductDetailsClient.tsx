@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Heart, MessageCircle, Loader2, Minus, Plus, Info, Share2, Tag, Send } from 'lucide-react';
+import { Heart, MessageCircle, Loader2, Minus, Plus, Info, Share2, Tag, Send, ShoppingCart } from 'lucide-react';
 import type { Product, User, Category, ProductCondition } from '@prisma/client';
 
 // Mapeamento para exibir os nomes em português
@@ -23,10 +23,16 @@ const conditionLabels: Record<ProductCondition, string> = {
   OTHER: 'Outro',
 };
 
+// Tipo atualizado para incluir os novos campos do vendedor premium
 type ProductWithDetails = Product & {
-  user: Partial<User>;
+  user: Partial<User> & { 
+    customRedirectUrl?: string | null;
+    whatsappLink?: string | null;
+    email?: string | null; // Adicionado para verificação
+  };
   category: Category | null;
   priceType: string | null;
+  productUrl?: string | null;
 };
 
 interface ProductDetailsClientProps {
@@ -40,6 +46,12 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
   const [quantity, setQuantity] = useState(1);
   const [isReserving, setIsReserving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+
+  // --- LÓGICA PARA O VENDEDOR PREMIUM ---
+  const isPremiumSeller = product.user.email === process.env.NEXT_PUBLIC_EMAIL_PREMIUM;
+  
+  // Define o link final: usa o link específico do produto, senão o link geral do vendedor.
+  const premiumRedirectUrl = product.productUrl || product.user.customRedirectUrl;
 
   const handleReserve = async () => {
     if (!session) {
@@ -108,8 +120,7 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
   const formatPrice = (price: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
   
   const whatsappMessage = encodeURIComponent(
-    `Oiê psit! Tudo bem? \n\nVi seu produto no Zacaplace e fiquei interessado neste achadinho:\n\n*Produto:* ${product.name}\n*Quantidade:* ${quantity}\n*Preço Total:* ${product.price !== null ? formatPrice(product.price * quantity) : 'a combinar'}\n\nQueria ver como faço pra gente fechar o negócio. É um estouro, psit! Aguardo seu retorno, abração!
-    `
+    `Oiê psit! Tudo bem? \n\nVi seu produto no Zacaplace e fiquei interessado neste achadinho:\n\n*Produto:* ${product.name}\n*Quantidade:* ${quantity}\n*Preço Total:* ${product.price !== null ? formatPrice(product.price * quantity) : 'a combinar'}\n\nQueria ver como faço pra gente fechar o negócio. É um estouro, psit! Aguardo seu retorno, abração!`
   );
   
   const whatsappUrl = `https://wa.me/${product.user.whatsappLink?.replace(/\D/g, '')}?text=${whatsappMessage}`;
@@ -129,7 +140,7 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
           />
            {isOnSale && (
              <Badge className="absolute top-3 right-3 text-sm bg-red-500 text-white border-none shadow-lg">PROMOÇÃO</Badge>
-          )}
+        )}
         </div>
         <div className="grid grid-cols-5 gap-2">
           {product.images.map((img, idx) => (
@@ -221,18 +232,33 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
             <p className="text-sm text-muted-foreground">{product.quantity} disponíveis</p>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button size="lg" variant="outline" onClick={handleReserve} disabled={isReserving}>
+        {/* --- LÓGICA DO BOTÃO ATUALIZADA --- */}
+        <div className="grid grid-cols-1 gap-4">
+          {isPremiumSeller ? (
+            // Botão para o Vendedor Premium
+            <Button asChild size="lg" className="w-full text-lg py-6 bg-zaca-vermelho hover:bg-zaca-vermelho/90 text-white">
+              <Link href={premiumRedirectUrl || '#'} target="_blank" rel="noopener noreferrer">
+                <Send className="mr-2 h-5 w-5" />
+                Ir Para o Produto
+              </Link>
+            </Button>
+          ) : (
+            // Botões para Vendedores Comuns
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Button size="lg" variant="outline" onClick={handleReserve} disabled={isReserving}>
                 {isReserving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Heart className="mr-2 h-4 w-4"/>}
                 Salvar na minha lista
-            </Button>
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                <Button size="lg" className="w-full bg-green-500 hover:bg-green-600">
-                    <MessageCircle className="mr-2 h-4 w-4"/>
-                    Contatar Vendedor
-                </Button>
-            </a>
+              </Button>
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                  <Button size="lg" className="w-full bg-green-500 hover:bg-green-600">
+                      <MessageCircle className="mr-2 h-4 w-4"/>
+                      Contatar Vendedor
+                  </Button>
+              </a>
+            </div>
+          )}
         </div>
+
         <div className='text-sm text-muted-foreground flex items-center gap-2'>
             <Info className='h-4 w-4' />
             <span>Salvar um item adiciona-o à sua lista para facilitar o contacto com o vendedor.</span>

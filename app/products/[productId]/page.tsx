@@ -13,7 +13,7 @@ interface ProductPageProps {
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { productId } = await params;
+  const { productId } = params;
 
   const product = await prisma.product.findUnique({
     where: { id: productId },
@@ -25,6 +25,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
           storeName: true,
           image: true,
           whatsappLink: true,
+          // --- CAMPOS ADICIONADOS PARA O VENDEDOR PREMIUM ---
+          email: true,
+          customRedirectUrl: true,
         },
       },
       category: true,
@@ -102,7 +105,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <main className="flex-grow py-8 sm:py-12">
         <div className="container mx-auto px-4">
           
-          <ProductDetailsClient product={product} />
+          <ProductDetailsClient product={product as any} />
           
           <Separator className="my-16 sm:my-24" />
 

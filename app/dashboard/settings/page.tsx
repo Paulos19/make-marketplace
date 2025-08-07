@@ -42,6 +42,9 @@ const formSchema = z.object({
   whatsappLink: z.string().url({
     message: 'Insira uma URL válida (ex: https://wa.me/SEUNUMERO).',
   }).or(z.literal('')).optional().nullable(),
+  customRedirectUrl: z.string().url({
+    message: 'Insira uma URL de redirecionamento válida.',
+  }).or(z.literal('')).optional().nullable(),
   storeName: z.string().min(2, {
     message: 'O nome da loja deve ter pelo menos 2 caracteres.',
   }).max(70, {
@@ -59,6 +62,7 @@ interface UserData {
   email?: string | null;
   image?: string | null;
   whatsappLink?: string | null;
+  customRedirectUrl?: string | null;
   storeName?: string | null;
   sellerBannerImageUrl?: string | null;
   profileDescription?: string | null;
@@ -101,12 +105,15 @@ export default function SettingsPage() {
   const [sellerBannerImageUrlState, setSellerBannerImageUrlState] = useState<string | null>(null); 
   const [initialDataLoading, setInitialDataLoading] = useState(true); 
 
+  const isPremiumSeller = session?.user?.email === process.env.NEXT_PUBLIC_EMAIL_PREMIUM;
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema) as Resolver<z.infer<typeof formSchema>>,
     defaultValues: {
       name: '',
       email: '',
       whatsappLink: '',
+      customRedirectUrl: '',
       storeName: '',
       profileDescription: '',
       showInSellersPage: false,
@@ -129,6 +136,7 @@ export default function SettingsPage() {
                   name: data.name || '',
                   email: data.email || '',
                   whatsappLink: data.whatsappLink || '',
+                  customRedirectUrl: data.customRedirectUrl || '',
                   storeName: data.storeName || '',
                   profileDescription: data.profileDescription || '',
                   showInSellersPage: data.stripeSubscriptionStatus === SubscriptionStatus.ACTIVE && data.showInSellersPage || false,
@@ -171,12 +179,12 @@ export default function SettingsPage() {
     }
   }
 
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     const dataToUpdate: Partial<UserData> = { 
       name: values.name,
-      whatsappLink: values.whatsappLink || null,
+      whatsappLink: isPremiumSeller ? null : values.whatsappLink || null,
+      customRedirectUrl: isPremiumSeller ? values.customRedirectUrl || null : null,
       storeName: values.storeName || null,
       profileDescription: values.profileDescription || null,
       image: profileImageUrl, 
@@ -288,9 +296,7 @@ export default function SettingsPage() {
                     </Avatar>
                     <ImageUpload
                     onUploadComplete={(urls) => urls.length > 0 && setProfileImageUrl(urls[0])}
-                    userId={userData.id}
-                    maxFiles={1}
-                    storagePath={`profile_pictures/`}
+                    userId={userData.id} maxFiles={1} storagePath={`profile_pictures/`}
                     currentFiles={profileImageUrl ? [profileImageUrl] : []}
                     onRemoveFile={() => setProfileImageUrl(null)}
                     />
@@ -311,9 +317,7 @@ export default function SettingsPage() {
                     )}
                     <ImageUpload
                     onUploadComplete={(urls) => urls.length > 0 && setSellerBannerImageUrlState(urls[0])}
-                    userId={userData.id}
-                    maxFiles={1}
-                    storagePath={`seller_banners/`}
+                    userId={userData.id} maxFiles={1} storagePath={`seller_banners/`}
                     currentFiles={sellerBannerImageUrlState ? [sellerBannerImageUrlState] : []}
                     onRemoveFile={() => setSellerBannerImageUrlState(null)}
                     />
@@ -331,7 +335,13 @@ export default function SettingsPage() {
                 <CardContent className="space-y-6 pt-3">
                     <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Seu Nome</FormLabel><FormControl><Input placeholder="Zacarias da Silva" {...field} value={field.value ?? ''} className="dark:bg-slate-700" /></FormControl><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input placeholder="zaca@trapalhoes.com" {...field} disabled className="disabled:opacity-70" /></FormControl><FormDescription className="text-xs">Seu email não pode ser alterado.</FormDescription><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="whatsappLink" render={({ field }) => (<FormItem><FormLabel>Link do WhatsApp</FormLabel><FormControl><Input placeholder="https://wa.me/55..." {...field} value={field.value ?? ''} className="dark:bg-slate-700" /></FormControl><FormDescription className="text-xs">Formato: https://wa.me/SEUNUMEROCOMCODIGOPAIS</FormDescription><FormMessage /></FormItem>)} />
+                    
+                    {/* RENDERIZAÇÃO CONDICIONAL DO CAMPO DE LINK */}
+                    {isPremiumSeller ? (
+                        <FormField control={form.control} name="customRedirectUrl" render={({ field }) => (<FormItem><FormLabel>Link de Redirecionamento Padrão</FormLabel><FormControl><Input placeholder="https://sua-loja-externa.com" {...field} value={field.value ?? ''} className="dark:bg-slate-700" /></FormControl><FormDescription className="text-xs">Link padrão para seus produtos.</FormDescription><FormMessage /></FormItem>)} />
+                    ) : (
+                        <FormField control={form.control} name="whatsappLink" render={({ field }) => (<FormItem><FormLabel>Link do WhatsApp</FormLabel><FormControl><Input placeholder="https://wa.me/55..." {...field} value={field.value ?? ''} className="dark:bg-slate-700" /></FormControl><FormDescription className="text-xs">Formato: https://wa.me/SEUNUMEROCOMCODIGOPAIS</FormDescription><FormMessage /></FormItem>)} />
+                    )}
                 </CardContent>
                 </Card>
 

@@ -28,12 +28,13 @@ import { useRouter } from 'next/navigation'
 import ImageUpload from '@/app/components/ImageUpload'
 import type { Category, Product } from '@prisma/client'
 import { ProductCondition } from '@prisma/client'
-import { Loader2, Tag, Wrench } from 'lucide-react'
+import { Loader2, Tag, Wrench, Link as LinkIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Separator } from '@/components/ui/separator'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useSession } from 'next-auth/react'
 
 const conditionLabels: Record<ProductCondition, string> = {
   NEW: 'Novo',
@@ -57,6 +58,7 @@ const formSchema = z.object({
     required_error: "Selecione a condição do produto."
   }),
   isService: z.boolean().default(false),
+  productUrl: z.string().url({ message: "Por favor, insira uma URL válida." }).or(z.literal('')).optional().nullable(),
 }).refine((data) => {
     if (data.isService && data.priceType === 'FIXED' && (!data.price || data.price <= 0)) {
         return false;
@@ -86,17 +88,17 @@ const formSchema = z.object({
     path: ["price"],
 });
 
-
-// CORREÇÃO 1: A interface agora aceita `availableCategories`
 interface ProductFormProps {
-  initialData?: Product | null;
+  initialData?: (Product & { productUrl?: string | null }) | null;
   availableCategories: Category[];
 }
 
-// CORREÇÃO 2: O componente recebe `availableCategories` como prop
 export const ProductForm = ({ initialData, availableCategories }: ProductFormProps) => {
   const router = useRouter()
+  const { data: session } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const isPremiumSeller = session?.user?.email === process.env.NEXT_PUBLIC_EMAIL_PREMIUM;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema) as Resolver<z.infer<typeof formSchema>>,
@@ -112,6 +114,7 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
       condition: ProductCondition.NEW,
       onPromotion: false,
       isService: false,
+      productUrl: '',
     },
   })
   
@@ -127,6 +130,7 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
         originalPrice: initialData.originalPrice ? Number(initialData.originalPrice) : null,
         quantity: Number(initialData.quantity),
         isService: !!initialData.isService,
+        productUrl: initialData.productUrl || '',
       };
       form.reset(valuesToSet);
     }
@@ -141,6 +145,7 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
           originalPrice: values.onPromotion ? values.originalPrice : null,
           quantity: values.isService ? 1 : values.quantity,
           condition: values.isService ? ProductCondition.OTHER : values.condition,
+          productUrl: isPremiumSeller ? values.productUrl : null,
       };
 
       const url = initialData ? `/api/products/${initialData.id}` : '/api/products'
@@ -153,7 +158,6 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
       })
 
       if (!response.ok) {
-        // Lógica de erro melhorada para exibir a mensagem da API
         const errorData = await response.json();
         throw new Error(errorData.message || `Falha ao ${initialData ? 'atualizar' : 'criar'} o item.`);
       }
@@ -161,12 +165,10 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
       const itemType = values.isService ? 'Serviço' : 'Produto';
       toast.success(`${itemType} ${initialData ? 'atualizado' : 'criado'} com sucesso!`);
       
-      // Redireciona para a página correta após o sucesso
-      router.push(initialData ? '/dashboard' : (values.isService ? '/services' : '/products'));
+      router.push('/dashboard');
       router.refresh();
 
     } catch (error) {
-      // Exibe a mensagem de erro específica no toast
       toast.error(error instanceof Error ? error.message : 'Ocorreu um erro desconhecido.');
     } finally {
       setIsSubmitting(false)
@@ -200,6 +202,25 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
                 <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel>Nome do {isService ? 'Serviço' : 'Produto'}</FormLabel><FormControl><Input placeholder={isService ? "Ex: Manicure e Pedicure Completa" : "Ex: Camiseta Estampada"} {...field} /></FormControl><FormMessage /></FormItem> )} />
                 <FormField control={form.control} name="description" render={({ field }) => ( <FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder={isService ? "Descreva os detalhes do serviço oferecido..." : "Descreva os detalhes do seu produto..."} {...field} rows={5} /></FormControl><FormMessage /></FormItem> )} />
                 <FormField control={form.control} name="images" render={({ field }) => ( <FormItem><FormLabel>Imagens de Divulgação</FormLabel><FormControl><ImageUpload onUploadComplete={field.onChange} currentFiles={field.value} maxFiles={5} /></FormControl><FormMessage /></FormItem> )} />
+                
+                {isPremiumSeller && (
+                  <FormField
+                    control={form.control}
+                    name="productUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2"><LinkIcon className="h-4 w-4 text-primary" /> Link de Redirecionamento do Produto</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://link-externo.com/produto-123" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormDescription>
+                          (Opcional) Link específico para este item. Se deixado em branco, será usado o link padrão da sua loja.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
             </CardContent>
         </Card>
         
@@ -223,7 +244,6 @@ export const ProductForm = ({ initialData, availableCategories }: ProductFormPro
                  <FormField control={form.control} name="categoryId" render={({ field }) => ( 
                     <FormItem>
                         <FormLabel>Categoria</FormLabel>
-                        {/* CORREÇÃO 3: Usa `availableCategories` diretamente e remove o estado de loading */}
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                 <SelectTrigger>

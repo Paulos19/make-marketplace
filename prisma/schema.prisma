@@ -53,6 +53,7 @@ model User {
   role                     UserRole            @default(USER)
   storeName                String?
   whatsappLink             String?
+  customRedirectUrl        String?
   profileDescription       String?
   sellerBannerImageUrl     String?
   showInSellersPage        Boolean             @default(false)
@@ -123,6 +124,7 @@ model Product {
   priceType     String   @default("FIXED")
   originalPrice Float?
   images        String[]
+  productUrl    String?
   isFeatured    Boolean  @default(false)
   isReserved    Boolean  @default(false)
   isSold        Boolean  @default(false)
