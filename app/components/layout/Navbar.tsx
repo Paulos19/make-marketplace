@@ -35,9 +35,10 @@ import {
   Store,
   ShoppingBag,
   Crown,
-  Search,
+    Search,
   BadgeCent,
   Wrench, // Ícone importado
+  LifeBuoy,
 } from 'lucide-react'
 import { UserRole } from '@prisma/client'
 import { Separator } from '@/components/ui/separator'
@@ -143,6 +144,11 @@ export default function Navbar() {
           <div className="flex items-center justify-end gap-x-2">
             
             <div className="hidden lg:flex items-center gap-x-1">
+                <Link href='https://wa.me/553197490093' target='_blank'>
+                  <Button variant="ghost" size="icon" aria-label="Support">
+                    <LifeBuoy className="h-5 w-5" />
+                  </Button>
+                </Link>
                 <Button onClick={() => setOpenSearch(true)} variant="ghost" size="icon" aria-label="Buscar"><Search className="h-5 w-5" /></Button>
                 <Link href='/my-reservations'><Button variant="ghost" size="icon" aria-label="Favoritos"><Heart className="h-5 w-5" /></Button></Link>
                 {user?.role === UserRole.SELLER && (
@@ -178,6 +184,11 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center lg:hidden">
+                <Link href='https://wa.me/553197490093' target='_blank'>
+                  <Button variant="ghost" size="icon" aria-label="Support">
+                    <LifeBuoy className="h-5 w-5" />
+                  </Button>
+                </Link>
                 <Button onClick={() => setOpenSearch(true)} variant="ghost" size="icon" aria-label="Buscar"><Search className="h-5 w-5" /></Button>
                 <Link href='/my-reservations'><Button variant="ghost" size="icon" aria-label="Favoritos"><Heart className="h-5 w-5" /></Button></Link>
                 <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -215,7 +226,11 @@ export default function Navbar() {
                             </Link>
                             </SheetClose>
                         ))}
-                        <Separator className="my-4" />
+                        <SheetClose asChild>
+                          <Link href="https://wa.me/553197490093" target="_blank" className={cn("flex items-center gap-3 text-lg font-medium transition-colors hover:text-primary p-2 rounded-md", "text-foreground")}>
+                            <LifeBuoy className="h-5 w-5" />Suporte
+                          </Link>
+                        </SheetClose>
                         {user ? (
                             <>
                             {userNavLinks.map(link => (

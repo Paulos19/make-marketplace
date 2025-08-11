@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ProductCard } from './products/components/ProductCard';
+import SupportSection from './components/home/SupportSection';
 
 type ProductWithDetails = Prisma.ProductGetPayload<{
   include: { user: true; category: true };
@@ -226,7 +227,7 @@ export default async function HomePage() {
                 </div>
             </div>
           </section>
-
+          <SupportSection />
         </div>
       </main>
       <Footer />

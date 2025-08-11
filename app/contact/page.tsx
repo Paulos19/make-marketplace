@@ -127,7 +127,7 @@ export default function ContactPage() {
                     <p className="text-slate-600 dark:text-slate-300">
                         Para um contacto mais direto, fale connosco pelo WhatsApp:
                     </p>
-                    <a href="https://wa.me/5531997490093" target="_blank" rel="noopener noreferrer" className="font-semibold text-zaca-azul hover:underline">
+                    <a href="https://wa.me/553197490093" target="_blank" rel="noopener noreferrer" className="font-semibold text-zaca-azul hover:underline">
                         +55 (31)99749-0093
                     </a>
                 </CardContent>
