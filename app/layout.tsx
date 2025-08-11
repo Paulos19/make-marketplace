@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 import { cn } from '@/lib/utils'
 import Script from 'next/script'
+import { LoginModalTrigger } from './components/auth/LoginModalTrigger'
 
 // Configurar a fonte Inter com pesos diferentes e uma variável CSS
 const inter = Inter({
@@ -70,6 +71,7 @@ export default async function RootLayout({
         </Script>
         
         <AuthProvider>
+          <LoginModalTrigger />
           {children}
           <Toaster />
         </AuthProvider>
