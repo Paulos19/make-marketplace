@@ -24,7 +24,7 @@ interface LoginModalProps {
 export function LoginModal({ isOpen, onClose }: LoginModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md p-0">
+      <DialogContent className="sm:max-w-md p-0 rounded-lg">
         <div className="relative">
           <Image
             src="/login.png"

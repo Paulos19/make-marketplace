@@ -12,7 +12,7 @@ const SupportSection = () => {
       <motion.div
         className="absolute inset-0 z-0"
         style={{
-          background: 'linear-gradient(45deg, #002244, #004488, #002244)',
+          background: 'linear-gradient(45deg, #ff6c71, #ff898d, #ffa6a9)',
           backgroundSize: '200% 200%',
         }}
         animate={{
