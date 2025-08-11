@@ -27,7 +27,7 @@ const SupportSection = () => {
       <motion.div
         className="absolute inset-0 z-0"
         style={{
-          background: 'radial-gradient(ellipse at center, rgba(0, 123, 255, 0.3), transparent 70%)',
+          background: 'radial-gradient(ellipse at center, rgba(255, 137, 141, 0.3), transparent 70%)',
         }}
         animate={{
           scale: [1, 1.2, 1],
