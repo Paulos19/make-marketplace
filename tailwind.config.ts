@@ -139,7 +139,27 @@ const config = {
       // <<< FIM DA CORREÇÃO >>>
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    // Custom plugin for backdrop-filter
+    function ({ addUtilities }) {
+      const newUtilities = {
+        '.backdrop-blur-sm': {
+          backdropFilter: 'blur(4px)',
+        },
+        '.backdrop-blur-md': {
+          backdropFilter: 'blur(8px)',
+        },
+        '.backdrop-blur-lg': {
+          backdropFilter: 'blur(12px)',
+        },
+        '.backdrop-blur-xl': {
+          backdropFilter: 'blur(16px)',
+        },
+      }
+      addUtilities(newUtilities, ['responsive'])
+    }
+  ],
 } satisfies Config;
 
 export default config;

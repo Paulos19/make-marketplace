@@ -1,21 +1,22 @@
 "use client"
 
-import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
-import { motion } from 'framer-motion'
+import { useMemo } from 'react'
+import { MotionDiv, MotionSection } from '@/components/MotionDiv'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { Prisma } from '@prisma/client'
-import { ChevronRight, ChevronLeft, PackageOpen, Rocket, Eye, Heart } from 'lucide-react'
+import { ChevronRight, Rocket, PackageOpen } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
 import { ProductCard, ProductCardSkeleton } from './components/ProductCard'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
 import { Separator } from '@/components/ui/separator'
+import { useProductPageData } from '@/lib/hooks/useProductPageData' // Import the new hook
+import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea' // Import the new scroll component
 
 // Tipagens para garantir que os dados incluam as relações necessárias
 type ProductWithDetails = Prisma.ProductGetPayload<{
@@ -39,113 +40,28 @@ const transformForCard = (product: ProductWithDetails): ProductCardPropsType => 
     };
 };
 
-// --- Componente de Scroll de Produtos (com navegação por setas no desktop) ---
+// --- Componente de Scroll de Produtos (agora usando HorizontalScrollArea) ---
 const ProductScrollArea = ({ products }: { products: ProductWithDetails[] }) => {
-    const scrollContainerRef = useRef<HTMLDivElement>(null)
-    const [canScrollLeft, setCanScrollLeft] = useState(false)
-    const [canScrollRight, setCanScrollRight] = useState(false)
- 
     // Filtra produtos para garantir que tenham imagens antes de renderizar
     const productsWithImages = useMemo(() => products.filter(p => p.images && p.images.length > 0), [products]);
 
-    const handleScroll = useCallback(() => {
-      const el = scrollContainerRef.current
-      if (el) {
-        const hasOverflow = el.scrollWidth > el.clientWidth
-        setCanScrollLeft(el.scrollLeft > 0)
-        setCanScrollRight(hasOverflow && el.scrollLeft < el.scrollWidth - el.clientWidth)
-      }
-    }, [])
- 
-    useEffect(() => {
-      const el = scrollContainerRef.current
-      if (el) {
-        handleScroll()
-        el.addEventListener('scroll', handleScroll, { passive: true })
-        window.addEventListener('resize', handleScroll)
-        return () => {
-          el.removeEventListener('scroll', handleScroll)
-          window.removeEventListener('resize', handleScroll)
-        }
-      }
-    }, [productsWithImages, handleScroll])
- 
-    const scroll = (direction: 'left' | 'right') => {
-      const el = scrollContainerRef.current
-      if (el) {
-        const scrollAmount = el.clientWidth * 0.8
-        el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' })
-      }
-    }
- 
     if (productsWithImages.length === 0) {
         return <div className="text-center text-sm text-muted-foreground py-4">Nenhum item com imagem para exibir.</div>;
     }
 
     return (
-      <div className="relative">
-        <div
-          ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto pb-4 no-scrollbar"
-        >
-          {productsWithImages.map((product) => (
-            <div key={product.id} className="w-48 flex-shrink-0 md:w-56">
-              {/* Aplica a transformação aqui */}
-              <ProductCard product={transformForCard(product)} />
-            </div>
-          ))}
-        </div>
-        {canScrollLeft || canScrollRight ? (
-          <div className="mt-4 hidden items-center justify-center md:flex">
-            <Button variant="ghost" size="icon" onClick={() => scroll('left')} disabled={!canScrollLeft}>
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <div className="w-24 h-1 mx-4 bg-slate-200 dark:bg-slate-700 rounded-full" />
-            <Button variant="ghost" size="icon" onClick={() => scroll('right')} disabled={!canScrollRight}>
-              <ChevronRight className="h-5 w-5" />
-            </Button>
+      <HorizontalScrollArea>
+        {productsWithImages.map((product) => (
+          <div key={product.id} className="w-48 flex-shrink-0 md:w-56">
+            <ProductCard product={transformForCard(product)} />
           </div>
-        ) : null}
-      </div>
+        ))}
+      </HorizontalScrollArea>
     )
 }
 
-// --- NOVO COMPONENTE: Grid de Produtos Turbinados ---
+// --- NOVO COMPONENTE: Grid de Produtos Turbinados (agora usando HorizontalScrollArea) ---
 const BoostedProductsGrid = ({ products, isLoading }: { products: ProductWithDetails[], isLoading: boolean }) => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const handleScroll = useCallback(() => {
-    const el = scrollContainerRef.current;
-    if (el) {
-      const hasOverflow = el.scrollWidth > el.clientWidth;
-      setCanScrollLeft(el.scrollLeft > 0);
-      setCanScrollRight(hasOverflow && el.scrollLeft < el.scrollWidth - el.clientWidth);
-    }
-  }, []);
-
-  useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (el) {
-      handleScroll();
-      el.addEventListener('scroll', handleScroll, { passive: true });
-      window.addEventListener('resize', handleScroll);
-      return () => {
-        el.removeEventListener('scroll', handleScroll);
-        window.removeEventListener('resize', handleScroll);
-      };
-    }
-  }, [products, handleScroll]);
-
-  const scroll = (direction: 'left' | 'right') => {
-    const el = scrollContainerRef.current;
-    if (el) {
-      const scrollAmount = el.clientWidth * 0.8;
-      el.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
-    }
-  };
-
   if (isLoading) {
       return (
           <div className="container mx-auto py-12 px-4 md:px-6 lg:px-8">
@@ -166,8 +82,8 @@ const BoostedProductsGrid = ({ products, isLoading }: { products: ProductWithDet
   }
 
   return (
-      <section className="container mx-auto py-12 px-4 md:px-6 lg:px-8">
-          <motion.div
+      <MotionSection className="container mx-auto py-12 px-4 md:px-6 lg:px-8">
+          <MotionDiv
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
@@ -178,29 +94,23 @@ const BoostedProductsGrid = ({ products, isLoading }: { products: ProductWithDet
                   Turbinados do Zaca
               </h2>
               <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Uma seleção turbinada de produtos e serviços, psit!</p>
-          </motion.div>
+          </MotionDiv>
           
-          <div className="relative">
-            <div
-              ref={scrollContainerRef}
-              className="flex gap-4 overflow-x-auto pb-4 no-scrollbar"
-            >
-              {products.map((product) => (
-                <motion.div 
-                  key={product.id} 
-                  className="w-48 flex-shrink-0 md:w-56"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <ProductCard product={transformForCard(product)} />
-                </motion.div>
-              ))}
-            </div>
-            
-          </div>
-      </section>
+          <HorizontalScrollArea>
+            {products.map((product) => (
+              <MotionDiv 
+                key={product.id} 
+                className="w-48 flex-shrink-0 md:w-56"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.5 }}
+              >
+                <ProductCard product={transformForCard(product)} />
+              </MotionDiv>
+            ))}
+          </HorizontalScrollArea>
+      </MotionSection>
   );
 };
 
@@ -286,7 +196,12 @@ const FeaturedCategorySection = ({ category, orientation = 'left' }: { category:
   const bannerImage = featuredProduct.images[0];
 
   return (
-    <div className="container mx-auto grid min-h-screen grid-cols-1 items-center gap-6 md:grid-cols-10">
+    <MotionSection
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="container mx-auto grid min-h-screen grid-cols-1 items-center gap-6 md:grid-cols-10">
       <div className={cn('relative col-span-10 h-96 rounded-xl bg-cover bg-center shadow-lg md:col-span-6 md:h-[80vh]', orientation === 'right' && 'md:order-last')}>
         <Image src={bannerImage} alt={`Banner para a categoria ${category.name}`} fill className="rounded-xl object-cover" />
       </div>
@@ -305,41 +220,13 @@ const FeaturedCategorySection = ({ category, orientation = 'left' }: { category:
           <Button asChild><Link href={`/products?category=${category.id}`}>Ver Coleção Completa</Link></Button>
         </div>
       </div>
-    </div>
+    </MotionSection>
   )
 }
 
 // --- Componente Principal da Página ---
 export default function ProductsPage() {
-  const [boostedProducts, setBoostedProducts] = useState<ProductWithDetails[]>([]);
-  const [categories, setCategories] = useState<CategoryWithProducts[]>([]);
-  const [sellers, setSellers] = useState<SellerWithProducts[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true)
-        const [boostedRes, categoriesRes, sellersRes] = await Promise.all([
-          fetch(`/api/products/boosted`),
-          fetch(`/api/products/by-category`),
-          fetch(`/api/sellers/featured`),
-        ])
-        if (!boostedRes.ok || !categoriesRes.ok || !sellersRes.ok) throw new Error('Falha ao buscar os dados da página.')
-        const boostedData = await boostedRes.json()
-        const categoriesData = await categoriesRes.json()
-        const sellersData = await sellersRes.json()
-        setBoostedProducts(boostedData.products || boostedData)
-        setCategories(categoriesData)
-        setSellers(sellersData)
-      } catch (error) {
-        console.error("Erro ao carregar dados da página de produtos:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    fetchData()
-  }, [])
+  const { boostedProducts, categories, sellers, isLoading, error } = useProductPageData(); // Use the new hook
 
   const sections = useMemo(() => {
     const interleaved: ({ type: 'category'; data: CategoryWithProducts } | { type: 'seller'; data: SellerWithProducts })[] = []
@@ -351,14 +238,26 @@ export default function ProductsPage() {
     return interleaved
   }, [categories, sellers])
 
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <main className="container mx-auto flex min-h-[50vh] flex-col items-center justify-center text-center">
+          <h2 className="mt-6 text-3xl font-bold text-red-500">Erro ao carregar dados</h2>
+          <p className="mt-2 text-muted-foreground">{error.message}</p>
+          <Button asChild className="mt-6"><Link href="/">Voltar para a Home</Link></Button>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
   return (
     <>
     <Navbar/>
-    <main>
-      {/* Componente antigo foi substituído pelo novo grid */}
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50"> {/* Added gradient background */}
       <BoostedProductsGrid products={boostedProducts} isLoading={isLoading} />
       
-      {/* Adiciona um separador se houver produtos turbinados */}
       {boostedProducts.length > 0 && <Separator className="my-12 container" />}
       
       {isLoading && (
@@ -382,7 +281,6 @@ export default function ProductsPage() {
               return <SellerSection key={`seller-${section.data.id}`} seller={section.data} />
             }
             if (section.type === 'category') {
-              // Condição atualizada para checar se há produtos com imagens
               const productsWithImages = section.data.products.filter(p => p.images && p.images.length > 0);
               if ((index + 1) % 4 === 0 && productsWithImages.length >= 3) {
                 return (
@@ -399,7 +297,7 @@ export default function ProductsPage() {
           })}
         </div>
       )}
-      {!isLoading && sections.length === 0 && (
+      {!isLoading && sections.length === 0 && boostedProducts.length === 0 && (
         <div className="container mx-auto flex min-h-[50vh] flex-col items-center justify-center text-center">
           <PackageOpen className="h-16 w-16 text-muted-foreground" />
           <h2 className="mt-6 text-3xl font-bold">Nenhum Produto Encontrado</h2>

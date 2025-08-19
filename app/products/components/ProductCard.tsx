@@ -37,7 +37,9 @@ export function ProductCard({ product }: ProductCardProps) {
   
   return (
     <Link href={itemUrl} className="group outline-none" tabIndex={-1}>
-        <Card className="h-full w-full overflow-hidden transition-all duration-300 ease-in-out group-hover:shadow-xl group-focus-visible:ring-2 group-focus-visible:ring-primary">
+        <Card className="h-full w-full overflow-hidden transition-all duration-300 ease-in-out 
+                       bg-white/30 backdrop-blur-md border border-white/50 shadow-lg 
+                       group-hover:shadow-xl group-hover:scale-[1.02] group-focus-visible:ring-2 group-focus-visible:ring-primary">
             <CardHeader className="relative h-48 w-full p-0">
                 <Image
                     src={firstImage}
