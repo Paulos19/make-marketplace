@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -35,9 +36,9 @@ import {
   Store,
   ShoppingBag,
   Crown,
-    Search,
+  Search,
   BadgeCent,
-  Wrench, // Ícone importado
+  Wrench,
   LifeBuoy,
 } from 'lucide-react'
 import { UserRole } from '@prisma/client'
@@ -74,8 +75,24 @@ export default function Navbar() {
   const [pendingSalesCount, setPendingSalesCount] = useState(0)
   const { hasActiveSubscription, hasActiveTurboBoost, hasActiveCarousel } = useUserStatus()
   const [openSearch, setOpenSearch] = useState(false)
+  
+  // --- ESTADO E LÓGICA PARA O NOVO EFEITO SPOTLIGHT ---
+  const [spotlightStyle, setSpotlightStyle] = useState({ opacity: 0, background: '' });
 
-  // Efeito para buscar vendas pendentes
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setSpotlightStyle({
+        opacity: 1,
+        background: `radial-gradient(200px circle at ${x}px ${y}px, hsla(var(--primary) / 0.1), transparent 80%)`,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setSpotlightStyle({ opacity: 0, background: '' });
+  };
+
   useEffect(() => {
     if (status === 'authenticated' && user?.role === UserRole.SELLER) {
       fetch('/api/sales/pending-count')
@@ -84,7 +101,6 @@ export default function Navbar() {
     }
   }, [status, user]);
 
-  // Efeito para abrir a busca com Ctrl+K
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
@@ -96,11 +112,10 @@ export default function Navbar() {
     return () => document.removeEventListener('keydown', down)
   }, [])
 
-  // Definições dos links
   const mainNavLinks = [
     { href: '/', label: 'Início', icon: Home },
     { href: '/products', label: 'Achadinhos', icon: Package2 },
-    { href: '/services', label: 'Serviços', icon: Wrench }, // Link de serviços adicionado
+    { href: '/services', label: 'Serviços', icon: Wrench },
     { href: '/sellers', label: 'Vendedores', icon: Store },
     { href: '/planos', label: 'Planos', icon: BadgeCent },
   ];
@@ -121,28 +136,53 @@ export default function Navbar() {
   return (
     <>
       <GlobalSearchCommand open={openSearch} setOpen={setOpenSearch} />
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-slate-800/60">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm dark:border-slate-800/60">
         <div className="container mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
           
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center space-x-2">
-              <Image src="/zacalogo.png" alt="Zacaplace Logo" width={180} height={50} priority />
+              <Image src="/zacalogo.png" alt="Zacaplace Logo" width={180} height={50} priority style={{ filter: 'brightness(0) invert(1)' }} className="hidden dark:block" />
+              <Image src="/zacalogo.png" alt="Zacaplace Logo" width={180} height={50} priority className="block dark:hidden" />
             </Link>
-            <nav className="hidden lg:flex">
-              <ul className="flex items-center space-x-6 text-sm font-medium">
-                {mainNavLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href} className={cn("transition-colors hover:text-primary", pathname === link.href ? "text-primary font-semibold" : "text-muted-foreground")}>
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
           </div>
           
-          <div className="flex items-center justify-end gap-x-2">
-            
+          {/* --- NOVA ESTRUTURA DA NAVEGAÇÃO DESKTOP --- */}
+          <nav 
+            className="hidden lg:flex items-center justify-center relative rounded-full border bg-card/20 h-12"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
+            <div 
+              className="absolute inset-0 -z-10 rounded-full transition-opacity duration-300" 
+              style={spotlightStyle}
+            />
+            <ul className="flex items-center h-full px-4">
+              {mainNavLinks.map((link) => (
+                <li key={link.href} className="relative h-full flex items-center">
+                  <Link 
+                    href={link.href} 
+                    className={cn(
+                      "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors duration-300", 
+                      pathname === link.href 
+                      ? "text-primary" 
+                      : "text-muted-foreground hover:text-primary"
+                    )}
+                  >
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                    {pathname === link.href && (
+                      <motion.div 
+                        layoutId="active-nav-dot"
+                        className="absolute bottom-2.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-primary rounded-full" 
+                      />
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          
+          <div className="flex items-center justify-end gap-x-1">
             <div className="hidden lg:flex items-center gap-x-1">
                 <Link href='https://wa.me/553197490093' target='_blank'>
                   <Button variant="ghost" size="icon" aria-label="Support">
@@ -183,14 +223,9 @@ export default function Navbar() {
                 ) : <Button asChild><Link href="/auth/signin">Entrar</Link></Button>}
             </div>
 
+            {/* --- NAVEGAÇÃO MOBILE (SEM ALTERAÇÕES SIGNIFICATIVAS) --- */}
             <div className="flex items-center lg:hidden">
-                <Link href='https://wa.me/553197490093' target='_blank'>
-                  <Button variant="ghost" size="icon" aria-label="Support">
-                    <LifeBuoy className="h-5 w-5" />
-                  </Button>
-                </Link>
                 <Button onClick={() => setOpenSearch(true)} variant="ghost" size="icon" aria-label="Buscar"><Search className="h-5 w-5" /></Button>
-                <Link href='/my-reservations'><Button variant="ghost" size="icon" aria-label="Favoritos"><Heart className="h-5 w-5" /></Button></Link>
                 <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                     <SheetTrigger asChild><Button variant="ghost" size="icon" aria-label="Abrir menu"><Menu className="h-6 w-6" /></Button></SheetTrigger>
                     <SheetContent side="left" className="w-full max-w-xs sm:max-w-sm p-0 flex flex-col">
@@ -226,42 +261,30 @@ export default function Navbar() {
                             </Link>
                             </SheetClose>
                         ))}
+                        <Separator className="my-2" />
+                        {user && userNavLinks.map(link => (
+                                <SheetClose key={link.href} asChild><Link href={link.href} className={cn("flex items-center gap-3 text-lg font-medium p-2 rounded-md", pathname === link.href ? "text-primary bg-muted" : "text-foreground")}><link.icon className="h-5 w-5"/>{link.label}</Link></SheetClose>
+                        ))}
                         <SheetClose asChild>
                           <Link href="https://wa.me/553197490093" target="_blank" className={cn("flex items-center gap-3 text-lg font-medium transition-colors hover:text-primary p-2 rounded-md", "text-foreground")}>
                             <LifeBuoy className="h-5 w-5" />Suporte
                           </Link>
                         </SheetClose>
-                        {user ? (
-                            <>
-                            {userNavLinks.map(link => (
-                                <SheetClose key={link.href} asChild><Link href={link.href} className={cn("flex items-center gap-3 text-lg font-medium p-2 rounded-md", pathname === link.href ? "text-primary bg-muted" : "text-foreground")}><link.icon className="h-5 w-5"/>{link.label}</Link></SheetClose>
-                            ))}
-                            {user.role === UserRole.SELLER && (
-                                <SheetClose asChild>
-                                    <Link href="/dashboard/sales" className={cn("flex items-center justify-between text-lg font-medium p-2 rounded-md", pathname === '/dashboard/sales' ? "text-primary bg-muted" : "text-foreground")}>
-                                        <div className="flex items-center gap-3"><ShoppingBag className="h-5 w-5" />Minhas Vendas</div>
-                                        {pendingSalesCount > 0 && <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-sm font-bold text-white">{pendingSalesCount}</div>}
-                                    </Link>
-                                </SheetClose>
-                            )}
-                            {user.role === UserRole.ADMIN && (<SheetClose asChild><Link href="/admin-dashboard" className={cn("flex items-center gap-3 text-lg font-medium p-2 rounded-md", pathname.startsWith('/admin-dashboard') ? "text-primary bg-muted" : "text-foreground")}><UserCircle2 className="h-5 w-5"/>Painel Admin</Link></SheetClose>)}
-                            </>
-                        ) : (
-                            <>
-                            <SheetClose asChild><Link href="/auth/signin" className="flex items-center gap-3 text-lg font-medium p-2 rounded-md"><LogIn className="h-5 w-5"/>Entrar</Link></SheetClose>
-                            <SheetClose asChild><Link href="/auth/signup"><Button className="w-full mt-2 bg-primary text-primary-foreground"><UserPlus className="mr-2 h-5 w-5"/>Criar Conta</Button></Link></SheetClose>
-                            </>
-                        )}
                         </nav>
-                        {user && (
-                            <div className="p-4 mt-auto border-t dark:border-slate-800">
-                                <Button variant="outline" onClick={() => {signOut({ callbackUrl: '/' }); setIsMobileMenuOpen(false);}} className="w-full flex items-center"><LogOut className="mr-2 h-5 w-5"/>Sair</Button>
+                        
+                        <div className="p-4 mt-auto border-t dark:border-slate-800">
+                          {user ? (
+                              <Button variant="outline" onClick={() => {signOut({ callbackUrl: '/' }); setIsMobileMenuOpen(false);}} className="w-full flex items-center"><LogOut className="mr-2 h-5 w-5"/>Sair</Button>
+                          ) : (
+                            <div className='flex flex-col gap-2'>
+                              <SheetClose asChild><Link href="/auth/signin" className='w-full'><Button variant={'outline'} className='w-full'>Entrar</Button></Link></SheetClose>
+                              <SheetClose asChild><Link href="/auth/signup" className='w-full'><Button className="w-full">Criar Conta</Button></Link></SheetClose>
                             </div>
-                        )}
+                          )}
+                        </div>
                     </SheetContent>
                 </Sheet>
             </div>
-
           </div>
         </div>
       </header>

@@ -99,3 +99,70 @@
     scrollbar-width: none; /* Firefox */
   }
 }
+
+@layer utilities {
+  @keyframes glowing-border {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+   @keyframes subtle-pulse {
+    0%, 100% {
+      opacity: 0.15;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.25;
+      transform: scale(1.05);
+    }
+  }
+
+  /* --- NOVAS ANIMAÇÕES PARA A GALERIA --- */
+  @keyframes move-gradient-1 {
+    0%, 100% { transform: translate(0%, 0%); }
+    25% { transform: translate(5%, 10%); }
+    50% { transform: translate(-5%, -10%); }
+    75% { transform: translate(10%, -5%); }
+  }
+  @keyframes move-gradient-2 {
+    0%, 100% { transform: translate(0%, 0%); }
+    25% { transform: translate(-5%, -10%); }
+    50% { transform: translate(5%, 10%); }
+    75% { transform: translate(-10%, 5%); }
+  }
+
+  .glowing-border-mask {
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box, 
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    border-color: hsl(var(--zaca-roxo) / 0.5);
+    box-shadow: 0 0 0 0 hsl(var(--zaca-roxo) / 0.3);
+  }
+  50% {
+    border-color: hsl(var(--zaca-azul) / 0.5);
+    box-shadow: 0 0 0 5px hsl(var(--zaca-azul) / 0);
+  }
+  100% {
+    border-color: hsl(var(--zaca-magenta) / 0.5);
+    box-shadow: 0 0 0 0 hsl(var(--zaca-magenta) / 0.3);
+  }
+}
+
+.embla {
+  overflow: hidden;
+}
+.embla__container {
+  display: flex;
+}
+.embla__slide {
+  flex: 0 0 auto;
+  min-width: 0;
+}

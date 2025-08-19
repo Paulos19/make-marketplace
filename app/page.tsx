@@ -2,9 +2,8 @@
 
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { Rocket, ArrowRight, ShoppingBag, UserPlus } from 'lucide-react';
+import { ShoppingBag, UserPlus } from 'lucide-react';
 import { HeroCarousel } from './components/home/HeroCarousel';
-import { ProductScrollArea } from './components/home/ProductScrollArea';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import { ModernProductSection } from './components/home/ModernProductSection';
@@ -13,25 +12,19 @@ import { TopSellers } from './components/home/TopSellers';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ProductCard } from './products/components/ProductCard';
 import SupportSection from './components/home/SupportSection';
+import { TurbinadosCarousel } from './components/home/TurbinadosCarousel';
+import { TitledProductGrid } from './components/home/TitledProductGrid';
+
 
 type ProductWithDetails = Prisma.ProductGetPayload<{
   include: { user: true; category: true };
-}> & { isService: boolean; };
+}>;
+
 type SectionWithProducts = Prisma.HomepageSectionGetPayload<{}> & {
   products: ProductWithDetails[];
 };
 
-const transformProductForClient = (product: ProductWithDetails) => {
-    if (!product) return null;
-    return {
-      ...product,
-      categories: product.category ? [product.category] : [],
-      createdAt: new Date(product.createdAt).toISOString(),
-      updatedAt: new Date(product.updatedAt).toISOString(),
-    }
-}
 
 export default async function HomePage() {
   const [
@@ -49,14 +42,13 @@ export default async function HomePage() {
         boostedUntil: { gte: new Date() }, 
         isSold: false, 
         isReserved: false,
-        isService: false, // <-- FILTRO ADICIONADO AQUI
       },
       include: { user: true, category: true },
       orderBy: { boostedUntil: 'asc' },
-      take: 10,
+      take: 12,
     }),
     prisma.homepageSection.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } }),
-    prisma.category.findMany({ where: { products: { some: { isService: false } } }, take: 5 }), // Filtro adicionado
+    prisma.category.findMany({ where: { products: { some: {} } }, take: 5 }),
     (async () => {
         const sellers = await prisma.user.findMany({
             where: {
@@ -104,9 +96,7 @@ export default async function HomePage() {
   const sectionProducts =
     allProductIds.length > 0
       ? await prisma.product.findMany({
-          where: { 
-            id: { in: allProductIds },
-          },
+          where: { id: { in: allProductIds } },
           include: { user: true, category: true },
         })
       : [];
@@ -122,113 +112,77 @@ export default async function HomePage() {
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950">
       <Navbar />
       <main className="flex-grow">
-        <div className="flex flex-col">
-          <HeroCarousel banners={banners} />
+        <HeroCarousel banners={banners} />
 
-          <div className="container mx-auto flex flex-col gap-12 sm:gap-16 py-12 sm:py-16">
-            
-            {boostedProducts.length > 0 && (
-              <>
-                {/* Versão Desktop */}
-                <section className="hidden md:block rounded-xl bg-gradient-to-tr from-white p-1 shadow-2xl">
-                  <div className="rounded-lg bg-slate-50 dark:bg-slate-900 p-6 sm:p-8">
-                      <ProductScrollArea
-                          title="Turbinados do Zaca"
-                          products={boostedProducts}
-                          icon={<Rocket className="h-6 w-6 text-blue-400" />}
-                      />
-                  </div>
-                </section>
+        {/* --- 1. Seção de Turbinados (redesenhada e mais sutil) --- */}
+        {boostedProducts.length > 0 && <TurbinadosCarousel products={boostedProducts} />}
 
-                {/* Versão Mobile */}
-                <section className="md:hidden">
-                    <div className="rounded-xl bg-gradient-to-tr from-white p-1 shadow-2xl">
-                        <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-4 dark:bg-slate-900">
-                            <Rocket className="h-6 w-6 text-blue-400" />
-                            <h2 className="text-2xl font-bold tracking-tight text-gray-800 dark:text-gray-100">
-                                Turbinados do Zaca
-                            </h2>
-                        </div>
-                    </div>
-                    <div className="mt-4 flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-                        {boostedProducts.map((product) => (
-                            <div key={product.id} className="w-48 flex-shrink-0">
-                                <ProductCard product={transformProductForClient(product) as any} />
-                            </div>
-                        ))}
-                    </div>
-                </section>
-              </>
-            )}
-
-            <CategoryHighlights categories={highlightedCategories} />
-
-            {newProducts.length > 0 && (
-              <ProductScrollArea
-                title="Novos Achadinhos"
-                products={newProducts}
-                href="/products"
-              />
-            )}
-
-            {newServices.length > 0 && (
-              <ProductScrollArea
-                title="Serviços em Destaque"
-                products={newServices}
-                href="/services"
-              />
-            )}
-            
-            {sectionsWithProducts.map((section) => (
-              <ModernProductSection key={section.id} {...section} />
-            ))}
-
-            <div className="text-center">
-              <Button asChild size="lg">
-                <Link href="/products">
-                  Ver todos os produtos <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-            
-            {topSellers.length > 0 && (
-                <TopSellers sellers={topSellers} />
-            )}
-          </div>
+        <div className="container mx-auto flex flex-col gap-16 sm:gap-24 py-16 sm:py-24">
           
-          <section className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
-            <div className="container mx-auto px-4 py-16">
-                <div className="grid md:grid-cols-2 gap-8 items-center">
-                    <div className="text-center">
-                        <Image src="/zaca.svg" alt="Ilustração do Zaca" width={500} height={500} className="mx-auto w-full max-w-md" />
-                    </div>
-                    <div className="text-center md:text-left">
-                        <h2 className="text-4xl md:text-5xl font-extrabold text-zaca-roxo dark:text-zaca-lilas leading-tight">
-                            CONECTE-SE COM SETE LAGOAS
-                        </h2>
-                        <p className="mt-4 text-lg text-muted-foreground">
-                            Cadastre-se para começar a vender seus produtos ou descobrir os melhores achadinhos e serviços da cidade!
-                        </p>
-                        <div className="mt-8 flex flex-col sm:flex-row justify-center md:justify-start gap-4">
-                            <Button asChild size="lg" className="bg-zaca-magenta hover:bg-zaca-magenta/90 text-white shadow-lg">
-                                <Link href="/auth/signup">
-                                    <UserPlus className="mr-2 h-5 w-5" />
-                                    QUERO VENDER
-                                </Link>
-                            </Button>
-                            <Button asChild size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/10 hover:text-primary shadow-lg">
-                                <Link href="/products">
-                                    <ShoppingBag className="mr-2 h-5 w-5" />
-                                    QUERO COMPRAR
-                                </Link>
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-          </section>
-          <SupportSection />
+          {/* --- 2. Seção dedicada para Novos Produtos --- */}
+          {newProducts.length > 0 && (
+            <TitledProductGrid 
+              title="Novos Achadinhos"
+              products={newProducts}
+              viewAllLink="/products?sort=newest"
+            />
+          )}
+
+          {/* --- 3. Seção dedicada para Novos Serviços --- */}
+          {newServices.length > 0 && (
+            <TitledProductGrid 
+              title="Serviços em Destaque"
+              products={newServices}
+              viewAllLink="/services?sort=newest"
+            />
+          )}
+
+          {/* 4. Destaques de Categoria */}
+          <CategoryHighlights categories={highlightedCategories} />
+          
+          {/* 5. Seções Customizadas (criadas pelo admin) */}
+          {sectionsWithProducts.map((section) => (
+            <ModernProductSection key={section.id} {...section} />
+          ))}
+
+          {/* 6. Top Vendedores */}
+          {topSellers.length > 0 && <TopSellers sellers={topSellers} />}
+
         </div>
+        
+        {/* 7. Seção de CTA e Suporte */}
+        <section className="bg-white dark:bg-slate-900 flex items-center justify-center py-20">
+          <div className="container mx-auto px-4">
+              <div className="grid md:grid-cols-2 gap-8 items-center">
+                  <div className="text-center">
+                      <Image src="/zaca.svg" alt="Ilustração do Zaca" width={500} height={500} className="mx-auto w-full max-w-sm" />
+                  </div>
+                  <div className="text-center md:text-left">
+                      <h2 className="text-4xl md:text-5xl font-extrabold text-zaca-roxo dark:text-zaca-lilas leading-tight">
+                          CONECTE-SE COM SETE LAGOAS
+                      </h2>
+                      <p className="mt-4 text-lg text-muted-foreground">
+                          Cadastre-se para começar a vender ou descobrir os melhores achadinhos e serviços da cidade!
+                      </p>
+                      <div className="mt-8 flex flex-col sm:flex-row justify-center md:justify-start gap-4">
+                          <Button asChild size="lg" className="bg-zaca-magenta hover:bg-zaca-magenta/90 text-white shadow-lg">
+                              <Link href="/auth/signup">
+                                  <UserPlus className="mr-2 h-5 w-5" />
+                                  QUERO VENDER
+                              </Link>
+                          </Button>
+                          <Button asChild size="lg" variant="outline" className="border-primary text-primary hover:bg-primary/10 hover:text-primary shadow-lg">
+                              <Link href="/products">
+                                  <ShoppingBag className="mr-2 h-5 w-5" />
+                                  QUERO COMPRAR
+                              </Link>
+                          </Button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+        </section>
+        <SupportSection />
       </main>
       <Footer />
     </div>
