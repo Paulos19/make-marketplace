@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Navbar from '@/app/components/layout/Navbar';
 import Footer from '@/app/components/layout/Footer';
 import type { Product } from '@prisma/client';
-import { cn } from '@/lib/utils'; 
+import { cn } from '@/lib/utils';
 import { PurchaseType } from '@prisma/client';
 import { PixPaymentModal } from '../components/modals/PixPaymentModal';
 
@@ -22,8 +22,8 @@ const plans = [
         name: 'Achadinho Turbo',
         priceId: process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID,
         price: 'R$ 4,90',
-        numericPrice: '0.01', // Valor numérico para a API PIX
-        purchaseType: PurchaseType.ACHADINHO_TURBO, // Tipo para o banco de dados
+        numericPrice: '4.90',
+        purchaseType: PurchaseType.ACHADINHO_TURBO,
         frequency: '/7 dias',
         description: 'Impulsione um produto ou serviço para o topo da homepage por uma semana.',
         features: [
@@ -41,8 +41,8 @@ const plans = [
         name: 'Carrossel na Praça',
         priceId: process.env.NEXT_PUBLIC_STRIPE_CAROUSEL_PRICE_ID,
         price: 'R$ 14,90',
-        numericPrice: '0.01', // Valor numérico para a API PIX
-        purchaseType: PurchaseType.CARROSSEL_PRACA, // Tipo para o banco de dados
+        numericPrice: '14.90',
+        purchaseType: PurchaseType.CARROSSEL_PRACA,
         frequency: '/postagem',
         description: 'Seu produto divulgado em um post com Tráfego Pago no Instagram do Zacaplace.',
         features: [
@@ -61,7 +61,7 @@ const plans = [
         priceId: process.env.NEXT_PUBLIC_STRIPE_SUBSCRIPTION_PRICE_ID,
         price: 'R$ 19,90',
         numericPrice: '19.90',
-        purchaseType: null, // Assinatura não tem compra avulsa via PIX neste fluxo
+        purchaseType: null,
         frequency: '/mês',
         description: 'Tenha sua própria página de vendedor e apareça na lista de lojas.',
         features: [
@@ -77,7 +77,6 @@ const plans = [
     },
 ];
 
-// O tipo 'Plan' agora inclui os novos campos
 type Plan = typeof plans[0];
 
 export default function PlanosPage() {
@@ -86,19 +85,14 @@ export default function PlanosPage() {
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedProductId, setSelectedProductId] = useState<string>('');
-
-    // --- ESTADOS PARA OS MODAIS ---
     const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
     const [activePlan, setActivePlan] = useState<Plan | null>(null);
-
-    // --- ESTADOS PARA O MODAL PIX ---
     const [isPixModalOpen, setIsPixModalOpen] = useState(false);
     const [pixDetails, setPixDetails] = useState<{
         valor: string;
         purchaseType: PurchaseType;
         productId: string;
     } | null>(null);
-
 
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.id) {
@@ -118,13 +112,16 @@ export default function PlanosPage() {
         setIsProductSelectorOpen(true);
     };
 
-    // Função para o checkout com STRIPE
+    // ✨✨✨ A CORREÇÃO ESTÁ NESTA FUNÇÃO ✨✨✨
     const handleStripeCheckout = async (priceId: string | undefined, type: string, productId?: string) => {
         if (!priceId) {
             toast.error("Erro de configuração: ID do plano não encontrado.");
             return;
         }
-        if (!productId) {
+        
+        // A verificação agora só acontece se o `type` for 'payment'.
+        // Para 'subscription', esta verificação é ignorada.
+        if (type === 'payment' && !productId) {
             toast.error("Você precisa selecionar um item para impulsionar.");
             return;
         }
@@ -149,7 +146,6 @@ export default function PlanosPage() {
         }
     };
     
-    // Função para iniciar o pagamento com PIX
     const handlePixPayment = (plan: Plan, productId: string) => {
         if (!productId) {
             toast.error("Você precisa selecionar um item para pagar com PIX.");
@@ -166,11 +162,10 @@ export default function PlanosPage() {
             productId: productId,
         });
         
-        setIsProductSelectorOpen(false); // Fecha o modal de seleção
-        setIsPixModalOpen(true); // Abre o modal do PIX
+        setIsProductSelectorOpen(false);
+        setIsPixModalOpen(true);
     };
     
-    // Função de callback para quando o pagamento PIX for bem-sucedido
     const handlePaymentSuccess = () => {
         toast.success("Serviço ativado! A página será atualizada.");
         router.refresh();
@@ -180,7 +175,6 @@ export default function PlanosPage() {
         <div className="flex flex-col min-h-screen">
             <Navbar />
 
-            {/* Renderiza o Modal de Pagamento PIX */}
             {pixDetails && (
                 <PixPaymentModal
                     isOpen={isPixModalOpen}
@@ -229,13 +223,11 @@ export default function PlanosPage() {
                                 </CardContent>
                                 <CardFooter>
                                     {plan.type === 'payment' ? (
-                                        // Para planos de pagamento único, o botão abre o seletor de produto
                                         <Button className="w-full" onClick={() => handleOpenProductSelector(plan)} size="lg">
                                             <plan.icon className="mr-2 h-5 w-5"/>
                                             {plan.buttonText}
                                         </Button>
                                     ) : (
-                                        // Para assinatura, vai direto para o checkout Stripe
                                         <Button className="w-full" onClick={() => handleStripeCheckout(plan.priceId, plan.type)} disabled={isLoading === plan.priceId} size="lg">
                                             {isLoading === plan.priceId && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
                                             {plan.buttonText}
@@ -248,7 +240,6 @@ export default function PlanosPage() {
                 </div>
             </main>
 
-            {/* Modal de Seleção de Produto (Refatorado) */}
             <Dialog open={isProductSelectorOpen} onOpenChange={setIsProductSelectorOpen}>
                 <DialogContent>
                     <DialogHeader>
@@ -275,7 +266,6 @@ export default function PlanosPage() {
                         )}
                     </div>
                     <DialogFooter className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                         {/* Botão de Pagar com PIX */}
                          <Button
                             variant="outline"
                             onClick={() => handlePixPayment(activePlan!, selectedProductId)}
@@ -283,7 +273,6 @@ export default function PlanosPage() {
                         >
                              <Banknote className="mr-2 h-4 w-4" /> Pagar com PIX
                         </Button>
-                        {/* Botão de Pagar com Cartão (Stripe) */}
                         <Button 
                             onClick={() => handleStripeCheckout(activePlan?.priceId, 'payment', selectedProductId)} 
                             disabled={!selectedProductId || isLoading === activePlan?.priceId}
