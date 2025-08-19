@@ -3,25 +3,18 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { loadStripe } from '@stripe/stripe-js';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Check, Crown, Rocket, Zap, Loader2, Info, Star } from 'lucide-react';
+import { Check, Crown, Rocket, Zap, Loader2, Info, Banknote } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Navbar from '@/app/components/layout/Navbar';
 import Footer from '@/app/components/layout/Footer';
 import type { Product } from '@prisma/client';
-import { cn } from '@/lib/utils';
-
-// Garante que a chave publicável do Stripe está definida no ambiente.
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-if (!stripePublishableKey) {
-    throw new Error("ERRO: A variável de ambiente NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY não está definida. Verifique seu arquivo .env.local");
-}
-// Carrega a instância do Stripe de forma assíncrona, agora com a chave validada.
-const stripePromise = loadStripe(stripePublishableKey);
+import { cn } from '@/lib/utils'; 
+import { PurchaseType } from '@prisma/client';
+import { PixPaymentModal } from '../components/modals/PixPaymentModal';
 
 
 const plans = [
@@ -29,6 +22,8 @@ const plans = [
         name: 'Achadinho Turbo',
         priceId: process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID,
         price: 'R$ 4,90',
+        numericPrice: '0.01', // Valor numérico para a API PIX
+        purchaseType: PurchaseType.ACHADINHO_TURBO, // Tipo para o banco de dados
         frequency: '/7 dias',
         description: 'Impulsione um produto ou serviço para o topo da homepage por uma semana.',
         features: [
@@ -46,6 +41,8 @@ const plans = [
         name: 'Carrossel na Praça',
         priceId: process.env.NEXT_PUBLIC_STRIPE_CAROUSEL_PRICE_ID,
         price: 'R$ 14,90',
+        numericPrice: '0.01', // Valor numérico para a API PIX
+        purchaseType: PurchaseType.CARROSSEL_PRACA, // Tipo para o banco de dados
         frequency: '/postagem',
         description: 'Seu produto divulgado em um post com Tráfego Pago no Instagram do Zacaplace.',
         features: [
@@ -63,6 +60,8 @@ const plans = [
         name: 'Meu Catálogo no Zaca',
         priceId: process.env.NEXT_PUBLIC_STRIPE_SUBSCRIPTION_PRICE_ID,
         price: 'R$ 19,90',
+        numericPrice: '19.90',
+        purchaseType: null, // Assinatura não tem compra avulsa via PIX neste fluxo
         frequency: '/mês',
         description: 'Tenha sua própria página de vendedor e apareça na lista de lojas.',
         features: [
@@ -78,18 +77,31 @@ const plans = [
     },
 ];
 
+// O tipo 'Plan' agora inclui os novos campos
+type Plan = typeof plans[0];
+
 export default function PlanosPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [selectedProductId, setSelectedProductId] = useState<string>('');
+
+    // --- ESTADOS PARA OS MODAIS ---
     const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
+    const [activePlan, setActivePlan] = useState<Plan | null>(null);
+
+    // --- ESTADOS PARA O MODAL PIX ---
+    const [isPixModalOpen, setIsPixModalOpen] = useState(false);
+    const [pixDetails, setPixDetails] = useState<{
+        valor: string;
+        purchaseType: PurchaseType;
+        productId: string;
+    } | null>(null);
+
 
     useEffect(() => {
         if (status === 'authenticated' && session?.user?.id) {
-            // <<< CORREÇÃO APLICADA AQUI >>>
-            // Removemos o filtro `&isService=false` para buscar tanto produtos quanto serviços.
             fetch(`/api/products?userId=${session.user.id}`)
                 .then(res => res.json())
                 .then(data => setProducts(Array.isArray(data.products) ? data.products : []))
@@ -97,24 +109,27 @@ export default function PlanosPage() {
         }
     }, [status, session]);
 
-    const handleCheckout = async (priceId: string | undefined, type: string, productId?: string) => {
+    const handleOpenProductSelector = (plan: Plan) => {
         if (status !== 'authenticated') {
             router.push('/auth/signin?callbackUrl=/planos');
             return;
         }
+        setActivePlan(plan);
+        setIsProductSelectorOpen(true);
+    };
 
+    // Função para o checkout com STRIPE
+    const handleStripeCheckout = async (priceId: string | undefined, type: string, productId?: string) => {
         if (!priceId) {
             toast.error("Erro de configuração: ID do plano não encontrado.");
             return;
         }
-
-        setIsLoading(priceId);
-
-        if (type === 'payment' && !productId && (priceId === process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID || priceId === process.env.NEXT_PUBLIC_STRIPE_CAROUSEL_PRICE_ID)) {
+        if (!productId) {
             toast.error("Você precisa selecionar um item para impulsionar.");
-            setIsLoading(null);
             return;
         }
+
+        setIsLoading(priceId);
 
         try {
             const response = await fetch('/api/stripe/checkout-session', {
@@ -124,21 +139,59 @@ export default function PlanosPage() {
             });
 
             const { url, error } = await response.json();
-
-            if (!response.ok || !url) {
-                throw new Error(error || "Não foi possível iniciar o checkout.");
-            }
+            if (!response.ok || !url) throw new Error(error || "Não foi possível iniciar o checkout.");
 
             window.location.href = url;
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Ocorreu um erro desconhecido.");
+        } finally {
             setIsLoading(null);
         }
     };
     
+    // Função para iniciar o pagamento com PIX
+    const handlePixPayment = (plan: Plan, productId: string) => {
+        if (!productId) {
+            toast.error("Você precisa selecionar um item para pagar com PIX.");
+            return;
+        }
+        if (!plan.purchaseType) {
+            toast.error("Este plano não suporta pagamento avulso com PIX.");
+            return;
+        }
+
+        setPixDetails({
+            valor: plan.numericPrice,
+            purchaseType: plan.purchaseType,
+            productId: productId,
+        });
+        
+        setIsProductSelectorOpen(false); // Fecha o modal de seleção
+        setIsPixModalOpen(true); // Abre o modal do PIX
+    };
+    
+    // Função de callback para quando o pagamento PIX for bem-sucedido
+    const handlePaymentSuccess = () => {
+        toast.success("Serviço ativado! A página será atualizada.");
+        router.refresh();
+    };
+
     return (
         <div className="flex flex-col min-h-screen">
             <Navbar />
+
+            {/* Renderiza o Modal de Pagamento PIX */}
+            {pixDetails && (
+                <PixPaymentModal
+                    isOpen={isPixModalOpen}
+                    onClose={() => setIsPixModalOpen(false)}
+                    valor={pixDetails.valor}
+                    purchaseType={pixDetails.purchaseType}
+                    productId={pixDetails.productId}
+                    onPaymentSuccess={handlePaymentSuccess}
+                />
+            )}
+
             <main className="flex-grow bg-slate-50 dark:bg-slate-950">
                 <div className="container mx-auto px-4 py-16">
                     <header className="text-center mb-12">
@@ -150,86 +203,97 @@ export default function PlanosPage() {
                         </p>
                     </header>
                     
-                    <Dialog open={isProductSelectorOpen} onOpenChange={setIsProductSelectorOpen}>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {plans.map((plan) => (
-                                <Card key={plan.name} className={cn("flex flex-col shadow-lg border-2", plan.className)}>
-                                    <CardHeader className="text-center items-center">
-                                        <div className="p-3 bg-white rounded-full mb-4 border shadow-inner">
-                                            <plan.icon className="h-8 w-8 text-slate-800" />
-                                        </div>
-                                        <CardTitle className="text-2xl font-semibold">{plan.name}</CardTitle>
-                                        <CardDescription className="px-6">{plan.description}</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="flex-grow space-y-4">
-                                        <div className="text-center">
-                                            <span className="text-4xl font-bold">{plan.price}</span>
-                                            <span className="text-muted-foreground">{plan.frequency}</span>
-                                        </div>
-                                        <ul className="space-y-2 text-sm">
-                                            {plan.features.map((feature, i) => (
-                                                <li key={i} className="flex items-center gap-2">
-                                                    <Check className="h-4 w-4 text-green-500" />
-                                                    <span>{feature}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </CardContent>
-                                    <CardFooter>
-                                        {plan.type === 'payment' && (plan.name === 'Achadinho Turbo' || plan.name === 'Carrossel na Praça') ? (
-                                            <DialogTrigger asChild>
-                                                <Button className="w-full" disabled={isLoading === plan.priceId} size="lg">
-                                                    {isLoading === plan.priceId ? <Loader2 className="h-5 w-5 animate-spin"/> : <plan.icon className="mr-2 h-5 w-5"/>}
-                                                    {plan.buttonText}
-                                                </Button>
-                                            </DialogTrigger>
-                                        ) : (
-                                            <Button className="w-full" onClick={() => handleCheckout(plan.priceId, plan.type)} disabled={isLoading === plan.priceId} size="lg">
-                                                {isLoading === plan.priceId && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
-                                                {plan.buttonText}
-                                            </Button>
-                                        )}
-                                    </CardFooter>
-                                </Card>
-                            ))}
-                        </div>
-                        
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Turbinar um Achadinho</DialogTitle>
-                                <DialogDescription>
-                                    Selecione qual dos seus produtos ou serviços você quer impulsionar para o topo da homepage.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="py-4">
-                                {products.length > 0 ? (
-                                    <Select onValueChange={setSelectedProductId} value={selectedProductId}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Escolha um item..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                ) : (
-                                    <div className="text-center text-sm text-muted-foreground p-4 border rounded-md">
-                                        <Info className="mx-auto h-6 w-6 mb-2"/>
-                                        Você precisa ter pelo menos um produto ou serviço cadastrado para poder turbiná-lo.
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {plans.map((plan) => (
+                            <Card key={plan.name} className={cn("flex flex-col shadow-lg border-2", plan.className)}>
+                                <CardHeader className="text-center items-center">
+                                    <div className="p-3 bg-white rounded-full mb-4 border shadow-inner">
+                                        <plan.icon className="h-8 w-8 text-slate-800" />
                                     </div>
-                                )}
-                            </div>
-                            <DialogFooter>
-                                <Button 
-                                    onClick={() => handleCheckout(process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID, 'payment', selectedProductId)} 
-                                    disabled={!selectedProductId || isLoading === process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID}
-                                >
-                                    {isLoading === process.env.NEXT_PUBLIC_STRIPE_TURBO_PRICE_ID ? <Loader2 className="h-4 w-4 animate-spin"/> : "Confirmar e Pagar"}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                                    <CardTitle className="text-2xl font-semibold">{plan.name}</CardTitle>
+                                    <CardDescription className="px-6">{plan.description}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-grow space-y-4">
+                                    <div className="text-center">
+                                        <span className="text-4xl font-bold">{plan.price}</span>
+                                        <span className="text-muted-foreground">{plan.frequency}</span>
+                                    </div>
+                                    <ul className="space-y-2 text-sm">
+                                        {plan.features.map((feature, i) => (
+                                            <li key={i} className="flex items-center gap-2">
+                                                <Check className="h-4 w-4 text-green-500" />
+                                                <span>{feature}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </CardContent>
+                                <CardFooter>
+                                    {plan.type === 'payment' ? (
+                                        // Para planos de pagamento único, o botão abre o seletor de produto
+                                        <Button className="w-full" onClick={() => handleOpenProductSelector(plan)} size="lg">
+                                            <plan.icon className="mr-2 h-5 w-5"/>
+                                            {plan.buttonText}
+                                        </Button>
+                                    ) : (
+                                        // Para assinatura, vai direto para o checkout Stripe
+                                        <Button className="w-full" onClick={() => handleStripeCheckout(plan.priceId, plan.type)} disabled={isLoading === plan.priceId} size="lg">
+                                            {isLoading === plan.priceId && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
+                                            {plan.buttonText}
+                                        </Button>
+                                    )}
+                                </CardFooter>
+                            </Card>
+                        ))}
+                    </div>
                 </div>
             </main>
+
+            {/* Modal de Seleção de Produto (Refatorado) */}
+            <Dialog open={isProductSelectorOpen} onOpenChange={setIsProductSelectorOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Selecione o item para: {activePlan?.name}</DialogTitle>
+                        <DialogDescription>
+                            Escolha qual dos seus produtos ou serviços você quer destacar com este plano.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {products.length > 0 ? (
+                            <Select onValueChange={setSelectedProductId} value={selectedProductId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Escolha um item..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        ) : (
+                            <div className="text-center text-sm text-muted-foreground p-4 border rounded-md">
+                                <Info className="mx-auto h-6 w-6 mb-2"/>
+                                Você precisa ter pelo menos um produto ou serviço cadastrado para poder usar este serviço.
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                         {/* Botão de Pagar com PIX */}
+                         <Button
+                            variant="outline"
+                            onClick={() => handlePixPayment(activePlan!, selectedProductId)}
+                            disabled={!selectedProductId || isLoading === activePlan?.priceId}
+                        >
+                             <Banknote className="mr-2 h-4 w-4" /> Pagar com PIX
+                        </Button>
+                        {/* Botão de Pagar com Cartão (Stripe) */}
+                        <Button 
+                            onClick={() => handleStripeCheckout(activePlan?.priceId, 'payment', selectedProductId)} 
+                            disabled={!selectedProductId || isLoading === activePlan?.priceId}
+                        >
+                            {isLoading === activePlan?.priceId ? <Loader2 className="h-4 w-4 animate-spin"/> : "Pagar com Cartão"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <Footer />
         </div>
     );

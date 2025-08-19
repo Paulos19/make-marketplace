@@ -7,6 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ENUMS EXISTENTES (sem alterações)
 enum UserRole {
   USER
   SELLER
@@ -43,38 +44,55 @@ enum ProductCondition {
   OTHER
 }
 
+// --- NOVOS ENUMS PARA O PIX ---
+
+// Novo Enum para o status do pagamento PIX
+enum PixPaymentStatus {
+  PENDING
+  CONFIRMED
+}
+
+// Novo Enum para diferenciar o método de pagamento na tabela Purchase
+enum PaymentMethod {
+  STRIPE
+  PIX
+}
+
+// --- MODELOS ---
+
 model User {
-  id                       String              @id @default(cuid())
+  id                       String               @id @default(cuid())
   name                     String?
-  email                    String?             @unique
+  email                    String?              @unique
   emailVerified            DateTime?
   image                    String?
   passwordHash             String?
-  role                     UserRole            @default(USER)
+  role                     UserRole             @default(USER)
   storeName                String?
   whatsappLink             String?
   customRedirectUrl        String?
   profileDescription       String?
   sellerBannerImageUrl     String?
-  showInSellersPage        Boolean             @default(false)
-  createdAt                DateTime            @default(now())
-  updatedAt                DateTime            @updatedAt
-  stripeCustomerId         String?             @unique @map("stripe_customer_id")
-  stripeSubscriptionId     String?             @unique @map("stripe_subscription_id")
-  stripeSubscriptionStatus SubscriptionStatus? @map("stripe_subscription_status")
-  stripePriceId            String?             @map("stripe_price_id")
-  stripeCurrentPeriodEnd   DateTime?           @map("stripe_current_period_end")
-
-  accounts           Account[]
-  sessions           Session[]
-  products           Product[]
-  reservations       Reservation[]
-  reviewsMade        Review[]            @relation("BuyerReviews")
-  reviewsReceived    Review[]            @relation("SellerReviews")
-  shortLinks         ShortLink[]
-  adminNotifications AdminNotification[]
-  purchases          Purchase[]
-  favorite           Favorite[]
+  showInSellersPage        Boolean              @default(false)
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+  stripeCustomerId         String?              @unique @map("stripe_customer_id")
+  stripeSubscriptionId     String?              @unique @map("stripe_subscription_id")
+  stripeSubscriptionStatus SubscriptionStatus?  @map("stripe_subscription_status")
+  stripePriceId            String?              @map("stripe_price_id")
+  stripeCurrentPeriodEnd   DateTime?            @map("stripe_current_period_end")
+  accounts                 Account[]
+  sessions                 Session[]
+  products                 Product[]
+  reservations             Reservation[]
+  reviewsMade              Review[]             @relation("BuyerReviews")
+  reviewsReceived          Review[]             @relation("SellerReviews")
+  shortLinks               ShortLink[]
+  adminNotifications       AdminNotification[]
+  purchases                Purchase[]
+  favorite                 Favorite[]
+  // Adiciona a relação com os pagamentos PIX iniciados pelo usuário
+  pixPayments              PixPayment[]
 
   @@map("User")
 }
@@ -132,45 +150,81 @@ model Product {
   isService     Boolean  @default(false)
   quantity      Int      @default(1)
   onPromotion   Boolean  @default(false)
-
-  condition ProductCondition @default(NEW)
-
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  boostedUntil DateTime? @map("boosted_until")
-
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  reservations Reservation[]
-  purchases    Purchase[]
-  shortLinks   ShortLink[]
-  favorite     Favorite[]
+  condition     ProductCondition @default(NEW)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  boostedUntil  DateTime? @map("boosted_until")
+  // Novo campo para controlar a visibilidade no "Carrossel na Praça"
+  carouselUntil DateTime? @map("carousel_until")
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservations  Reservation[]
+  purchases     Purchase[]
+  shortLinks    ShortLink[]
+  favorite      Favorite[]
 
   @@map("Product")
 }
 
 model Purchase {
-  id                    String       @id @default(cuid())
-  type                  PurchaseType
-  status                String       @default("PAID")
-  submissionStatus      String       @default("AVAILABLE")
-  stripePaymentIntentId String       @unique
-  createdAt             DateTime     @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  id                      String       @id @default(cuid())
+  type                    PurchaseType
+  status                  String       @default("PAID")
+  submissionStatus        String       @default("AVAILABLE")
+  createdAt               DateTime     @default(now())
+  // Novo campo para identificar o método de pagamento
+  paymentMethod           PaymentMethod @default(STRIPE)
+  // O ID do Stripe agora é opcional, pois o pagamento pode ser via PIX
+  stripePaymentIntentId   String?      @unique
+  userId                  String
+  user                    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId               String?
+  product                 Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  // Adiciona a relação com o pagamento PIX
+  pixPayment              PixPayment?
 
   @@index([userId])
   @@index([productId])
   @@map("Purchase")
 }
+
+// --- NOVOS MODELOS PARA O PIX ---
+
+// Modelo para armazenar a cobrança PIX gerada e seu status
+// Esta tabela será usada pelo sistema de polling para verificar o pagamento.
+model PixPayment {
+  id        String           @id @default(cuid())
+  txid      String           @unique // ID da transação da Efí, usado para o polling
+  status    PixPaymentStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relação 1-para-1 com a compra
+  purchaseId String          @unique
+  purchase   Purchase        @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  @@map("PixPayment")
+}
+
+// Modelo para armazenar os dados brutos recebidos pelo webhook da Efí
+// Essencial para auditoria e depuração.
+model PixWebhook {
+  id          String   @id @default(cuid())
+  txid        String   @unique
+  endToEndId  String
+  valor       String
+  horario     DateTime
+  pix         Json // Armazena o payload completo do webhook
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("PixWebhook")
+}
+
+// --- MODELOS EXISTENTES (sem alterações a partir daqui) ---
 
 model Category {
   id       String    @id @default(cuid())
@@ -181,21 +235,20 @@ model Category {
 }
 
 model Reservation {
-  id          String            @id @default(cuid())
-  userId      String
-  productId   String
-  status      ReservationStatus @default(PENDING)
-  quantity    Int
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  reviewToken String?           @unique
-  isArchived  Boolean           @default(false)
-  readByAdmin Boolean           @default(false)
-
-  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product           Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
-  review            Review?
-  adminNotification AdminNotification?
+  id                  String            @id @default(cuid())
+  userId              String
+  productId           String
+  status              ReservationStatus @default(PENDING)
+  quantity            Int
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  reviewToken         String?           @unique
+  isArchived          Boolean           @default(false)
+  readByAdmin         Boolean           @default(false)
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product             Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  review              Review?
+  adminNotification   AdminNotification?
 
   @@map("Reservation")
 }
@@ -289,30 +342,26 @@ model ShortLink {
   description String?
   imageUrl    String?
   title       String?
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("ShortLink")
 }
 
 model AdminNotification {
-  id        String   @id @default(cuid())
-  message   String
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  type      String   @default("RESERVATION")
-  metadata  Json?
-
-  reservationId      String? @unique
-  sellerId           String?
-  sellerWhatsappLink String?
-
-  reservation Reservation? @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-  seller      User?        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  id                   String       @id @default(cuid())
+  message              String
+  isRead               Boolean      @default(false)
+  createdAt            DateTime     @default(now())
+  type                 String       @default("RESERVATION")
+  metadata             Json?
+  reservationId        String?      @unique
+  sellerId             String?
+  sellerWhatsappLink   String?
+  reservation          Reservation? @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  seller               User?        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
   @@map("AdminNotification")
 }
@@ -322,9 +371,8 @@ model Favorite {
   userId    String
   productId String
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, productId]) // Garante que um usuário só pode favoritar um produto uma vez
+  @@unique([userId, productId])
 }

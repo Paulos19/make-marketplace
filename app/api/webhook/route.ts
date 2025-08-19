@@ -1,58 +1,74 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+// app/api/webhook/route.ts (MODIFICADO)
 
-const prisma = new PrismaClient();
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { addDays } from 'date-fns';
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const notification = await req.json();
-    console.log('Webhook recebido:', JSON.stringify(notification, null, 2));
-
-    if (!notification?.pix?.length) {
-      return NextResponse.json({ message: 'Notificação recebida, mas sem dados PIX válidos.' }, { status: 200 });
+    const data = await req.json();
+    if (!data.pix || data.pix.length === 0) {
+      return NextResponse.json({ message: 'Nenhuma notificação PIX recebida' }, { status: 200 });
     }
 
-    // Itera sobre cada pagamento na notificação (geralmente vem apenas um)
-    for (const pix of notification.pix) {
-      const { txid, valor, endToEndId, horario } = pix;
+    const pixTransaction = data.pix[0];
+    const { txid, endToEndId, valor, horario } = pixTransaction;
 
-      if (!txid) {
-        console.warn('Webhook PIX recebido sem txid:', pix);
-        continue;
-      }
-
-      // Verifica se este pagamento já foi salvo para evitar duplicidade
-      const existingPayment = await prisma.pixWebhook.findUnique({
-        where: { txid },
-      });
-
-      if (existingPayment) {
-        console.log(`[Webhook] Pagamento para txid ${txid} já existe no banco. Ignorando.`);
-        continue;
-      }
-
-      // Cria um novo registro no banco de dados com os dados do pagamento
-      await prisma.pixWebhook.create({
-        data: {
-          txid: txid,
-          endToEndId: endToEndId,
-          valor: parseFloat(valor),
-          horario: new Date(horario),
-          status: 'COMPLETED',
-          payload: pix, // Salva o objeto completo do pix para auditoria
-        },
-      });
-
-      console.log(`[Webhook] Pagamento com txid ${txid} foi salvo com sucesso no banco de dados.`);
+    // 1. Verificar se este webhook já foi processado pelo txid
+    const existingWebhook = await prisma.pixWebhook.findUnique({ where: { txid } });
+    if (existingWebhook) {
+      return NextResponse.json({ message: 'Webhook já processado' }, { status: 200 });
     }
 
-    // Responde à EFI confirmando o recebimento
-    return NextResponse.json({ message: 'Webhook processado com sucesso' }, { status: 200 });
+    // 2. Salvar o payload do webhook para auditoria
+    await prisma.pixWebhook.create({
+      data: { txid, endToEndId, valor, horario: new Date(horario), pix: pixTransaction },
+    });
 
-  } catch (error: any) {
-    console.error(`[Webhook] Erro fatal durante o processamento:`, error.message);
-    return NextResponse.json({ message: 'Erro interno no servidor' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+    // 3. Encontrar o pagamento pendente no sistema
+    const pixPayment = await prisma.pixPayment.findUnique({
+      where: { txid },
+      include: { purchase: true },
+    });
+
+    if (!pixPayment || pixPayment.status === 'CONFIRMED') {
+        console.warn(`Webhook recebido para txid ${txid} não encontrado ou já confirmado.`);
+        return NextResponse.json({ status: "ok" });
+    }
+
+    // 4. Iniciar uma transação para garantir a consistência dos dados
+    await prisma.$transaction(async (tx) => {
+      // Atualizar o status do pagamento e da compra
+      await tx.pixPayment.update({
+        where: { id: pixPayment.id },
+        data: { status: 'CONFIRMED' },
+      });
+      await tx.purchase.update({
+        where: { id: pixPayment.purchaseId },
+        data: { status: 'PAID' },
+      });
+
+      // 5. Executar a lógica de negócio baseada no tipo de compra
+      const purchase = pixPayment.purchase;
+      if (purchase && purchase.productId) {
+        const now = new Date();
+        if (purchase.type === 'ACHADINHO_TURBO') {
+          await tx.product.update({
+            where: { id: purchase.productId },
+            data: { boostedUntil: addDays(now, 7) }, // Exemplo: Boost por 7 dias
+          });
+        } else if (purchase.type === 'CARROSSEL_PRACA') {
+          await tx.product.update({
+            where: { id: purchase.productId },
+            data: { carouselUntil: addDays(now, 7) }, // Exemplo: Carrossel por 7 dias
+          });
+        }
+      }
+    });
+
+    return NextResponse.json({ status: "ok" });
+  } catch (error) {
+    console.error('Erro ao processar webhook PIX:', error);
+    return NextResponse.json({ error: 'Erro interno no servidor' }, { status: 500 });
   }
 }
