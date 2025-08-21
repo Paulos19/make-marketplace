@@ -40,6 +40,7 @@ import {
   BadgeCent,
   Wrench,
   LifeBuoy,
+  Instagram,
 } from 'lucide-react'
 import { UserRole } from '@prisma/client'
 import { Separator } from '@/components/ui/separator'
@@ -184,6 +185,11 @@ export default function Navbar() {
           
           <div className="flex items-center justify-end gap-x-1">
             <div className="hidden lg:flex items-center gap-x-1">
+                <a href="https://www.instagram.com/zacaplace_setelagoas" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
+                  <span className="bg-gradient-to-r from-blue-500 to-pink-500 rounded-md p-1">
+                    <Instagram className="h-5 w-5 text-white" />
+                  </span>
+                </a>
                 <Link href='https://wa.me/553197490093' target='_blank'>
                   <Button variant="ghost" size="icon" aria-label="Support">
                     <LifeBuoy className="h-5 w-5" />
@@ -265,6 +271,14 @@ export default function Navbar() {
                         {user && userNavLinks.map(link => (
                                 <SheetClose key={link.href} asChild><Link href={link.href} className={cn("flex items-center gap-3 text-lg font-medium p-2 rounded-md", pathname === link.href ? "text-primary bg-muted" : "text-foreground")}><link.icon className="h-5 w-5"/>{link.label}</Link></SheetClose>
                         ))}
+                        <SheetClose asChild>
+                          <Link href="https://www.instagram.com/zacaplace_setelagoas" target="_blank" className={cn("flex items-center gap-3 text-lg font-medium transition-colors hover:text-primary p-2 rounded-md", "text-foreground")}>
+                            <span className="bg-gradient-to-r from-blue-500 to-pink-500 rounded-md p-1">
+                              <Instagram className="h-5 w-5 text-white" />
+                            </span>
+                            Instagram
+                          </Link>
+                        </SheetClose>
                         <SheetClose asChild>
                           <Link href="https://wa.me/553197490093" target="_blank" className={cn("flex items-center gap-3 text-lg font-medium transition-colors hover:text-primary p-2 rounded-md", "text-foreground")}>
                             <LifeBuoy className="h-5 w-5" />Suporte
