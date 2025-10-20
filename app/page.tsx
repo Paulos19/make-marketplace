@@ -159,7 +159,7 @@ export default async function HomePage() {
                   </div>
                   <div className="text-center md:text-left">
                       <h2 className="text-4xl md:text-5xl font-extrabold text-zaca-roxo dark:text-zaca-lilas leading-tight">
-                          CONECTE-SE COM SETE LAGOAS
+                          CONECTE-SE COM SETE LAGOAS!
                       </h2>
                       <p className="mt-4 text-lg text-muted-foreground">
                           Cadastre-se para começar a vender ou descobrir os melhores achadinhos e serviços da cidade!
