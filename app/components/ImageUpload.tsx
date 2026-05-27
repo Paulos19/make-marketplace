@@ -1,17 +1,11 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { app } from '@/lib/firebase';
-import { Progress } from "@/components/ui/progress";
+import { useState } from 'react';
+import { UploadDropzone } from '@/lib/uploadthing';
 import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
-import { UploadCloud, X, Trash2, Loader2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
-const storage = getStorage(app);
-
-// A interface já estava correta, usando currentFiles
 export interface ImageUploadProps {
   onUploadComplete: (urls: string[]) => void;
   maxFiles?: number;
@@ -19,80 +13,19 @@ export interface ImageUploadProps {
   userId?: string;
   currentFiles?: string[];
   onRemoveFile?: (url: string) => void;
+  /** Endpoint do UploadThing a ser usado. Default: "imageUploader" */
+  endpoint?: "imageUploader" | "productImage" | "profileImage" | "bannerImage";
 }
 
 export default function ImageUpload({
   onUploadComplete,
   maxFiles = 1,
-  storagePath = 'uploads/',
-  userId,
-  // CORREÇÃO: Usar 'currentFiles' e definir um valor padrão como []
-  currentFiles = [], 
+  currentFiles = [],
   onRemoveFile,
+  endpoint = "imageUploader",
 }: ImageUploadProps) {
-  const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
-  const [progress, setProgress] = useState<Record<string, number>>({});
   const [isUploading, setIsUploading] = useState(false);
-
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    // Calcula quantos uploads ainda são permitidos
-    const remainingSlots = maxFiles - currentFiles.length;
-    const filesToAdd = acceptedFiles.slice(0, remainingSlots);
-    setFilesToUpload(prev => [...prev, ...filesToAdd]);
-  }, [maxFiles, currentFiles.length]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] },
-    maxFiles: maxFiles - currentFiles.length,
-    disabled: isUploading || currentFiles.length >= maxFiles,
-  });
-
-  const handleUpload = async () => {
-    if (filesToUpload.length === 0) return;
-    setIsUploading(true);
-    setProgress({});
-    
-    const uploadPromises = filesToUpload.map(file => {
-      return new Promise<string>((resolve, reject) => {
-        const uniqueFileName = `${Date.now()}-${file.name}`;
-        const fullStoragePath = userId ? `${storagePath}${userId}/${uniqueFileName}` : `${storagePath}${uniqueFileName}`;
-        const storageRef = ref(storage, fullStoragePath);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-
-        uploadTask.on('state_changed',
-          (snapshot) => {
-            const prog = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setProgress(prev => ({ ...prev, [file.name]: prog }));
-          },
-          (error) => {
-            console.error("Erro no upload: ", error);
-            toast.error(`Falha no upload de ${file.name}`);
-            reject(error);
-          },
-          async () => {
-            try {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(downloadURL);
-            } catch (error) {
-              reject(error);
-            }
-          }
-        );
-      });
-    });
-
-    try {
-        const uploadedUrls = await Promise.all(uploadPromises);
-        onUploadComplete(uploadedUrls);
-        setFilesToUpload([]); // Limpa a fila de upload
-        toast.success(`${uploadedUrls.length} imagem(ns) enviada(s)!`);
-    } catch (error) {
-        toast.error("Alguns uploads falharam. Tente novamente.");
-    } finally {
-        setIsUploading(false);
-    }
-  };
+  const remainingSlots = maxFiles - currentFiles.length;
 
   const handleRemoveExistingFile = (urlToRemove: string) => {
     if (onRemoveFile) {
@@ -102,28 +35,42 @@ export default function ImageUpload({
 
   return (
     <div className="space-y-4">
-      <div
-        {...getRootProps()}
-        className={`p-6 border-2 border-dashed rounded-md cursor-pointer text-center transition-colors ${isDragActive ? 'border-sky-500' : 'border-gray-300'}`}
-      >
-        <input {...getInputProps()} />
-        <UploadCloud className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-        <p className="text-sm text-gray-500">Arraste e solte ou clique para selecionar. ({maxFiles - currentFiles.length} restante(s))</p>
-      </div>
-
-      {filesToUpload.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="font-medium">Fila de Upload:</h4>
-          {filesToUpload.map(file => (
-            <div key={file.name} className="flex items-center justify-between p-2 border rounded-md">
-              <span className="text-sm truncate">{file.name}</span>
-              {progress[file.name] && <Progress value={progress[file.name]} className="w-1/2 mx-2 h-2" />}
-            </div>
-          ))}
-          <Button onClick={handleUpload} disabled={isUploading || filesToUpload.length === 0} className="w-full">
-            {isUploading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enviando...</> : `Enviar ${filesToUpload.length} Arquivo(s)`}
-          </Button>
-        </div>
+      {remainingSlots > 0 && (
+        <UploadDropzone
+          endpoint={endpoint}
+          config={{ mode: "auto" }}
+          onUploadBegin={() => {
+            setIsUploading(true);
+          }}
+          onClientUploadComplete={(res) => {
+            setIsUploading(false);
+            if (res) {
+              const urls = res.map((file) => file.ufsUrl);
+              onUploadComplete(urls);
+              toast.success(`${urls.length} imagem(ns) enviada(s)!`);
+            }
+          }}
+          onUploadError={(error: Error) => {
+            setIsUploading(false);
+            toast.error(`Falha no upload: ${error.message}`);
+          }}
+          appearance={{
+            container:
+              "border-2 border-dashed border-border rounded-lg p-6 cursor-pointer transition-colors hover:border-primary/50 ut-uploading:border-primary",
+            label: "text-sm text-muted-foreground",
+            allowedContent: "text-xs text-muted-foreground/70",
+            button:
+              "bg-primary text-primary-foreground hover:bg-primary/90 ut-uploading:bg-primary/70 rounded-md px-4 py-2 text-sm font-medium",
+            uploadIcon: "text-muted-foreground/50 w-12 h-12",
+          }}
+          content={{
+            label: () =>
+              isUploading
+                ? "Enviando..."
+                : `Arraste e solte ou clique para selecionar. (${remainingSlots} restante(s))`,
+            allowedContent: () => "Imagens até 8MB (JPG, PNG, GIF, WebP)",
+          }}
+        />
       )}
 
       {currentFiles.length > 0 && (

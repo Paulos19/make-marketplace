@@ -1,6 +1,6 @@
 'use client'
 
-import { ProductCard } from '@/app/products/components/ProductCard'
+import { ProductCard } from '@/app/(public)/products/components/ProductCard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { motion } from 'framer-motion'
 import { Package, Wrench } from 'lucide-react'

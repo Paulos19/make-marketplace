@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Configuração do servidor incompleta para IA.' }, { status: 500 });
   }
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   try {
     const session = await getServerSession(authOptions);
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     if (!validation.success) {
       return NextResponse.json({ message: validation.error.errors[0].message }, { status: 400 });
     }
-    
+
     const { count } = validation.data;
 
     const existingCategories = await prisma.category.findMany({
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     const existingCategoryNames = existingCategories.map(cat => cat.name);
     const existingCategoriesString = existingCategoryNames.length > 0 ? existingCategoryNames.join(', ') : "Nenhuma categoria existente ainda";
 
-    
+
     const prompt = `
       Você é um especialista em branding e marketing para o e-commerce brasileiro "Zacaplace", inspirado no humor dos Trapalhões.
       O tom da marca é divertido, popular e com um "sotaque" do interior de Minas Gerais.
@@ -99,43 +99,43 @@ export async function POST(request: Request) {
       **FORMATO DE SAÍDA OBRIGATÓRIO:** Retorne **APENAS e ESTRITAMENTE** um array JSON de strings.
       Exemplo de formato: ["Parafernália do Dedé", "Barato do Didi"]
     `;
-    
+
 
     const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{text: prompt}]}],
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
       safetySettings,
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
-            type: SchemaType.ARRAY,
-            items: { type: SchemaType.STRING }
+          type: SchemaType.ARRAY,
+          items: { type: SchemaType.STRING }
         }
       }
     });
-    const responseText = result.response.text(); 
-    
+    const responseText = result.response.text();
+
     let newCategoryNames: string[] = [];
     try {
-        const parsedResponse = JSON.parse(responseText);
+      const parsedResponse = JSON.parse(responseText);
 
-        if (!Array.isArray(parsedResponse) || !parsedResponse.every(item => typeof item === 'string')) {
-            console.error("Resposta da IA não é um array de strings:", parsedResponse);
-            throw new Error('A resposta da IA não é um array de strings válido.');
-        }
-        newCategoryNames = parsedResponse;
+      if (!Array.isArray(parsedResponse) || !parsedResponse.every(item => typeof item === 'string')) {
+        console.error("Resposta da IA não é um array de strings:", parsedResponse);
+        throw new Error('A resposta da IA não é um array de strings válido.');
+      }
+      newCategoryNames = parsedResponse;
 
-    } catch (e: Error) {
-        console.error("Erro ao fazer o parse da resposta JSON da IA:", responseText, "Erro original:", e.message);
-        const extracted = responseText.match(/"([^"]*)"/g);
-        if (extracted) {
-            newCategoryNames = extracted.map(s => s.replace(/"/g, ''));
-            if (newCategoryNames.length === 0) {
-                 throw new Error("A IA retornou uma resposta em um formato inesperado. Tente novamente.");
-            }
-            toast.warning("Formato da resposta da IA corrigido, mas pode não ser ideal.");
-        } else {
-            throw new Error("A IA retornou uma resposta em um formato inesperado. Tente novamente.");
+    } catch (e: any) {
+      console.error("Erro ao fazer o parse da resposta JSON da IA:", responseText, "Erro original:", e.message);
+      const extracted = responseText.match(/"([^"]*)"/g);
+      if (extracted) {
+        newCategoryNames = extracted.map(s => s.replace(/"/g, ''));
+        if (newCategoryNames.length === 0) {
+          throw new Error("A IA retornou uma resposta em um formato inesperado. Tente novamente.");
         }
+        toast.warning("Formato da resposta da IA corrigido, mas pode não ser ideal.");
+      } else {
+        throw new Error("A IA retornou uma resposta em um formato inesperado. Tente novamente.");
+      }
     }
 
     const uniqueGenerated = [...new Set(newCategoryNames.map(name => name.trim()).filter(name => name.length > 0))];
@@ -156,15 +156,15 @@ export async function POST(request: Request) {
       skipDuplicates: true,
     });
 
-    return NextResponse.json({ 
-        message: `${created.count} novas categorias foram geradas e salvas com sucesso!`,
-        newCategories: trulyNewCategories,
+    return NextResponse.json({
+      message: `${created.count} novas categorias foram geradas e salvas com sucesso!`,
+      newCategories: trulyNewCategories,
     }, { status: 201 });
 
   } catch (error) {
     console.error("Erro na geração de categorias com IA:", error);
     if (error instanceof Error && error.message.includes("content is blocked")) {
-        return NextResponse.json({ message: 'A sugestão de categoria foi bloqueada por políticas de segurança. Tente um pedido diferente.' }, { status: 400 });
+      return NextResponse.json({ message: 'A sugestão de categoria foi bloqueada por políticas de segurança. Tente um pedido diferente.' }, { status: 400 });
     }
     return NextResponse.json({ message: error instanceof Error ? error.message : "Erro interno do servidor ao gerar categorias." }, { status: 500 });
   }

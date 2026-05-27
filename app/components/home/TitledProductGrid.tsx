@@ -2,7 +2,7 @@
 
 import { Prisma } from '@prisma/client'
 import Link from 'next/link'
-import { ProductCard } from '@/app/products/components/ProductCard'
+import { ProductCard } from '@/app/(public)/products/components/ProductCard'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'

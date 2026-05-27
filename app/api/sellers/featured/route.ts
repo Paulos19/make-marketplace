@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const featuredSellers = await prisma.user.findMany({
       where: {
-        role: UserRole.SELLER,
+        role: { in: [UserRole.SELLER, UserRole.ADMIN] },
         showInSellersPage: true,
         products: {
           some: {

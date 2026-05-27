@@ -9,16 +9,17 @@ import { sendReviewRequestEmail } from '@/lib/resend';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { reservationId: string } }
+  props: { params: Promise<{ reservationId: string }> }
 ) {
   try {
+    const params = await props.params;
     const { reservationId } = params;
     if (!reservationId) {
       return NextResponse.json({ error: 'ID da reserva não fornecido.' }, { status: 400 });
     }
 
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== UserRole.SELLER) {
+    if (!session?.user?.id || (session.user.role !== UserRole.SELLER && session.user.role !== UserRole.ADMIN)) {
       return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 401 });
     }
 
@@ -99,16 +100,17 @@ export async function PATCH(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { reservationId: string } }
+    props: { params: Promise<{ reservationId: string }> }
 ) {
     try {
+        const params = await props.params;
         const { reservationId } = params;
         if (!reservationId) {
             return NextResponse.json({ error: 'ID da reserva não fornecido.' }, { status: 400 });
         }
 
         const session = await getServerSession(authOptions);
-        if (!session?.user?.id || session.user.role !== UserRole.SELLER) {
+        if (!session?.user?.id || (session.user.role !== UserRole.SELLER && session.user.role !== UserRole.ADMIN)) {
             return NextResponse.json({ error: 'Acesso não autorizado.' }, { status: 401 });
         }
 

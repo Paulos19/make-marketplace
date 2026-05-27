@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -29,8 +29,6 @@ import {
   UserCircle2,
   LayoutDashboard,
   LogOut,
-  LogIn,
-  UserPlus,
   Home,
   Package2,
   Store,
@@ -49,23 +47,23 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 // Hook para buscar o status do utilizador (assinaturas, etc.)
 function useUserStatus() {
-    const { data: session, status } = useSession();
-    const [userStatus, setUserStatus] = useState({
-        hasActiveSubscription: false,
-        hasActiveTurboBoost: false,
-        hasActiveCarousel: false,
-    });
+  const { data: session, status } = useSession();
+  const [userStatus, setUserStatus] = useState({
+    hasActiveSubscription: false,
+    hasActiveTurboBoost: false,
+    hasActiveCarousel: false,
+  });
 
-    useEffect(() => {
-        if (status === 'authenticated') {
-            fetch('/api/user/status')
-                .then(res => res.json())
-                .then(data => setUserStatus(data))
-                .catch(err => console.error("Falha ao buscar status do utilizador:", err));
-        }
-    }, [status, session]);
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetch('/api/user/status')
+        .then(res => res.json())
+        .then(data => setUserStatus(data))
+        .catch(err => console.error("Falha ao buscar status do utilizador:", err));
+    }
+  }, [status, session]);
 
-    return userStatus;
+  return userStatus;
 }
 
 export default function Navbar() {
@@ -76,26 +74,43 @@ export default function Navbar() {
   const [pendingSalesCount, setPendingSalesCount] = useState(0)
   const { hasActiveSubscription, hasActiveTurboBoost, hasActiveCarousel } = useUserStatus()
   const [openSearch, setOpenSearch] = useState(false)
+
+  // Estado para o hover magnético na nav desktop
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // --- NOVA LÓGICA DE TRANSPARÊNCIA E OCULTAÇÃO NO SCROLL ---
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
   
-  // --- ESTADO E LÓGICA PARA O NOVO EFEITO SPOTLIGHT ---
-  const [spotlightStyle, setSpotlightStyle] = useState({ opacity: 0, background: '' });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    setSpotlightStyle({
-        opacity: 1,
-        background: `radial-gradient(200px circle at ${x}px ${y}px, hsla(var(--primary) / 0.1), transparent 80%)`,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setSpotlightStyle({ opacity: 0, background: '' });
-  };
+  // Páginas que têm um Hero escuro e não precisam do spacer da Navbar
+  const isDarkHeroPage = pathname === '/' || pathname === '/sellers' || pathname === '/products' || pathname === '/services' || pathname?.startsWith('/seller/');
 
   useEffect(() => {
-    if (status === 'authenticated' && user?.role === UserRole.SELLER) {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setIsScrolled(currentScrollY > 50);
+
+      // Hide on scroll down, show on scroll up
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsHidden(true);
+      } else {
+        setIsHidden(false);
+      }
+      setLastScrollY(currentScrollY);
+    };
+    // Inicializa
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
+  const isTransparent = isDarkHeroPage && !isScrolled;
+  // isDarkMode: true on dark hero pages even after scrolling, so text/icons stay light
+  const isDarkMode = isDarkHeroPage;
+
+  useEffect(() => {
+    if (status === 'authenticated' && (user?.role === UserRole.SELLER || user?.role === UserRole.ADMIN)) {
       fetch('/api/sales/pending-count')
         .then(res => res.ok ? res.json() : { count: 0 })
         .then(data => setPendingSalesCount(data.count || 0));
@@ -120,188 +135,324 @@ export default function Navbar() {
     { href: '/sellers', label: 'Vendedores', icon: Store },
     { href: '/planos', label: 'Planos', icon: BadgeCent },
   ];
+
   const userNavLinks = [
     { href: '/dashboard', label: 'Minha Loja', icon: LayoutDashboard },
     { href: '/my-reservations', label: 'Favoritos', icon: Heart },
   ];
 
   const getAvatarFallback = (name?: string | null) => (name ? name.trim().split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : <UserCircle2 />);
-  
+
   const avatarRingClass = cn({
-      "ring-2 ring-offset-2 ring-offset-background": hasActiveSubscription || hasActiveTurboBoost || hasActiveCarousel,
-      "ring-yellow-400": hasActiveSubscription,
-      "ring-blue-500": !hasActiveSubscription && hasActiveTurboBoost,
-      "ring-red-500": !hasActiveSubscription && !hasActiveTurboBoost && hasActiveCarousel
+    "ring-2 ring-offset-2 ring-offset-background": hasActiveSubscription || hasActiveTurboBoost || hasActiveCarousel,
+    "ring-yellow-400": hasActiveSubscription,
+    "ring-blue-500": !hasActiveSubscription && hasActiveTurboBoost,
+    "ring-red-500": !hasActiveSubscription && !hasActiveTurboBoost && hasActiveCarousel
   });
 
   return (
     <>
       <GlobalSearchCommand open={openSearch} setOpen={setOpenSearch} />
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm dark:border-slate-800/60">
-        <div className="container mx-auto flex h-16 max-w-screen-xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <Image src="/zacalogo.png" alt="Zacaplace Logo" width={180} height={50} priority style={{ filter: 'brightness(0) invert(1)' }} className="hidden dark:block" />
-              <Image src="/zacalogo.png" alt="Zacaplace Logo" width={180} height={50} priority className="block dark:hidden" />
+
+      {/* Contêiner de Entrada com Animação */}
+      <motion.header
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+        className={cn(
+          "fixed top-0 left-0 w-full z-50 transition-all duration-500",
+          // Layout Pill no Desktop e Fixed Top no Mobile
+          "md:top-4 md:left-1/2 md:-translate-x-1/2 md:w-[95%] max-w-7xl md:rounded-full",
+          // Hide/Show via CSS transform (apenas no desktop, fixa no mobile)
+          isHidden ? "translate-y-0 md:-translate-y-[calc(100%+1rem)] opacity-100 md:opacity-0 pointer-events-auto md:pointer-events-none" : "translate-y-0 opacity-100 pointer-events-auto",
+          isTransparent
+            ? "bg-transparent border-transparent shadow-none"
+            : isDarkHeroPage
+              ? "border-b md:border border-white/10 bg-black/70 backdrop-blur-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
+              : "border-b md:border border-border/40 bg-background/80 backdrop-blur-2xl shadow-xl"
+        )}
+      >
+        <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+
+          {/* Logo */}
+          <div className="flex items-center gap-4 z-10">
+            <Link href="/" className="flex items-center space-x-2 transition-transform hover:scale-105 active:scale-95">
+              <Image
+                src="/zacalogo.png"
+                alt="Zacaplace Logo"
+                width={160} height={45} priority
+                style={{ filter: (isTransparent || isDarkMode) ? 'brightness(0) invert(1)' : undefined }}
+                className={cn("hidden dark:block", (isTransparent || isDarkMode) && "block dark:block")}
+              />
+              <Image
+                src="/zacalogo.png" alt="Zacaplace Logo" width={160} height={45} priority
+                className={cn("block dark:hidden", (isTransparent || isDarkMode) && "hidden")}
+              />
             </Link>
           </div>
-          
-          {/* --- NOVA ESTRUTURA DA NAVEGAÇÃO DESKTOP --- */}
-          <nav 
-            className="hidden lg:flex items-center justify-center relative rounded-full border bg-card/20 h-12"
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-          >
-            <div 
-              className="absolute inset-0 -z-10 rounded-full transition-opacity duration-300" 
-              style={spotlightStyle}
-            />
-            <ul className="flex items-center h-full px-4">
-              {mainNavLinks.map((link) => (
-                <li key={link.href} className="relative h-full flex items-center">
-                  <Link 
-                    href={link.href} 
-                    className={cn(
-                      "flex items-center gap-2 px-4 h-full text-sm font-medium transition-colors duration-300", 
-                      pathname === link.href 
-                      ? "text-primary" 
-                      : "text-muted-foreground hover:text-primary"
-                    )}
+
+          {/* Navegação Desktop Glassmorphic */}
+          <nav className="hidden lg:flex flex-1 justify-center relative z-0" onMouseLeave={() => setHoveredIndex(null)}>
+            <ul className={cn(
+              "flex items-center p-1 rounded-full border transition-colors duration-500",
+              isTransparent
+                ? "bg-black/20 border-white/10 backdrop-blur-md"
+                : isDarkMode
+                  ? "bg-white/5 border-white/10 backdrop-blur-md"
+                  : "bg-foreground/5 border-foreground/10"
+            )}>
+              {mainNavLinks.map((link, idx) => {
+                const isActive = pathname === link.href;
+                return (
+                  <li
+                    key={link.href}
+                    className="relative"
+                    onMouseEnter={() => setHoveredIndex(idx)}
                   >
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                    {pathname === link.href && (
-                      <motion.div 
-                        layoutId="active-nav-dot"
-                        className="absolute bottom-2.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-primary rounded-full" 
+                    {/* Hover Background Magnético */}
+                    <AnimatePresence>
+                      {hoveredIndex === idx && (
+                        <motion.div
+                          layoutId="hover-bg"
+                          className={cn("absolute inset-0 rounded-full -z-10", (isTransparent || isDarkMode) ? "bg-white/20" : "bg-primary/10")}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                        />
+                      )}
+                    </AnimatePresence>
+
+                    {/* Active Background Fixo */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="active-bg"
+                        className={cn("absolute inset-0 rounded-full -z-10 shadow-[0_0_15px_rgba(var(--primary),0.5)]", (isTransparent || isDarkMode) ? "bg-white" : "bg-primary")}
+                        transition={{ type: "spring", stiffness: 300, damping: 25 }}
                       />
                     )}
-                  </Link>
-                </li>
-              ))}
+
+                    <Link
+                      href={link.href}
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors z-10",
+                        isActive
+                          ? ((isTransparent || isDarkMode) ? "text-black" : "text-primary-foreground")
+                          : ((isTransparent || isDarkMode) ? "text-white/80 hover:text-white" : "text-foreground/70 hover:text-foreground")
+                      )}
+                    >
+                      <link.icon className={cn("h-4 w-4",
+                        isActive ? ((isTransparent || isDarkMode) ? "text-black" : "text-primary-foreground") : ((isTransparent || isDarkMode) ? "text-white" : "text-primary")
+                      )} />
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
-          
-          <div className="flex items-center justify-end gap-x-1">
+
+          {/* Ações da Direita (Ícones e Avatar) */}
+          <div className="flex items-center justify-end gap-x-2 z-10">
             <div className="hidden lg:flex items-center gap-x-1">
-                <a href="https://www.instagram.com/zacaplace_setelagoas" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
-                  <span className="bg-gradient-to-r from-blue-500 to-pink-500 rounded-md p-1">
-                    <Instagram className="h-5 w-5 text-white" />
-                  </span>
-                </a>
+              <motion.a
+                whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}
+                href="https://www.instagram.com/zacaplace_setelagoas"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn("flex items-center justify-center rounded-full h-9 w-9 border shadow-sm transition-colors", (isTransparent || isDarkMode) ? "bg-white/10 hover:bg-white/20 border-white/20" : "bg-accent/50 hover:bg-accent border-foreground/5")}
+              >
+                <span className="bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 rounded-full p-1">
+                  <Instagram className="h-4 w-4 text-white" />
+                </span>
+              </motion.a>
+
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
                 <Link href='https://wa.me/553197490093' target='_blank'>
-                  <Button variant="ghost" size="icon" aria-label="Support">
+                  <Button variant="ghost" size="icon" aria-label="Support" className={cn("rounded-full transition-colors", (isTransparent || isDarkMode) ? "text-white hover:bg-white/20 hover:text-white" : "hover:bg-accent/80")}>
                     <LifeBuoy className="h-5 w-5" />
                   </Button>
                 </Link>
-                <Button onClick={() => setOpenSearch(true)} variant="ghost" size="icon" aria-label="Buscar"><Search className="h-5 w-5" /></Button>
-                <Link href='/my-reservations'><Button variant="ghost" size="icon" aria-label="Favoritos"><Heart className="h-5 w-5" /></Button></Link>
-                {user?.role === UserRole.SELLER && (
-                    <Link href='/dashboard/sales' className="relative">
-                        <Button variant="ghost" size="icon" aria-label="Minhas Vendas"><ShoppingBag className="h-5 w-5" /></Button>
-                        {pendingSalesCount > 0 && <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">{pendingSalesCount}</div>}
-                    </Link>
-                )}
-                <Separator orientation="vertical" className="h-6 mx-2" />
-                {status === 'loading' ? <Skeleton className="h-10 w-10 rounded-full" /> : user ? (
+              </motion.div>
+
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                <Button onClick={() => setOpenSearch(true)} variant="ghost" size="icon" aria-label="Buscar" className={cn("rounded-full transition-colors", (isTransparent || isDarkMode) ? "text-white hover:bg-white/20 hover:text-white" : "hover:bg-accent/80")}>
+                  <Search className="h-5 w-5" />
+                </Button>
+              </motion.div>
+
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                <Link href='/my-reservations'>
+                  <Button variant="ghost" size="icon" aria-label="Favoritos" className={cn("rounded-full transition-colors", (isTransparent || isDarkMode) ? "text-white hover:bg-white/20 hover:text-white" : "hover:bg-accent/80")}>
+                    <Heart className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </motion.div>
+
+              {(user?.role === UserRole.SELLER || user?.role === UserRole.ADMIN) && (
+                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                  <Link href='/dashboard/sales' className="relative inline-block">
+                    <Button variant="ghost" size="icon" aria-label="Minhas Vendas" className={cn("rounded-full transition-colors", (isTransparent || isDarkMode) ? "text-white hover:bg-white/20 hover:text-white" : "hover:bg-accent/80")}>
+                      <ShoppingBag className="h-5 w-5" />
+                    </Button>
+                    {pendingSalesCount > 0 && (
+                      <motion.div
+                        initial={{ scale: 0 }} animate={{ scale: 1 }}
+                        className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive shadow-lg shadow-destructive/40 text-[10px] font-bold text-destructive-foreground ring-2 ring-background"
+                      >
+                        {pendingSalesCount}
+                      </motion.div>
+                    )}
+                  </Link>
+                </motion.div>
+              )}
+
+              <Separator orientation="vertical" className={cn("h-6 mx-2", (isTransparent || isDarkMode) ? "bg-white/20" : "bg-foreground/10")} />
+
+              {status === 'loading' ? (
+                <Skeleton className="h-10 w-10 rounded-full" />
+              ) : user ? (
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-11 w-11 rounded-full p-0">
-                        <Avatar className={cn("h-10 w-10", avatarRingClass)}>
+                  <DropdownMenuTrigger asChild>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="relative h-11 w-11 rounded-full p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <Avatar className={cn("h-10 w-10 transition-shadow", avatarRingClass)}>
                         <AvatarImage src={user.image ?? undefined} alt={user.name ?? 'Avatar'} />
                         <AvatarFallback className="bg-primary/10 font-bold">{getAvatarFallback(user.name)}</AvatarFallback>
-                        </Avatar>
-                        {hasActiveSubscription && <Crown className="absolute -top-1 -right-1 h-5 w-5 text-yellow-400 fill-yellow-400 rotate-12 drop-shadow-lg" />}
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end" forceMount>
-                        <DropdownMenuLabel className="font-normal">
-                            <div className="flex flex-col space-y-1"><p className="text-sm font-medium leading-none">{user.name}</p><p className="text-xs leading-none text-muted-foreground">{user.email}</p></div>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {userNavLinks.map(link => (<DropdownMenuItem key={link.href} asChild><Link href={link.href} className='flex items-center'><link.icon className="mr-2 h-4 w-4" />{link.label}</Link></DropdownMenuItem>))}
-                        {user.role === UserRole.ADMIN && (<DropdownMenuItem asChild><Link href="/admin-dashboard" className='flex items-center'><UserCircle2 className="mr-2 h-4 w-4" />Painel Admin</Link></DropdownMenuItem>)}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })} className='flex items-center'><LogOut className="mr-2 h-4 w-4" />Sair</DropdownMenuItem>
-                    </DropdownMenuContent>
+                      </Avatar>
+                      {hasActiveSubscription && <Crown className="absolute -top-1 -right-1 h-5 w-5 text-yellow-400 fill-yellow-400 rotate-12 drop-shadow-md" />}
+                    </motion.button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 rounded-xl border-white/10 bg-background/95 backdrop-blur-xl" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal py-3">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.name}</p>
+                        <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-foreground/5" />
+                    {userNavLinks.map(link => (
+                      <DropdownMenuItem key={link.href} asChild className="rounded-md m-1 cursor-pointer focus:bg-primary/10">
+                        <Link href={link.href} className='flex items-center'>
+                          <link.icon className="mr-2 h-4 w-4 text-primary" />{link.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                    {(user.role === UserRole.ADMIN) && (
+                      <DropdownMenuItem asChild className="rounded-md m-1 cursor-pointer focus:bg-primary/10">
+                        <Link href="/admin-dashboard" className='flex items-center'>
+                          <UserCircle2 className="mr-2 h-4 w-4 text-primary" />Painel Admin
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator className="bg-foreground/5" />
+                    <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })} className='rounded-md m-1 cursor-pointer focus:bg-destructive/10 focus:text-destructive text-destructive flex items-center'>
+                      <LogOut className="mr-2 h-4 w-4" />Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
                 </DropdownMenu>
-                ) : <Button asChild><Link href="/auth/signin">Entrar</Link></Button>}
+              ) : (
+                <Button asChild className={cn("rounded-full shadow-lg transition-all", (isTransparent || isDarkMode) ? "bg-white text-black hover:bg-white/90 shadow-white/20" : "shadow-primary/20 hover:shadow-primary/40")}><Link href="/auth/signin">Entrar</Link></Button>
+              )}
             </div>
 
-            {/* --- NAVEGAÇÃO MOBILE (SEM ALTERAÇÕES SIGNIFICATIVAS) --- */}
-            <div className="flex items-center lg:hidden">
-                <Button onClick={() => setOpenSearch(true)} variant="ghost" size="icon" aria-label="Buscar"><Search className="h-5 w-5" /></Button>
-                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                    <SheetTrigger asChild><Button variant="ghost" size="icon" aria-label="Abrir menu"><Menu className="h-6 w-6" /></Button></SheetTrigger>
-                    <SheetContent side="left" className="w-full max-w-xs sm:max-w-sm p-0 flex flex-col">
-                        {user ? (
-                            <div className="p-4 border-b dark:border-slate-800">
-                                <Link href="/dashboard" className="flex items-center gap-4" onClick={() => setIsMobileMenuOpen(false)}>
-                                <div className="relative">
-                                    <Avatar className={cn("h-12 w-12", avatarRingClass)}>
-                                        <AvatarImage src={user.image ?? undefined} alt={user.name ?? 'Avatar'} />
-                                        <AvatarFallback className="bg-primary/10 font-bold">{getAvatarFallback(user.name)}</AvatarFallback>
-                                    </Avatar>
-                                    {hasActiveSubscription && <Crown className="absolute -top-1 -right-1 h-5 w-5 text-yellow-400 fill-yellow-400 rotate-12 drop-shadow-lg" />}
-                                </div>
-                                <div className="flex-1 truncate">
-                                    <p className="text-sm font-semibold leading-none truncate">{user.name}</p>
-                                    <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
-                                </div>
-                                </Link>
-                            </div>
-                        ) : (
-                            <div className="p-4 border-b dark:border-slate-800">
-                                <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <Image src="/zacalogo.png" alt="Zacaplace Logo" width={150} height={40} />
-                                </Link>
-                            </div>
-                        )}
-                        
-                        <nav className="flex flex-col space-y-1 p-4 flex-1">
-                        {mainNavLinks.map((link) => (
-                            <SheetClose key={link.href} asChild>
-                            <Link href={link.href} className={cn("flex items-center gap-3 text-lg font-medium transition-colors hover:text-primary p-2 rounded-md", pathname === link.href ? "text-primary bg-muted" : "text-foreground")}>
-                                <link.icon className="h-5 w-5" />{link.label}
-                            </Link>
-                            </SheetClose>
-                        ))}
-                        <Separator className="my-2" />
-                        {user && userNavLinks.map(link => (
-                                <SheetClose key={link.href} asChild><Link href={link.href} className={cn("flex items-center gap-3 text-lg font-medium p-2 rounded-md", pathname === link.href ? "text-primary bg-muted" : "text-foreground")}><link.icon className="h-5 w-5"/>{link.label}</Link></SheetClose>
-                        ))}
-                        <SheetClose asChild>
-                          <Link href="https://www.instagram.com/zacaplace_setelagoas" target="_blank" className={cn("flex items-center gap-3 text-lg font-medium transition-colors hover:text-primary p-2 rounded-md", "text-foreground")}>
-                            <span className="bg-gradient-to-r from-blue-500 to-pink-500 rounded-md p-1">
-                              <Instagram className="h-5 w-5 text-white" />
-                            </span>
-                            Instagram
-                          </Link>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <Link href="https://wa.me/553197490093" target="_blank" className={cn("flex items-center gap-3 text-lg font-medium transition-colors hover:text-primary p-2 rounded-md", "text-foreground")}>
-                            <LifeBuoy className="h-5 w-5" />Suporte
-                          </Link>
-                        </SheetClose>
-                        </nav>
-                        
-                        <div className="p-4 mt-auto border-t dark:border-slate-800">
-                          {user ? (
-                              <Button variant="outline" onClick={() => {signOut({ callbackUrl: '/' }); setIsMobileMenuOpen(false);}} className="w-full flex items-center"><LogOut className="mr-2 h-5 w-5"/>Sair</Button>
-                          ) : (
-                            <div className='flex flex-col gap-2'>
-                              <SheetClose asChild><Link href="/auth/signin" className='w-full'><Button variant={'outline'} className='w-full'>Entrar</Button></Link></SheetClose>
-                              <SheetClose asChild><Link href="/auth/signup" className='w-full'><Button className="w-full">Criar Conta</Button></Link></SheetClose>
-                            </div>
-                          )}
+            {/* --- NAVEGAÇÃO MOBILE --- */}
+            <div className="flex items-center lg:hidden z-10">
+              <Button onClick={() => setOpenSearch(true)} variant="ghost" size="icon" aria-label="Buscar" className={cn("rounded-full", (isTransparent || isDarkMode) ? "text-white" : "")}>
+                <Search className="h-5 w-5" />
+              </Button>
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Abrir menu" className={cn("rounded-full", (isTransparent || isDarkMode) ? "text-white" : "")}>
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full sm:max-w-sm p-0 flex flex-col bg-background/95 backdrop-blur-xl border-l-white/10">
+                  {user ? (
+                    <div className="p-6 border-b border-foreground/10 bg-primary/5">
+                      <Link href="/dashboard" className="flex items-center gap-4" onClick={() => setIsMobileMenuOpen(false)}>
+                        <div className="relative">
+                          <Avatar className={cn("h-14 w-14", avatarRingClass)}>
+                            <AvatarImage src={user.image ?? undefined} alt={user.name ?? 'Avatar'} />
+                            <AvatarFallback className="bg-primary/20 font-bold">{getAvatarFallback(user.name)}</AvatarFallback>
+                          </Avatar>
+                          {hasActiveSubscription && <Crown className="absolute -top-1 -right-1 h-6 w-6 text-yellow-400 fill-yellow-400 rotate-12 drop-shadow-md" />}
                         </div>
-                    </SheetContent>
-                </Sheet>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-lg font-bold leading-none truncate">{user.name}</p>
+                          <p className="text-sm text-muted-foreground truncate mt-1">{user.email}</p>
+                        </div>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="p-6 border-b border-foreground/10 flex items-center justify-center bg-primary/5">
+                      <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Image src="/zacalogo.png" alt="Zacaplace Logo" width={180} height={50} className="dark:invert" />
+                      </Link>
+                    </div>
+                  )}
+
+                  <div className="flex-1 overflow-y-auto px-4 py-6">
+                    <nav className="flex flex-col space-y-2">
+                      {mainNavLinks.map((link, i) => (
+                        <SheetClose key={link.href} asChild>
+                          <Link href={link.href} className="block">
+                            <motion.div
+                              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+                              className={cn(
+                                "flex items-center gap-4 text-base font-medium transition-all p-4 rounded-xl border border-transparent",
+                                pathname === link.href ? "text-primary bg-primary/10 border-primary/20" : "text-foreground/80 hover:bg-foreground/5"
+                              )}
+                            >
+                              <div className={cn("p-2 rounded-lg", pathname === link.href ? "bg-primary text-primary-foreground shadow-md shadow-primary/30" : "bg-foreground/5")}>
+                                <link.icon className="h-5 w-5" />
+                              </div>
+                              {link.label}
+                            </motion.div>
+                          </Link>
+                        </SheetClose>
+                      ))}
+
+                      <Separator className="my-4 bg-foreground/10" />
+
+                      <h4 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2 px-2">Suporte & Social</h4>
+
+                      <SheetClose asChild>
+                        <Link href="https://www.instagram.com/zacaplace_setelagoas" target="_blank" className="flex items-center gap-4 p-3 rounded-xl hover:bg-foreground/5 text-foreground/80 transition-colors">
+                          <span className="bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 rounded-lg p-2 shadow-md">
+                            <Instagram className="h-4 w-4 text-white" />
+                          </span>
+                          Siga no Instagram
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link href="https://wa.me/553197490093" target="_blank" className="flex items-center gap-4 p-3 rounded-xl hover:bg-foreground/5 text-foreground/80 transition-colors">
+                          <div className="p-2 rounded-lg bg-green-500 text-white shadow-md shadow-green-500/30">
+                            <LifeBuoy className="h-4 w-4" />
+                          </div>
+                          Central de Ajuda
+                        </Link>
+                      </SheetClose>
+                    </nav>
+                  </div>
+
+                  <div className="p-6 mt-auto border-t border-foreground/10 bg-background/50 backdrop-blur-md">
+                    {user ? (
+                      <Button variant="destructive" onClick={() => { signOut({ callbackUrl: '/' }); setIsMobileMenuOpen(false); }} className="w-full flex items-center rounded-xl h-12 shadow-lg shadow-destructive/20 hover:shadow-destructive/40 transition-all">
+                        <LogOut className="mr-2 h-5 w-5" />Terminar Sessão
+                      </Button>
+                    ) : (
+                      <div className='flex flex-col gap-3'>
+                        <SheetClose asChild><Link href="/auth/signin" className='w-full'><Button variant={'outline'} className='w-full rounded-xl h-12 border-primary/20 text-primary hover:bg-primary/5'>Acesse sua conta</Button></Link></SheetClose>
+                        <SheetClose asChild><Link href="/auth/signup" className='w-full'><Button className="w-full rounded-xl h-12 shadow-lg shadow-primary/30 transition-all hover:shadow-primary/50">Criar Conta Grátis</Button></Link></SheetClose>
+                      </div>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </div>
-      </header>
+      </motion.header>
     </>
   );
 }

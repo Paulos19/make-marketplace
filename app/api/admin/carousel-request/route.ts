@@ -14,7 +14,7 @@ const carouselRequestSchema = z.object({
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id || session.user.role !== UserRole.SELLER) {
+  if (!session?.user?.id || (session.user.role !== UserRole.SELLER && session.user.role !== UserRole.ADMIN)) {
     return NextResponse.json({ message: 'Acesso negado. Apenas para vendedores.' }, { status: 403 });
   }
 

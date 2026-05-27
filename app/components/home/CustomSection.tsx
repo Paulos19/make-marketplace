@@ -3,7 +3,7 @@
 
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { ProductCard } from '@/app/products/components/ProductCard';
+import { ProductCard } from '@/app/(public)/products/components/ProductCard';
 import type { HomepageSection, Product, User, Category } from '@prisma/client';
 import './CustomSection.css'; 
 

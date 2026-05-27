@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       // Busca em vendedores (nome da loja, nome do vendedor)
       prisma.user.findMany({
         where: {
-          role: UserRole.SELLER,
+          role: { in: [UserRole.SELLER, UserRole.ADMIN] },
           showInSellersPage: true,
           OR: [
             { storeName: { contains: query, mode: 'insensitive' } },

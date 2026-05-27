@@ -7,7 +7,7 @@ import { UserRole } from '@prisma/client';
 export async function GET(request: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user?.id || session.user.role !== UserRole.SELLER) {
+        if (!session?.user?.id || (session.user.role !== UserRole.SELLER && session.user.role !== UserRole.ADMIN)) {
             return NextResponse.json({ error: 'Acesso não autorizado' }, { status: 401 });
         }
 

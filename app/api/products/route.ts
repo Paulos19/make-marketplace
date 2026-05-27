@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ message: 'ID de utilizador não encontrado na sessão.' }, { status: 401 });
     }
 
-    if (session.user.role !== UserRole.SELLER) {
+    if ((session.user.role !== UserRole.SELLER && session.user.role !== UserRole.ADMIN)) {
       return NextResponse.json({ message: `A sua permissão é '${session.user.role}'. É necessário ser um VENDEDOR.` }, { status: 403 });
     }
 

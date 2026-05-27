@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google' // Importar a fonte Inter
+import { Outfit } from 'next/font/google' // Importar a fonte Outfit
 import AuthProvider from './components/AuthProvider'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils'
 import Script from 'next/script'
 import { LoginModalTrigger } from './components/auth/LoginModalTrigger'
 
-// Configurar a fonte Inter com pesos diferentes e uma variável CSS
-const inter = Inter({
+// Configurar a fonte Outfit com pesos diferentes e uma variável CSS
+const outfit = Outfit({
   subsets: ['latin'],
   variable: '--font-sans',
 })
@@ -53,7 +53,7 @@ export default async function RootLayout({
       <body
         className={cn(
           'min-h-screen bg-background font-sans antialiased',
-          inter.variable,
+          outfit.variable,
         )}
       >
         {/* Adiciona as tags do Google Analytics aqui */}

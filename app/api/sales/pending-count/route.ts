@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const session = await getServerSession(authOptions);
 
     // Se não houver sessão ou o usuário não for um vendedor, retorna 0.
-    if (!session?.user?.id || session.user.role !== UserRole.SELLER) {
+    if (!session?.user?.id || (session.user.role !== UserRole.SELLER && session.user.role !== UserRole.ADMIN)) {
       return NextResponse.json({ count: 0 });
     }
 

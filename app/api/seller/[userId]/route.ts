@@ -4,10 +4,10 @@ import { UserRole } from '@prisma/client';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     if (!userId) {
       console.error('API Error: userId not found in params.');
       return NextResponse.json({ error: 'ID do vendedor não fornecido.' }, { status: 400 });
@@ -16,7 +16,7 @@ export async function GET(
     const seller = await prisma.user.findUnique({
       where: {
         id: userId,
-        role: UserRole.SELLER,
+        role: { in: [UserRole.SELLER, UserRole.ADMIN] },
         showInSellersPage: true,
       },
       include: {

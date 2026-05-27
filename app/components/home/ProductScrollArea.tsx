@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { ProductCard } from '@/app/products/components/ProductCard'
+import { ProductCard } from '@/app/(public)/products/components/ProductCard'
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
 import { Prisma } from '@prisma/client'
 import { cn } from '@/lib/utils'

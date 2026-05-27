@@ -12,11 +12,16 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "i.pinimg.com",
         port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "*.ufs.sh",
+      },
+      {
+        protocol: "https",
+        hostname: "utfs.io",
       }
     ]
-  },
-  eslint: {
-    ignoreDuringBuilds: true
   },
   typescript: {
     ignoreBuildErrors: true

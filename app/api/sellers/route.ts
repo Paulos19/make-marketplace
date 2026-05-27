@@ -5,6 +5,9 @@ import { UserRole } from '@prisma/client';
 export async function GET() {
   try {
     const sellers = await prisma.user.findMany({
+      where: {
+        role: { in: [UserRole.SELLER, UserRole.ADMIN] }
+      },
       select: {
         id: true,
         name: true,
