@@ -19,9 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MoreHorizontal, PlusCircle, Trash2, Edit, Loader2, Sparkles, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import type { Category } from "@prisma/client"; // Importa o tipo Category gerado pelo Prisma
+import type { Category } from "@prisma/client";
 
-// Tipagem para os dados iniciais, incluindo a contagem de produtos
 type CategoryWithCount = Category & {
   _count: {
     products: number;
@@ -33,12 +32,14 @@ interface CategoryClientProps {
 }
 
 function AIGenerationCard({ onGenerationComplete }: { onGenerationComplete: () => void }) {
-  const [generationCount, setGenerationCount] = useState(3); // Padrão para 3 categorias
+  const [generationCount, setGenerationCount] = useState(3);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerate = async () => {
     if (generationCount < 1 || generationCount > 10) {
-      toast.error("Por favor, insira um número de 1 a 10 para gerar categorias.");
+      toast.error("Limite inválido", {
+        description: "Insira um número de 1 a 10 para gerar categorias.",
+      });
       return;
     }
     setIsGenerating(true);
@@ -51,44 +52,46 @@ function AIGenerationCard({ onGenerationComplete }: { onGenerationComplete: () =
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Falha ao gerar categorias com IA.");
       
-      toast.success(data.message || "Categorias geradas!", {
+      toast.success("Categorias geradas com sucesso!", {
         description: data.newCategories && data.newCategories.length > 0 
-          ? `Novas categorias: ${data.newCategories.join(', ')}`
+          ? `Novas: ${data.newCategories.join(', ')}`
           : "Nenhuma nova categoria única foi adicionada.",
       });
-      onGenerationComplete(); // Chama a função para atualizar a lista principal
+      onGenerationComplete();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ocorreu um erro na geração com IA.");
+      toast.error("Erro na geração", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro na geração com IA.",
+      });
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <Card className="mb-6 bg-gradient-to-tr from-zaca-lilas/20 to-zaca-azul/20 dark:from-zaca-lilas/10 dark:to-zaca-azul/10 border-zaca-roxo/30">
+    <Card className="mb-6 mt-6">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-zaca-roxo dark:text-zaca-lilas font-bangers tracking-wider">
-          <Sparkles className="h-5 w-5" />
-          Gerador de Categorias com IA (Gemini)
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-indigo-500" />
+          Gerador de Categorias com IA
         </CardTitle>
         <CardDescription>
-          Sem ideias? Deixe a IA do Gemini criar novas categorias relevantes para seus produtos de maquiagem.
+          Sem ideias? Deixe a IA do Gemini criar novas categorias relevantes para o marketplace.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col sm:flex-row items-end gap-4">
         <div className="w-full sm:w-auto flex-grow">
-          <Label htmlFor="ai-count" className="text-sm font-medium">Nº de categorias a gerar</Label>
+          <Label htmlFor="ai-count">Nº de categorias a gerar</Label>
           <Input 
             id="ai-count" 
             type="number" 
             value={generationCount}
             onChange={(e) => setGenerationCount(Number(e.target.value))}
             min="1"
-            max="10" // Limite para não sobrecarregar ou gerar muitas de uma vez
-            className="mt-1 h-10 dark:bg-slate-700 dark:border-slate-600"
+            max="10"
+            className="mt-1 h-10 max-w-xs"
           />
         </div>
-        <Button onClick={handleGenerate} disabled={isGenerating} className="w-full sm:w-auto bg-zaca-magenta hover:bg-zaca-magenta/90 text-white">
+        <Button onClick={handleGenerate} disabled={isGenerating} className="w-full sm:w-auto">
           {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
           Sugerir com IA
         </Button>
@@ -99,8 +102,6 @@ function AIGenerationCard({ onGenerationComplete }: { onGenerationComplete: () =
 
 export function CategoryClient({ initialData }: CategoryClientProps) {
   const router = useRouter();
-  // Não é necessário useState para 'categories' se router.refresh() for usado para buscar dados atualizados
-  // const [categories, setCategories] = useState(initialData); // Pode ser removido
   const [isLoading, setIsLoading] = useState(false);
   
   const [isAddOrEditModalOpen, setIsAddOrEditModalOpen] = useState(false);
@@ -128,7 +129,9 @@ export function CategoryClient({ initialData }: CategoryClientProps) {
 
   const handleSaveCategory = async () => {
     if (!categoryName.trim()) {
-        toast.error("O nome da categoria não pode estar vazio.");
+        toast.error("Campo obrigatório", {
+          description: "O nome da categoria não pode estar vazio."
+        });
         return;
     }
     setIsLoading(true);
@@ -145,11 +148,15 @@ export function CategoryClient({ initialData }: CategoryClientProps) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Falha ao salvar categoria.');
       
-      toast.success(`Categoria ${isEditing ? 'atualizada' : 'criada'} com sucesso!`);
+      toast.success(isEditing ? "Categoria atualizada!" : "Categoria criada!", {
+        description: `A categoria "${categoryName}" foi salva com sucesso.`
+      });
       setIsAddOrEditModalOpen(false);
-      router.refresh(); // Atualiza os dados da página (Server Component)
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ocorreu um erro ao salvar.");
+      toast.error("Erro ao salvar", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao salvar."
+      });
     } finally {
       setIsLoading(false);
     }
@@ -167,9 +174,11 @@ export function CategoryClient({ initialData }: CategoryClientProps) {
       
       toast.success("Categoria excluída com sucesso!");
       setIsDeleteModalOpen(false);
-      router.refresh(); // Atualiza os dados da página
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Ocorreu um erro ao excluir.");
+      toast.error("Erro ao excluir", {
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao excluir."
+      });
     } finally {
       setIsLoading(false);
     }
@@ -179,14 +188,15 @@ export function CategoryClient({ initialData }: CategoryClientProps) {
     <>
       <AIGenerationCard onGenerationComplete={() => router.refresh()} />
 
-      <div className="flex justify-end mb-6">
-        <Button onClick={handleOpenAddModal} className="bg-zaca-azul hover:bg-zaca-azul/90 text-white">
+      <div className="flex justify-end mb-4">
+        <Button onClick={handleOpenAddModal}>
           <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Nova Categoria
         </Button>
       </div>
-      <Card className="shadow-lg dark:bg-slate-800/80 border-slate-200 dark:border-slate-700">
+
+      <Card>
         <CardHeader>
-          <CardTitle className="font-bangers text-zaca-roxo dark:text-zaca-lilas tracking-wide">Categorias Existentes</CardTitle>
+          <CardTitle>Categorias Existentes</CardTitle>
           <CardDescription>Gerencie as categorias de produtos do seu marketplace.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -206,15 +216,21 @@ export function CategoryClient({ initialData }: CategoryClientProps) {
                     <TableCell className="text-center">{category._count.products}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-white dark:bg-slate-800">
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleOpenEditModal(category)}><Edit className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleOpenEditModal(category)}>
+                            <Edit className="mr-2 h-4 w-4" />Editar
+                          </DropdownMenuItem>
                           <DropdownMenuItem 
-                            className="text-red-600 dark:text-red-500 focus:text-red-600 dark:focus:text-red-500" 
+                            variant="destructive"
                             onClick={() => handleOpenDeleteModal(category)}
-                            disabled={category._count.products > 0} // Desabilita se houver produtos
+                            disabled={category._count.products > 0}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />Excluir
                           </DropdownMenuItem>
@@ -226,17 +242,16 @@ export function CategoryClient({ initialData }: CategoryClientProps) {
               </TableBody>
             </Table>
           ) : (
-            <p className="text-center text-slate-500 dark:text-slate-400 py-8">Nenhuma categoria cadastrada ainda. Que tal adicionar uma ou usar a IA para gerar ideias?</p>
+            <p className="text-center text-muted-foreground py-8">Nenhuma categoria cadastrada ainda.</p>
           )}
         </CardContent>
       </Card>
 
-      {/* Modal para Adicionar/Editar Categoria */}
       <Dialog open={isAddOrEditModalOpen} onOpenChange={setIsAddOrEditModalOpen}>
-        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-800">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-bangers text-zaca-roxo dark:text-zaca-lilas">
-                {currentCategory ? 'Editar Categoria do Zaca' : 'Adicionar Nova Categoria'}
+            <DialogTitle>
+                {currentCategory ? 'Editar Categoria' : 'Adicionar Nova Categoria'}
             </DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-2">
@@ -245,13 +260,12 @@ export function CategoryClient({ initialData }: CategoryClientProps) {
               id="category-name" 
               value={categoryName} 
               onChange={(e) => setCategoryName(e.target.value)} 
-              placeholder="Ex: Sombras Poderosas"
-              className="dark:bg-slate-700 dark:border-slate-600"
+              placeholder="Ex: Celulares"
             />
           </div>
           <DialogFooter>
             <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
-            <Button onClick={handleSaveCategory} disabled={isLoading} className="bg-zaca-magenta hover:bg-zaca-magenta/90 text-white">
+            <Button onClick={handleSaveCategory} disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>} 
                 {currentCategory ? 'Salvar Alterações' : 'Criar Categoria'}
             </Button>
@@ -259,17 +273,16 @@ export function CategoryClient({ initialData }: CategoryClientProps) {
         </DialogContent>
       </Dialog>
       
-      {/* Modal para Excluir Categoria */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-800">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader className="flex flex-row items-center gap-2">
-            <AlertTriangle className="h-6 w-6 text-red-500"/>
-            <DialogTitle className="font-bangers text-red-600 dark:text-red-400">Confirmar Exclusão</DialogTitle>
+            <AlertTriangle className="h-6 w-6 text-destructive"/>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
           </DialogHeader>
           <DialogDescription className="py-4">
             Tem certeza que deseja excluir a categoria "<strong>{currentCategory?.name}</strong>"? 
             {currentCategory && currentCategory._count.products > 0 
-                ? <span className="block text-red-500 mt-2">Esta categoria não pode ser excluída pois possui {currentCategory._count.products} produto(s) associado(s).</span> 
+                ? <span className="block text-destructive mt-2">Esta categoria não pode ser excluída pois possui {currentCategory._count.products} produto(s) associado(s).</span> 
                 : <span className="block mt-2">Esta ação não pode ser desfeita.</span>
             }
           </DialogDescription>
