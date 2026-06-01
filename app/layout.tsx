@@ -6,6 +6,7 @@ import './globals.css'
 import { cn } from '@/lib/utils'
 import Script from 'next/script'
 import { LoginModalTrigger } from './components/auth/LoginModalTrigger'
+import AnaChatWidget from './components/chat/AnaChatWidget'
 
 // Configurar a fonte Outfit com pesos diferentes e uma variável CSS
 const outfit = Outfit({
@@ -74,6 +75,7 @@ export default async function RootLayout({
           <LoginModalTrigger />
           {children}
           <Toaster />
+          <AnaChatWidget />
         </AuthProvider>
       </body>
     </html>
