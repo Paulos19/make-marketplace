@@ -18,7 +18,10 @@ import {
   Home,
   Store,
   LineChart,
+  BotMessageSquare, // Ícone para o Agente Ana
 } from 'lucide-react';
+import { checkAgentAccess } from '@/app/actions/checkSubscription';
+import { useEffect, useState } from 'react';
 
 const navGroups = [
   {
@@ -55,12 +58,36 @@ interface SidebarNavProps {
 
 export function SidebarNav({ isCollapsed }: SidebarNavProps) {
   const pathname = usePathname();
+  const [hasAgentAccess, setHasAgentAccess] = useState(false);
+
+  useEffect(() => {
+    async function verifyAccess() {
+      const result = await checkAgentAccess();
+      if (result.hasAccess) {
+        setHasAgentAccess(true);
+      }
+    }
+    verifyAccess();
+  }, []);
+
+  // Clona e modifica os navGroups para adicionar o Agente Ana se tiver acesso
+  const dynamicNavGroups = navGroups.map(group => {
+    if (group.title === 'Gestão de Loja') {
+      const newItems = [...group.items];
+      if (hasAgentAccess) {
+        // Insere logo no topo da gestão de loja
+        newItems.unshift({ href: '/dashboard/agent', label: 'Agente Ana (IA)', icon: BotMessageSquare });
+      }
+      return { ...group, items: newItems };
+    }
+    return group;
+  });
 
   return (
     <TooltipProvider delayDuration={0}>
       <nav className="flex flex-col gap-6 px-4 py-6">
         
-        {navGroups.map((group, groupIndex) => (
+        {dynamicNavGroups.map((group, groupIndex) => (
             <div key={groupIndex} className="flex flex-col gap-2">
                 {/* Group Title */}
                 <h4 className={cn(
