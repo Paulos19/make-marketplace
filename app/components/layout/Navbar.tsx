@@ -44,6 +44,11 @@ import { UserRole } from '@prisma/client'
 import { Separator } from '@/components/ui/separator'
 import { GlobalSearchCommand } from '../search/GlobalSearchCommand'
 import { Skeleton } from '@/components/ui/skeleton'
+import { MapPin } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from '@/components/ui/dialog'
+import { useLocation } from '@/lib/hooks/useLocation'
+import { setLocationCookie } from '@/app/actions/location'
+import { useRouter } from 'next/navigation'
 
 // Hook para buscar o status do utilizador (assinaturas, etc.)
 function useUserStatus() {
@@ -66,7 +71,12 @@ function useUserStatus() {
   return userStatus;
 }
 
-export default function Navbar() {
+interface NavbarProps {
+  initialState?: string;
+  initialCity?: string;
+}
+
+export default function Navbar({ initialState = '', initialCity = '' }: NavbarProps) {
   const { data: session, status } = useSession()
   const user = session?.user
   const pathname = usePathname()
@@ -74,6 +84,17 @@ export default function Navbar() {
   const [pendingSalesCount, setPendingSalesCount] = useState(0)
   const { hasActiveSubscription, hasActiveTurboBoost, hasActiveCarousel } = useUserStatus()
   const [openSearch, setOpenSearch] = useState(false)
+  const router = useRouter()
+
+  const { states, cities, selectedState, setSelectedState, loadingStates, loadingCities } = useLocation(initialState)
+  const [localCity, setLocalCity] = useState(initialCity)
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
+
+  const handleSaveLocation = async () => {
+    await setLocationCookie(selectedState, localCity)
+    setIsLocationModalOpen(false)
+    router.refresh()
+  }
 
   // Estado para o hover magnético na nav desktop
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -189,6 +210,63 @@ export default function Navbar() {
                 className={cn("block dark:hidden", (isTransparent || isDarkMode) && "hidden")}
               />
             </Link>
+
+            {/* Location Selector */}
+            <div className="hidden sm:flex items-center">
+              <span className={cn("text-xl font-light mx-2", (isTransparent || isDarkMode) ? "text-white/50" : "text-foreground/30")}>|</span>
+              <Dialog open={isLocationModalOpen} onOpenChange={setIsLocationModalOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" className={cn("px-2 py-1 h-auto flex items-center gap-1 rounded-full text-sm font-semibold hover:bg-foreground/5", (isTransparent || isDarkMode) ? "text-white hover:bg-white/10" : "text-foreground")}>
+                    <MapPin className="h-4 w-4" />
+                    {initialCity && initialState ? `${initialCity}, ${initialState}` : initialState ? initialState : "BR"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md border-white/10 bg-background/95 backdrop-blur-xl">
+                  <DialogHeader>
+                    <DialogTitle>Onde você está?</DialogTitle>
+                    <DialogDescription>
+                      Selecione seu Estado e Cidade para ver os produtos mais próximos de você.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex flex-col gap-4 py-4">
+                    <div className="flex-1 space-y-2 relative">
+                        <label className="text-sm font-medium">Estado (UF)</label>
+                        <select
+                            value={selectedState}
+                            onChange={(e) => {
+                                setSelectedState(e.target.value);
+                                setLocalCity('');
+                            }}
+                            disabled={loadingStates}
+                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 appearance-none"
+                        >
+                            <option value="">Todo o Brasil</option>
+                            {states.map((s) => (
+                                <option key={s.id} value={s.sigla}>{s.nome} ({s.sigla})</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex-1 space-y-2 relative">
+                        <label className="text-sm font-medium">Cidade (Opcional)</label>
+                        <select
+                            value={localCity}
+                            onChange={(e) => setLocalCity(e.target.value)}
+                            disabled={loadingCities || !selectedState}
+                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                        >
+                            <option value="">Todas as Cidades</option>
+                            {cities.map((c) => (
+                                <option key={c.id} value={c.nome}>{c.nome}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <Button onClick={handleSaveLocation} className="w-full mt-4">
+                      Aplicar Filtro
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {/* Navegação Desktop Glassmorphic */}

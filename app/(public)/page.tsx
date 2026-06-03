@@ -2,6 +2,7 @@
 
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { cookies } from 'next/headers';
 import { ShoppingBag, UserPlus } from 'lucide-react';
 import { HeroCarousel } from '@/app/components/home/HeroCarousel';
 import { EditorialProductSection } from '@/app/components/home/EditorialProductSection';
@@ -25,6 +26,22 @@ type SectionWithProducts = Prisma.HomepageSectionGetPayload<{}> & {
 
 
 export default async function HomePage() {
+  const cookieStore = await cookies();
+  const stateFilter = cookieStore.get('zacaplace_state')?.value || '';
+  const cityFilter = cookieStore.get('zacaplace_city')?.value || '';
+
+  const locationFilter = stateFilter ? {
+    user: {
+      state: stateFilter,
+      ...(cityFilter ? { city: cityFilter } : {}),
+    }
+  } : {};
+
+  const sellerLocationFilter = stateFilter ? {
+    state: stateFilter,
+    ...(cityFilter ? { city: cityFilter } : {}),
+  } : {};
+
   const [
     banners,
     boostedProducts,
@@ -40,6 +57,7 @@ export default async function HomePage() {
         boostedUntil: { gte: new Date() },
         isSold: false,
         isReserved: false,
+        ...locationFilter,
       },
       include: { user: true, category: true },
       orderBy: { boostedUntil: 'asc' },
@@ -53,6 +71,7 @@ export default async function HomePage() {
           role: 'SELLER',
           showInSellersPage: true,
           reviewsReceived: { some: {} },
+          ...sellerLocationFilter,
         },
         include: { reviewsReceived: { select: { rating: true } } },
       });
@@ -77,13 +96,13 @@ export default async function HomePage() {
         .slice(0, 5);
     })(),
     prisma.product.findMany({
-      where: { isService: false, isSold: false, isReserved: false },
+      where: { isService: false, isSold: false, isReserved: false, ...locationFilter },
       include: { user: true, category: true },
       orderBy: { createdAt: 'desc' },
       take: 10,
     }),
     prisma.product.findMany({
-      where: { isService: true, isSold: false, isReserved: false },
+      where: { isService: true, isSold: false, isReserved: false, ...locationFilter },
       include: { user: true, category: true },
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -94,7 +113,7 @@ export default async function HomePage() {
   const sectionProducts =
     allProductIds.length > 0
       ? await prisma.product.findMany({
-        where: { id: { in: allProductIds } },
+        where: { id: { in: allProductIds }, ...locationFilter },
         include: { user: true, category: true },
       })
       : [];

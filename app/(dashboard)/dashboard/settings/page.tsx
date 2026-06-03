@@ -30,6 +30,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { SubscriptionStatus } from '@prisma/client';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useLocation } from '@/lib/hooks/useLocation';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -69,6 +70,8 @@ interface UserData {
   profileDescription?: string | null;
   showInSellersPage?: boolean | null;
   stripeSubscriptionStatus?: SubscriptionStatus | null;
+  state?: string | null;
+  city?: string | null;
 }
 
 const SubscriptionActionCard = ({ onCheckout, isLoading }: { onCheckout: () => void, isLoading: boolean }) => (
@@ -106,6 +109,9 @@ export default function SettingsPage() {
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null); 
   const [sellerBannerImageUrlState, setSellerBannerImageUrlState] = useState<string | null>(null); 
   const [initialDataLoading, setInitialDataLoading] = useState(true); 
+
+  const { states, cities, selectedState, setSelectedState, loadingStates, loadingCities } = useLocation();
+  const [city, setCity] = useState("");
 
   const isPremiumSeller = session?.user?.email === process.env.NEXT_PUBLIC_EMAIL_PREMIUM;
 
@@ -145,6 +151,10 @@ export default function SettingsPage() {
               });
               setProfileImageUrl(data.image || null);
               setSellerBannerImageUrlState(data.sellerBannerImageUrl || null);
+              setSelectedState(data.state || '');
+              // Need a small timeout to allow cities to load before setting the city, or just set it
+              // and the select will show it once cities array updates.
+              setTimeout(() => setCity(data.city || ''), 100);
           })
           .catch((err) => {
             toast.error(err.message || 'Não foi possível carregar os dados do perfil.');
@@ -192,6 +202,8 @@ export default function SettingsPage() {
       image: profileImageUrl, 
       sellerBannerImageUrl: sellerBannerImageUrlState,
       showInSellersPage: values.showInSellersPage,
+      state: selectedState || null,
+      city: city || null,
     };
     try {
       const response = await fetch('/api/user', { 
@@ -334,6 +346,37 @@ export default function SettingsPage() {
                                 <FormMessage />
                             </FormItem>
                         )} />
+
+                        <div className="flex gap-4 w-full">
+                            <div className="flex-1 space-y-2 relative">
+                                <FormLabel className="text-slate-700 dark:text-slate-300">Estado (UF)</FormLabel>
+                                <select
+                                    value={selectedState}
+                                    onChange={(e) => setSelectedState(e.target.value)}
+                                    disabled={loadingStates}
+                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                                >
+                                    <option value="" disabled>Selecione um estado</option>
+                                    {states.map((s) => (
+                                        <option key={s.id} value={s.sigla}>{s.nome} ({s.sigla})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex-1 space-y-2 relative">
+                                <FormLabel className="text-slate-700 dark:text-slate-300">Cidade</FormLabel>
+                                <select
+                                    value={city}
+                                    onChange={(e) => setCity(e.target.value)}
+                                    disabled={loadingCities || !selectedState}
+                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                                >
+                                    <option value="" disabled>Selecione uma cidade</option>
+                                    {cities.map((c) => (
+                                        <option key={c.id} value={c.nome}>{c.nome}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                         
                         <FormField control={form.control} name="email" render={({ field }) => (
                             <FormItem>

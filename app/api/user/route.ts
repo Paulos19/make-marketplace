@@ -14,6 +14,8 @@ const updateUserSchema = z.object({
   sellerBannerImageUrl: z.string().url().nullable().optional(),
   profileDescription: z.string().max(500).nullable().optional(),
   showInSellersPage: z.boolean().optional(),
+  state: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
 });
 
 // GET: Busca os dados do usuário logado

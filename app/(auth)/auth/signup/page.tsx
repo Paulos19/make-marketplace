@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, EyeOff, Eye, User, Building, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useLocation } from "@/lib/hooks/useLocation";
 
 type AccountType = 'USER' | 'SELLER';
 
@@ -21,6 +22,9 @@ export default function SignUpPage() {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const { states, cities, selectedState, setSelectedState, loadingStates, loadingCities } = useLocation();
+  const [city, setCity] = useState("");
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +56,7 @@ export default function SignUpPage() {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, confirmPassword, whatsappLink, role: accountType }),
+        body: JSON.stringify({ name, email, password, confirmPassword, whatsappLink, role: accountType, state: selectedState, city }),
       });
 
       const data = await response.json();
@@ -253,6 +257,40 @@ export default function SignUpPage() {
                                 >
                                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
+                            </div>
+
+                            <div className="flex gap-4">
+                                <div className="flex-1 relative">
+                                    <select
+                                        id="state"
+                                        value={selectedState}
+                                        onChange={(e) => setSelectedState(e.target.value)}
+                                        disabled={isLoading || loadingStates}
+                                        className="w-full h-12 bg-white/95 border-0 text-black placeholder:text-gray-500 rounded-xl px-4 font-medium focus-visible:ring-2 focus-visible:ring-white/50 appearance-none"
+                                    >
+                                        <option value="" disabled>Estado</option>
+                                        {states.map((s) => (
+                                            <option key={s.id} value={s.sigla}>{s.sigla}</option>
+                                        ))}
+                                    </select>
+                                    {loadingStates && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />}
+                                </div>
+                                
+                                <div className="flex-1 relative">
+                                    <select
+                                        id="city"
+                                        value={city}
+                                        onChange={(e) => setCity(e.target.value)}
+                                        disabled={isLoading || loadingCities || !selectedState}
+                                        className="w-full h-12 bg-white/95 border-0 text-black placeholder:text-gray-500 rounded-xl px-4 font-medium focus-visible:ring-2 focus-visible:ring-white/50 appearance-none"
+                                    >
+                                        <option value="" disabled>Cidade</option>
+                                        {cities.map((c) => (
+                                            <option key={c.id} value={c.nome}>{c.nome}</option>
+                                        ))}
+                                    </select>
+                                    {loadingCities && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />}
+                                </div>
                             </div>
 
                             <div className={cn("grid transition-all duration-300", accountType === 'SELLER' ? "grid-rows-[1fr] opacity-100 mt-4" : "grid-rows-[0fr] opacity-0")}>

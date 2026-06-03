@@ -1,12 +1,23 @@
 import prisma from '@/lib/prisma'
 import { SellerCard } from './components/SellerCard'
 import { PackageOpen, Store } from 'lucide-react'
+import { cookies } from 'next/headers'
 
 export default async function SellersPage() {
+  const cookieStore = await cookies();
+  const stateFilter = cookieStore.get('zacaplace_state')?.value || '';
+  const cityFilter = cookieStore.get('zacaplace_city')?.value || '';
+
+  const sellerLocationFilter = stateFilter ? {
+    state: stateFilter,
+    ...(cityFilter ? { city: cityFilter } : {}),
+  } : {};
+
   const sellers = await prisma.user.findMany({
     where: {
       role: 'SELLER',
       showInSellersPage: true,
+      ...sellerLocationFilter,
     },
     include: {
       // Inclui as avaliações recebidas para calcular a média

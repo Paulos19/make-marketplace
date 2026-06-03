@@ -14,6 +14,8 @@ const registerUserSchema = z.object({
   confirmPassword: z.string().min(6, { message: "A confirmação da senha é obrigatória." }),
   role: z.enum([UserRole.USER, UserRole.SELLER]),
   whatsappLink: z.string().url().optional().nullable(),
+  state: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
 }).refine(data => data.password === data.confirmPassword, {
     message: "As senhas não coincidem, cumpadi!",
     path: ["confirmPassword"],
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: errorMessage }, { status: 400 });
     }
 
-    const { email, name, password, whatsappLink, role } = validation.data;
+    const { email, name, password, whatsappLink, role, state, city } = validation.data;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -46,6 +48,8 @@ export async function POST(request: Request) {
         passwordHash,
         role,
         whatsappLink: role === UserRole.SELLER ? whatsappLink : null,
+        state,
+        city,
       },
     });
 

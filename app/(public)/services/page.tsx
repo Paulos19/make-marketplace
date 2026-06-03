@@ -8,6 +8,7 @@ import { MiniProductCard } from '@/app/components/product/MiniProductCard'
 import { PackageOpen, ChevronLeft, ChevronRight, Wrench } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { cookies } from 'next/headers'
 
 type ProductWithDetails = Prisma.ProductGetPayload<{
   include: { user: true; category: true }
@@ -32,11 +33,28 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
   const take = 16; // 16 itens por página
   const skip = (page - 1) * take;
 
+  const cookieStore = await cookies();
+  const stateFilter = cookieStore.get('zacaplace_state')?.value || '';
+  const cityFilter = cookieStore.get('zacaplace_city')?.value || '';
+
+  const locationFilter = stateFilter ? {
+    user: {
+      state: stateFilter,
+      ...(cityFilter ? { city: cityFilter } : {}),
+    }
+  } : {};
+
+  const sellerLocationFilter = stateFilter ? {
+    state: stateFilter,
+    ...(cityFilter ? { city: cityFilter } : {}),
+  } : {};
+
   // Build the filtered query
   const whereClause: Prisma.ProductWhereInput = {
     isSold: false,
     isReserved: false,
     isService: true, // Apenas Serviços
+    ...locationFilter,
   };
 
   if (categoryId) {
@@ -61,6 +79,7 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
         isSold: false,
         isReserved: false,
         isService: true,
+        ...locationFilter,
       },
       include: { user: true, category: true },
       orderBy: { boostedUntil: 'asc' },
@@ -73,7 +92,8 @@ export default async function ServicesPage({ searchParams }: { searchParams: Pro
       where: {
         role: 'SELLER',
         showInSellersPage: true,
-        products: { some: { isService: true, isSold: false } }
+        products: { some: { isService: true, isSold: false } },
+        ...sellerLocationFilter,
       },
       include: { 
         products: { 
