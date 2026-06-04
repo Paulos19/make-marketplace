@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
                 storeName: true,
               }
             },
-            reviews: {
+            productReviews: {
               select: {
                 rating: true
               }
@@ -84,9 +84,9 @@ export async function GET(request: NextRequest) {
 
     const formattedFavorites = favorites.map(f => {
       const p = f.product;
-      const totalReviews = p.reviews.length;
+      const totalReviews = p.productReviews ? p.productReviews.length : 0;
       const averageRating = totalReviews > 0 
-        ? p.reviews.reduce((acc, rev) => acc + rev.rating, 0) / totalReviews 
+        ? p.productReviews.reduce((acc: any, rev: any) => acc + rev.rating, 0) / totalReviews 
         : 4.9; // Default if none, or could be 0
 
       return {
