@@ -1,5 +1,3 @@
-import { enableScreens } from 'react-native-screens';
-enableScreens();
 import "./global.css";
 
 import { Stack } from 'expo-router';
@@ -26,7 +24,6 @@ export default function RootLayout() {
         <Stack.Screen name="products" />
         <Stack.Screen name="products/[productId]" />
         <Stack.Screen name="dashboard/sales" />
-        <Stack.Screen name="my-reservations" />
         {/* Add other screens here as you develop them */}
       </Stack>
       <Sidebar />
