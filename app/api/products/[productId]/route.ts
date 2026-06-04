@@ -30,6 +30,36 @@ const updateProductSchema = z.object({
     path: ["price"],
 });
 
+// Handler para o método GET (Buscar Produto por ID)
+export async function GET(
+  request: Request,
+  { params }: { params: { productId: string } }
+) {
+  try {
+    const { productId } = params;
+    if (!productId) {
+      return NextResponse.json({ message: 'ID do produto não fornecido.' }, { status: 400 });
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        user: true,
+        category: true
+      }
+    });
+
+    if (!product) {
+      return NextResponse.json({ message: 'Produto não encontrado.' }, { status: 404 });
+    }
+
+    return NextResponse.json(product, { status: 200 });
+  } catch (error) {
+    console.error("[PRODUCT_GET]", error);
+    return NextResponse.json({ message: 'Erro interno do servidor.' }, { status: 500 });
+  }
+}
+
 // Handler para o método PATCH (Atualizar Produto)
 export async function PATCH(
   request: Request,
