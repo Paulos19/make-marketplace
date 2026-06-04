@@ -30,10 +30,10 @@ const updateProductSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
-    const { productId } = params;
+    const { productId } = await params;
     if (!productId) {
       return NextResponse.json({ message: 'ID do produto não fornecido.' }, { status: 400 });
     }
@@ -105,21 +105,23 @@ async function handleUpdate(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
-  return handleUpdate(request, params.productId);
+  const { productId } = await params;
+  return handleUpdate(request, productId);
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
-  return handleUpdate(request, params.productId);
+  const { productId } = await params;
+  return handleUpdate(request, productId);
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
     const userId = await getMobileUserId(request);
@@ -127,7 +129,7 @@ export async function DELETE(
       return NextResponse.json({ message: 'Não autorizado.' }, { status: 401 });
     }
 
-    const { productId } = params;
+    const { productId } = await params;
     if (!productId) {
       return NextResponse.json({ message: 'ID do produto não fornecido.' }, { status: 400 });
     }
