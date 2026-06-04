@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getMobileUserId } from '../../../auth-helper';
+import { getMobileUserId } from '../../auth-helper';
 import { ReservationStatus } from '@prisma/client';
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {

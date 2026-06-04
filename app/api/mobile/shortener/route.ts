@@ -79,3 +79,28 @@ export async function POST(request: NextRequest) {
     return new NextResponse('Erro interno do servidor', { status: 500 });
   }
 }
+
+export async function GET(request: NextRequest) {
+  try {
+    const userId = await getMobileUserId(request);
+    if (!userId) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
+    const userLinks = await prisma.shortLink.findMany({
+      where: {
+        userId: userId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return NextResponse.json(userLinks);
+    
+  } catch (error) {
+    console.error('[MOBILE_SHORTENER_GET_ERROR]', error);
+    return new NextResponse('Erro interno do servidor', { status: 500 });
+  }
+}
+
