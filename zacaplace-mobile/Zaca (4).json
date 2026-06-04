@@ -1,0 +1,583 @@
+{
+  "name": "Zaca",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zaca-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        400,
+        304
+      ],
+      "id": "05cb9241-7468-4c7c-ac47-a6ddc37cacc4",
+      "name": "Chat Trigger",
+      "webhookId": "f03a3254-ab1a-4267-9b03-5108f46e4830"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        512,
+        512
+      ],
+      "id": "2ab83d2e-f267-4f0e-9c31-397898f3e7d6",
+      "name": "Google Gemini Chat Model",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "lEoLgDd1fZPUaRex",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        624
+      ],
+      "id": "ed9b565f-63e6-4881-a5c8-5ddc30902ee3",
+      "name": "Window Buffer Memory",
+      "credentials": {
+        "redis": {
+          "id": "0t8maoGpKOA6XwaX",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca os detalhes dos produtos na loja. Retorna nome, preço (price), imagens (images), quantidade em estoque (quantity) e o ID. Acione esta ferramenta sempre que o cliente pedir um produto, uma recomendação ou perguntar se \"tem no estoque/tamanho\". Use o 'termo_busca' baseado na frase do cliente.",
+        "url": "=https://zacaplace.vercel.app/api/products?q={{$fromAI('termo_busca', 'O nome, cor ou estilo que o cliente deseja. Ex: tenis, blusa preta. Deixe vazio se ele só pedir barato')}}&limit=5",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  \"termo_busca\": $fromAI('termo_busca', 'O nome, cor ou estilo que o cliente deseja. Ex: tenis, blusa preta. Deixe vazio se ele só pedir barato') || \"\",\n  \"preco_maximo\": $fromAI('preco_maximo', 'Se o cliente pedir algo barato ou até X reais, extraia o número e coloque aqui. Se não houver limite, retorne null', 'number') || null,\n  \"categoria\": $fromAI('categoria', 'Categoria identificada, como calçados, camisetas. Deixe vazio se não estiver claro') || \"\"\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        880,
+        592
+      ],
+      "id": "23406215-0d3d-4288-b515-595cf2dfe080",
+      "name": "Tool_Buscar_Produtos"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Realiza uma pesquisa global no marketplace. Retorna se existe uma loja (seller) ou categoria com aquele nome. Use quando o cliente perguntar o nome de uma loja específica ou de um departamento geral da loja.",
+        "url": "=https://zacaplace.vercel.app/api/search?q={{$fromAI('termo_pesquisa_geral', 'Palavra-chave para pesquisar lojas ou categorias')}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        1008,
+        608
+      ],
+      "id": "ebc3b8df-1f2d-4ed3-a1d7-671e94679250",
+      "name": "Tool_Pesquisa_Geral"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1168,
+        304
+      ],
+      "id": "6ed01d92-5308-483a-bbe5-aadc07224a4e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7dccc919-72b2-4de8-8597-96aa67f90f90",
+              "name": "sessionId",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "88011489-3592-4d20-a9b2-13f7918f95a3",
+              "name": "chatInput",
+              "value": "={{ $json.body.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "ae4dc6de-67bc-4a0c-af56-b010f2215001",
+              "name": "action",
+              "value": "={{ $json.body.action }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        608,
+        304
+      ],
+      "id": "57e3bafd-3481-4091-ac02-4f7eca1f886e",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}\n",
+        "options": {
+          "systemMessage": "Você é a Ana, a assistente virtual inteligente e proativa do marketplace Zacaplace / Make Store.\nSeu tom é amigável, acolhedor, rápido e persuasivo, agindo como uma vendedora de elite.\n\n═══════════════════════════════════════════\n1. IDENTIDADE E TOM\n═══════════════════════════════════════════\n- Idioma: português brasileiro nativo.\n- Tom: profissional, acolhedor, empático e direto.\n- Formato das respostas: Curtas, no máximo 2 a 3 parágrafos. Não crie listas infinitas.\n- Onde você está: Você conversa no chat mobile do app oficial da loja.\n\n═══════════════════════════════════════════\n2. REGRAS DE OURO PARA AS TOOLS\n═══════════════════════════════════════════\n- NUNCA AVISE QUE VAI PROCURAR: Não diga \"vou verificar\" ou \"aguarde\". Apenas acione a ferramenta silenciosamente e já devolva a resposta com o resultado.\n- NUNCA INVENTE: Não invente produtos, preços, estoques ou links. Se não achar algo na busca, diga gentilmente que não encontrou.\n- OBJETIVIDADE: Quando o cliente pedir uma recomendação (ex: \"quero um tênis barato\"), extraia os dados e acione a Tool_Buscar_Produtos Imediatamente.\n\n═══════════════════════════════════════════\n3. APRESENTANDO PRODUTOS\n═══════════════════════════════════════════\nSempre que for recomendar ou apresentar um produto baseado no retorno das suas ferramentas, OBRIGATORIAMENTE use o seguinte formato de TAG exatamente como descrito abaixo para que o aplicativo possa renderizar o card nativo do produto:\n\n$$PRODUCT::[ID_DO_PRODUTO_RETORNADO]::[Nome do Produto retornado]::[Valor numérico ex: 199.90]::[url_da_primeira_imagem_do_array]$$\n\n*Atenção:* NUNCA altere os separadores '::' e NUNCA invente o ID ou URL. O app irá interceptar essa string e exibir um Card Lindo e clicável na tela do usuário. Se você precisar mostrar mais de um produto, coloque a TAG correspondente para cada um deles.\n\n═══════════════════════════════════════════\n4. LIMITES DE ESCOPO\n═══════════════════════════════════════════\n- Se o cliente perguntar algo completamente fora do escopo do marketplace, informe educadamente que você é uma assistente focada em ajudar com os incríveis produtos e vendedores da Zacaplace.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        816,
+        304
+      ],
+      "id": "0df998e4-b7ea-47c4-8311-e608c5af5cba",
+      "name": "Agente Ana do Zaca"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zaca-seller-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        400,
+        960
+      ],
+      "id": "1269beb7-75db-496d-9bd5-5be3bf264f92",
+      "name": "Webhook",
+      "webhookId": "1451a9c1-c00d-4026-bcab-232107749434"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Você é a Ana, assistente virtual inteligente da Zacaplace focada exclusivamente em VENDEDORES.\nVocê tem acesso aos dados e ao estoque do vendedor atual (o ID dele é passado via webhook e você deve SEMPRE repassar esse sellerId nas ferramentas que exigirem).\n\nSua missão é ajudar o vendedor a gerenciar seu catálogo. \nVocê pode: Listar produtos, Excluir produtos, e Cadastrar novos produtos.\n\n## REGRAS ESTRITAS PARA CADASTRO DE PRODUTOS:\n\nO processo de criação de um produto DEVE seguir obrigatoriamente a ordem abaixo. NUNCA pule etapas.\n\nPASSO 1 - CATEGORIA (Obrigatório):\nAntes de cadastrar qualquer produto, você DEVE usar a ferramenta \"listar_categorias\" para descobrir o ID correto da categoria. NUNCA invente ou adivinhe um categoryId. Se a lista retornar algo como \"Móveis\" com ID \"cm0a1b2c3...\", use exatamente esse ID.\n\nPASSO 2 - FOTOS (Obrigatório):\nPara cadastrar um produto, você precisa do array de URLs das imagens. \nSe o vendedor pedir para cadastrar um produto e ainda NÃO tiver enviado as fotos na conversa, você deve PARAR e responder EXATAMENTE (e APENAS) com este texto literal:\n[ACTION: REQUEST_IMAGE_UPLOAD]\n\nIsso ativará a interface de upload na tela dele.\nEm seguida, a próxima mensagem que você receberá do usuário começará com a tag \"[EVENT: IMAGES_UPLOADED]\", contendo o array com os links das fotos.\n\nPASSO 3 - CADASTRO:\nSomente quando você tiver TODOS os dados (nome, descrição, preço, o ID VERDADEIRO da categoria) e o ARRAY DE URLs DAS IMAGENS recebido no evento acima, você deve chamar a ferramenta de \"Criar Produto\".\n\nIMPORTANTE: Se o usuário enviar a tag \"[EVENT: IMAGES_UPLOADED]\", significa que ele já enviou as fotos com sucesso. Analise a mensagem, capture o array de URLs e prossiga imediatamente com a criação do produto na API, confirmando o sucesso de forma amigável ao vendedor no final.\n\nREGRA DE OURO E EXECUÇÃO DE FERRAMENTAS:\nVocê é uma assistente de AÇÃO. Você NUNCA deve simular ou apenas dizer que fez algo.\nSe o usuário pedir para cadastrar um produto e você já tiver as fotos e o categoryId, VOCÊ É OBRIGADA A CHAMAR A FERRAMENTA 'Criar Produto'. \nNUNCA responda \"Produto cadastrado com sucesso\" a menos que você tenha acabado de executar a ferramenta 'Criar Produto' e ela tenha retornado um status de sucesso (HTTP 200/201). Se você não chamar a ferramenta, o produto NÃO será salvo no banco de dados e você estará mentindo para o usuário.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        768,
+        960
+      ],
+      "id": "e57de5a6-f6e3-40c3-8b6f-a7f4f61647f4",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        640,
+        1168
+      ],
+      "id": "bb665f54-24ce-4c04-b7bd-5a6cf82f5130",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "hNHcgyFSQt6uJ5K2",
+          "name": "paulo2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        784,
+        1168
+      ],
+      "id": "820d5d24-5a7c-4606-beba-891217a707ae",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "0t8maoGpKOA6XwaX",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use esta ferramenta para listar os produtos do vendedor.",
+        "url": "=https://zacaplace.vercel.app/api/products?sellerId={{ $('Webhook').item.json.body.sellerId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        1056,
+        1168
+      ],
+      "id": "c4305bb7-9ff9-43e4-a077-77e9c29fabd2",
+      "name": "Listar Meus Produtos"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use esta ferramenta para excluir um produto informando o seu ID.",
+        "method": "DELETE",
+        "url": "=https://zacaplace.vercel.app/api/products/{id}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        1216,
+        1168
+      ],
+      "id": "debebd72-af0a-43d7-8672-275358c6be47",
+      "name": "Excluir Produto"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Obrigatório usar esta ferramenta para realizar o cadastro real no banco de dados. VOCÊ NÃO PODE DIZER QUE CADASTROU SEM CHAMAR ESTA FERRAMENTA. Você deve fornecer os seguintes parâmetros para a ferramenta: name (string), description (string), price (number), categoryId (string), sellerId (string), images (array de strings), quantity (number), condition (string), priceType (string), isService (boolean).",
+        "method": "POST",
+        "url": "https://zacaplace.vercel.app/api/agent/products",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  \"name\": $fromAI('name', 'Nome do produto escolhido pelo usuário'),\n  \"description\": $fromAI('description', 'Descrição detalhada do produto'),\n  \"price\": $fromAI('price', 'Preço numérico do produto (apenas números ex: 99.90)', 'number') || null,\n  \"categoryId\": $fromAI('categoryId', 'O ID exato (começa com cm...) retornado pela ferramenta de listar categorias'),\n  \"images\": ($fromAI('images', 'Uma string contendo as URLs das fotos separadas apenas por vírgulas. Exemplo: url1,url2', 'string') || '').split(',').map(url => url.trim()).filter(Boolean),\n  \"sellerId\": $('Webhook').item.json.body.sellerId,\n  \"quantity\": $fromAI('quantity', 'Quantidade do produto em estoque (padrão 1)', 'number') || 1,\n  \"condition\": $fromAI('condition', 'Estado do produto. Opções: NEW, USED_LIKE_NEW, USED_GOOD, USED_FAIR') || 'NEW',\n  \"priceType\": \"FIXED\",\n  \"isService\": false\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        1152,
+        1328
+      ],
+      "id": "3d040cbe-f1ba-4765-b448-cae6bc9ec3f5",
+      "name": "Criar Produto",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "uZTieO40VAa85rz9",
+          "name": "Authorization"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"output\": $json.output } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        960
+      ],
+      "id": "76b5f283-935d-4ebf-8425-3fb4486eef57",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7dccc919-72b2-4de8-8597-96aa67f90f90",
+              "name": "sessionId",
+              "value": "={{ $json.body.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "88011489-3592-4d20-a9b2-13f7918f95a3",
+              "name": "chatInput",
+              "value": "={{ $json.body.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "ae4dc6de-67bc-4a0c-af56-b010f2215001",
+              "name": "action",
+              "value": "={{ $json.body.action }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        576,
+        960
+      ],
+      "id": "71943f9d-4f77-4f15-97bc-cd1fa3a78ebc",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use esta ferramenta ANTES de criar um produto para descobrir o ID correto da categoria. NUNCA invente um categoryId, você deve buscar a lista de categorias e usar o ID exato que corresponde ao produto (ex: 'cm0...').",
+        "url": "https://zacaplace.vercel.app/api/categories",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        928,
+        1168
+      ],
+      "id": "cd8346ab-41a1-4cbd-a309-cb481f9c4ee2",
+      "name": "listar_categorias"
+    }
+  ],
+  "pinData": {
+    "Chat Trigger": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n-n8n.qqfurw.easypanel.host",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+            "content-length": "99",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+            "content-type": "application/json",
+            "origin": "http://localhost:3000",
+            "priority": "u=1, i",
+            "referer": "http://localhost:3000/",
+            "sec-ch-ua": "\"Chromium\";v=\"148\", \"Google Chrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "179.252.135.130",
+            "x-forwarded-host": "n8n-n8n.qqfurw.easypanel.host",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "6b57cdc222d7",
+            "x-real-ip": "179.252.135.130"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "action": "sendMessage",
+            "sessionId": "web-1780323640327-neruv66",
+            "chatInput": "Olá, Ana, tudo bem?"
+          },
+          "webhookUrl": "https://n8n-n8n.qqfurw.easypanel.host/webhook/zaca-chat",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Ana do Zaca",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Ana do Zaca",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool_Buscar_Produtos": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Ana do Zaca",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool_Pesquisa_Geral": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Ana do Zaca",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Agente Ana do Zaca",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Ana do Zaca": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar Meus Produtos": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Excluir Produto": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Produto": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "listar_categorias": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8a283433-f2ab-44f6-ab4f-8f7f08617702",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eb423e3cb965fc5166ab16cfed22abe288a6331fa0b88be0e6ad3f46af0fdf71"
+  },
+  "id": "n3eXMaYK8fTbBKHz",
+  "tags": []
+}
