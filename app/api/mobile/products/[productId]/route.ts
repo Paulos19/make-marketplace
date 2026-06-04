@@ -38,19 +38,30 @@ export async function GET(
       return NextResponse.json({ message: 'ID do produto não fornecido.' }, { status: 400 });
     }
 
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        user: true,
-        category: true
-      }
-    });
+    const [product, reviewStats] = await Promise.all([
+      prisma.product.findUnique({
+        where: { id: productId },
+        include: {
+          user: true,
+          category: true
+        }
+      }),
+      prisma.productReview.aggregate({
+        where: { productId },
+        _avg: { rating: true },
+        _count: { rating: true },
+      }),
+    ]);
 
     if (!product) {
       return NextResponse.json({ message: 'Produto não encontrado.' }, { status: 404 });
     }
 
-    return NextResponse.json(product, { status: 200 });
+    return NextResponse.json({
+      ...product,
+      averageRating: reviewStats._avg.rating || 0,
+      totalReviews: reviewStats._count.rating || 0,
+    }, { status: 200 });
   } catch (error) {
     console.error("[MOBILE_PRODUCT_GET]", error);
     return NextResponse.json({ message: 'Erro interno do servidor.' }, { status: 500 });

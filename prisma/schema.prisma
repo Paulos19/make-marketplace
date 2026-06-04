@@ -93,6 +93,7 @@ model User {
   adminNotifications       AdminNotification[]
   purchases                Purchase[]
   favorite                 Favorite[]
+  productReviews           ProductReview[]
   // Adiciona a relação com os pagamentos PIX iniciados pelo usuário
   pixPayments              PixPayment[]
 
@@ -162,10 +163,11 @@ model Product {
   category      Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   userId        String
   user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reservations  Reservation[]
-  purchases     Purchase[]
-  shortLinks    ShortLink[]
-  favorite      Favorite[]
+  reservations    Reservation[]
+  purchases       Purchase[]
+  shortLinks      ShortLink[]
+  favorite        Favorite[]
+  productReviews  ProductReview[]
 
   @@map("Product")
 }
@@ -269,6 +271,22 @@ model Review {
 
   @@index([sellerId])
   @@map("Review")
+}
+
+model ProductReview {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String?
+  images    String[]
+  createdAt DateTime @default(now())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([userId])
+  @@map("ProductReview")
 }
 
 model ThemeSettings {
