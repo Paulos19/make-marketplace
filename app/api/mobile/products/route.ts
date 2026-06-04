@@ -135,7 +135,13 @@ export async function GET(req: NextRequest) {
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
-        include: { user: true, category: true },
+        include: {
+          user: true,
+          category: true,
+          productReviews: {
+            select: { rating: true }
+          }
+        },
         orderBy,
         skip: (page - 1) * limit,
         take: limit,
@@ -143,8 +149,17 @@ export async function GET(req: NextRequest) {
       prisma.product.count({ where }),
     ]);
 
+    // Compute averageRating and totalReviews for each product
+    const productsWithRatings = products.map(({ productReviews, ...product }) => {
+      const totalReviews = productReviews.length;
+      const averageRating = totalReviews > 0
+        ? productReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+        : 0;
+      return { ...product, averageRating: Math.round(averageRating * 10) / 10, totalReviews };
+    });
+
     return NextResponse.json({
-      products,
+      products: productsWithRatings,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
     });

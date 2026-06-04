@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
             }
           },
           category: true,
+          productReviews: { select: { rating: true } },
         },
         orderBy: { boostedUntil: 'asc' },
         take: 10,
@@ -114,6 +115,7 @@ export async function GET(req: NextRequest) {
               }
             },
             category: true,
+            productReviews: { select: { rating: true } },
           },
         })
       : [];
@@ -148,18 +150,31 @@ export async function GET(req: NextRequest) {
           }
         },
         category: true,
+        productReviews: { select: { rating: true } },
       },
       orderBy: { createdAt: 'desc' },
       take: 20,
     });
 
+    // Helper to compute ratings
+    const withRatings = (products: any[]) => products.map(({ productReviews, ...p }) => {
+      const total = productReviews?.length || 0;
+      const avg = total > 0 ? productReviews.reduce((s: number, r: any) => s + r.rating, 0) / total : 0;
+      return { ...p, averageRating: Math.round(avg * 10) / 10, totalReviews: total };
+    });
+
+    const sectionsWithRatings = sectionsWithProducts.map(section => ({
+      ...section,
+      products: withRatings(section.products),
+    }));
+
     return NextResponse.json({
       banners,
-      boostedProducts,
-      sections: sectionsWithProducts,
+      boostedProducts: withRatings(boostedProducts),
+      sections: sectionsWithRatings,
       sellers,
       categories,
-      discoveries,
+      discoveries: withRatings(discoveries),
     });
   } catch (error: any) {
     console.error('Erro ao buscar dados consolidados da homepage:', error);
