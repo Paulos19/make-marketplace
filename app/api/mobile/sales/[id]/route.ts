@@ -3,8 +3,9 @@ import prisma from '@/lib/prisma';
 import { getMobileUserId } from '../../auth-helper';
 import { ReservationStatus } from '@prisma/client';
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const { id } = await params;
         const userId = await getMobileUserId(request);
         if (!userId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
@@ -12,7 +13,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         const { status } = body;
 
         const reservation = await prisma.reservation.findUnique({
-            where: { id: params.id },
+            where: { id: id },
             include: { product: true }
         });
 
@@ -20,7 +21,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         if (reservation.product.userId !== userId) return NextResponse.json({ error: 'Proibido' }, { status: 403 });
 
         const updated = await prisma.reservation.update({
-            where: { id: params.id },
+            where: { id: id },
             data: { status: status as ReservationStatus }
         });
 
@@ -31,20 +32,21 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const { id } = await params;
         const userId = await getMobileUserId(request);
         if (!userId) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
         const reservation = await prisma.reservation.findUnique({
-            where: { id: params.id },
+            where: { id: id },
             include: { product: true }
         });
 
         if (!reservation) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
         if (reservation.product.userId !== userId) return NextResponse.json({ error: 'Proibido' }, { status: 403 });
 
-        await prisma.reservation.delete({ where: { id: params.id } });
+        await prisma.reservation.delete({ where: { id: id } });
 
         return NextResponse.json({ success: true });
     } catch (error) {
