@@ -50,3 +50,63 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }
+
+export async function GET(request: NextRequest) {
+  const userId = await getMobileUserId(request);
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  try {
+    const favorites = await prisma.favorite.findMany({
+      where: { userId },
+      include: {
+        product: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                storeName: true,
+              }
+            },
+            reviews: {
+              select: {
+                rating: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const formattedFavorites = favorites.map(f => {
+      const p = f.product;
+      const totalReviews = p.reviews.length;
+      const averageRating = totalReviews > 0 
+        ? p.reviews.reduce((acc, rev) => acc + rev.rating, 0) / totalReviews 
+        : 4.9; // Default if none, or could be 0
+
+      return {
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        originalPrice: p.originalPrice,
+        images: p.images,
+        condition: p.condition,
+        onPromotion: p.onPromotion,
+        isService: p.isService,
+        user: p.user,
+        averageRating,
+        totalReviews
+      };
+    });
+
+    return NextResponse.json(formattedFavorites);
+  } catch (error) {
+    console.error('Erro ao listar favoritos mobile:', error);
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+  }
+}
