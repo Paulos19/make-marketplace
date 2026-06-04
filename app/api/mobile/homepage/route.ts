@@ -103,7 +103,6 @@ export async function GET(req: NextRequest) {
             id: { in: allProductIds },
             isSold: false,
             isReserved: false,
-            ...locationFilter,
           },
           include: {
             user: {
