@@ -3,6 +3,8 @@ import { checkAgentAccess } from '@/app/actions/checkSubscription';
 import SellerAgentChat from './components/SellerAgentChat';
 import { BotMessageSquare } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Agente Ana - Inteligência Artificial | Zacaplace',
   description: 'Gerencie seu catálogo com o poder da Inteligência Artificial.',
