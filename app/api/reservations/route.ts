@@ -9,6 +9,8 @@ import { Resend } from 'resend';
 // Se não tiver, esta parte pode ser adaptada ou removida.
 // import { ReservationNotificationEmail } from '@/app/components/emails/ReservationNotificationEmail';
 
+import { decode } from 'next-auth/jwt'; // Import decode for JWT
+
 // Inicializa o Resend se a chave estiver disponível
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -36,10 +38,32 @@ async function sendReservationNotificationEmail(params: {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user || !session.user.id || !session.user.name || !session.user.email) {
-      return NextResponse.json({ message: 'Autenticação necessária ou dados do usuário ausentes na sessão.' }, { status: 401 });
+    const authorizationHeader = request.headers.get('authorization');
+    let buyerId = null;
+
+    if (authorizationHeader && authorizationHeader.startsWith('Bearer ')) {
+      const token = authorizationHeader.substring(7);
+      try {
+        const decoded = await decode({
+          token: token,
+          secret: authOptions.secret!,
+        });
+        if (decoded && decoded.id) {
+          buyerId = decoded.id as string;
+        }
+      } catch (error) {
+        console.error('Erro ao decodificar token:', error);
+        return NextResponse.json({ message: 'Token inválido' }, { status: 401 });
+      }
+    }
+
+    if (!buyerId) {
+      const session = await getServerSession(authOptions);
+      if (session?.user?.id) {
+        buyerId = session.user.id;
+      } else {
+        return NextResponse.json({ message: 'Autenticação necessária ou dados do usuário ausentes.' }, { status: 401 });
+      }
     }
 
     const reservationSchema = z.object({
@@ -55,7 +79,6 @@ export async function POST(request: Request) {
     }
 
     const { productId, quantity: reservedQuantity } = validation.data;
-    const buyerId = session.user.id;
 
     const result = await prisma.$transaction(async (tx) => {
       const product = await tx.product.findUnique({
