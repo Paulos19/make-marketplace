@@ -103,12 +103,14 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '12', 10);
 
-  const where: any = {
-    isSold: false,
-    isReserved: false,
-  };
+  const where: any = {};
 
-  if (userId) where.userId = userId;
+  if (userId) {
+    where.userId = userId;
+  } else {
+    where.isSold = false;
+    where.isReserved = false;
+  }
   if (categoryId) where.categoryId = categoryId;
   if (isServiceQuery !== null) where.isService = isServiceQuery === 'true';
 
